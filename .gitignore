@@ -1,0 +1,13 @@
+# Entorno virtual de Python
+.venv/
+__pycache__/
+*.pyc
+
+# Config local del cliente MCP (específica de esta máquina)
+.claude/
+
+# Exportaciones de posts (imágenes regenerables, no son código fuente)
+posts/
+
+# macOS
+.DS_Store

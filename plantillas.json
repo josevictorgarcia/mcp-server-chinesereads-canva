@@ -1,0 +1,136 @@
+{
+  "_comentario": "canva_design_id debe apuntar a un diseño MULTI-PÁGINA en Canva: varias páginas duplicadas con el mismo layout (hasta max_paginas). Cada hueco.texto_actual debe ser EXACTAMENTE el texto que aparece ahora en la plantilla (en cada página), para que se pueda localizar y sustituir. Los huecos con tipo 'imagen' no llevan max_caracteres; se rellenan buscando una imagen de licencia libre (CC0/dominio público) o, si no se encuentra, a mano.",
+  "plantillas": [
+    {
+      "id": "texto-6",
+      "nombre": "5 palabras en chino sobre X",
+      "descripcion": "Slide de vocabulario con carácter, pinyin, traducción y una frase de ejemplo completa (chino, pinyin y traducción). Fondo fijo, solo cambia el texto.",
+      "canva_design_id": "DAHGvSQ2oJQ",
+      "formato": "1080x1080",
+      "max_paginas": 12,
+      "huecos": [
+        {
+          "id": "CARACTER",
+          "tipo": "texto",
+          "descripcion": "Carácter o palabra en chino de esta slide.",
+          "max_caracteres": 12,
+          "texto_actual": "汤"
+        },
+        {
+          "id": "PINYIN",
+          "tipo": "texto",
+          "descripcion": "Pinyin con marcas de tono del carácter.",
+          "max_caracteres": 20,
+          "texto_actual": "tāng"
+        },
+        {
+          "id": "TRADUCCION",
+          "tipo": "texto",
+          "descripcion": "Traducción al español o inglés, una sola acepción.",
+          "max_caracteres": 20,
+          "texto_actual": "soup"
+        },
+        {
+          "id": "EJEMPLO_CARACTER",
+          "tipo": "texto",
+          "descripcion": "Frase de ejemplo en chino usando el carácter.",
+          "max_caracteres": 40,
+          "texto_actual": "请给我一碗鸡汤"
+        },
+        {
+          "id": "EJEMPLO_PINYIN",
+          "tipo": "texto",
+          "descripcion": "Pinyin de la frase de ejemplo, con tonos.",
+          "max_caracteres": 60,
+          "texto_actual": "qǐng gěi wǒ yì wǎn jī tāng"
+        },
+        {
+          "id": "EJEMPLO_TRADUCCION",
+          "tipo": "texto",
+          "descripcion": "Traducción de la frase de ejemplo.",
+          "max_caracteres": 60,
+          "texto_actual": "Please give me a bowl of chicken soup"
+        }
+      ],
+      "reglas_estilo": [
+        "Palabras de uso cotidiano, nivel HSK 1-3. Nada rebuscado.",
+        "Pinyin siempre con marcas de tono (tāng, no tang).",
+        "Traducción en minúscula, una sola acepción, la más común.",
+        "La frase de ejemplo debe ser natural, corta y usar el carácter de forma clara.",
+        "Todas las palabras de un mismo post deben ser del mismo campo semántico y no repetirse entre sí."
+      ]
+    },
+    {
+      "id": "texto-3",
+      "nombre": "Palabra en chino (solo texto)",
+      "descripcion": "Slide mínima de vocabulario: carácter, pinyin y traducción. Sin frase de ejemplo.",
+      "canva_design_id": "DAHIgvEIxeU",
+      "formato": "1080x1080",
+      "max_paginas": 12,
+      "huecos": [
+        {
+          "id": "CARACTER",
+          "tipo": "texto",
+          "descripcion": "Carácter o palabra en chino de esta slide.",
+          "max_caracteres": 12,
+          "texto_actual": "青"
+        },
+        {
+          "id": "PINYIN",
+          "tipo": "texto",
+          "descripcion": "Pinyin con marcas de tono del carácter.",
+          "max_caracteres": 20,
+          "texto_actual": "qīng"
+        },
+        {
+          "id": "TRADUCCION",
+          "tipo": "texto",
+          "descripcion": "Traducción; si el carácter tiene varias acepciones relevantes, sepáralas con ' / '.",
+          "max_caracteres": 30,
+          "texto_actual": "blue-green / youth"
+        }
+      ],
+      "reglas_estilo": [
+        "Palabras de uso cotidiano, nivel HSK 1-3. Nada rebuscado.",
+        "Pinyin siempre con marcas de tono (qīng, no qing).",
+        "Traducción en minúscula. Solo separa varias acepciones si de verdad hace falta para entender la palabra.",
+        "Todas las palabras de un mismo post deben ser del mismo campo semántico y no repetirse entre sí."
+      ]
+    },
+    {
+      "id": "texto-imagen-3",
+      "nombre": "Palabra en chino con imagen",
+      "descripcion": "Slide de vocabulario donde la traducción se transmite con una imagen en vez de texto: carácter, pinyin e imagen ilustrativa.",
+      "canva_design_id": "DAHHlcpC6To",
+      "formato": "1080x1080",
+      "max_paginas": 12,
+      "huecos": [
+        {
+          "id": "CARACTER",
+          "tipo": "texto",
+          "descripcion": "Carácter o palabra en chino de esta slide.",
+          "max_caracteres": 12,
+          "texto_actual": "扫帚"
+        },
+        {
+          "id": "PINYIN",
+          "tipo": "texto",
+          "descripcion": "Pinyin con marcas de tono del carácter.",
+          "max_caracteres": 20,
+          "texto_actual": "sǎo zhǒu"
+        },
+        {
+          "id": "IMAGEN",
+          "tipo": "imagen",
+          "descripcion": "Imagen que ilustra el significado del carácter. Buscar en Openverse filtrando solo licencia CC0/PDM; si no hay resultado válido, pedir la imagen al usuario en vez de usar una de licencia dudosa."
+        }
+      ],
+      "reglas_estilo": [
+        "Palabras de uso cotidiano, nivel HSK 1-3. Nada rebuscado.",
+        "Pinyin siempre con marcas de tono (sǎo zhǒu, no sao zhou).",
+        "La imagen debe representar el significado literal del carácter de forma clara y reconocible a simple vista.",
+        "Todas las palabras de un mismo post deben ser del mismo campo semántico y no repetirse entre sí."
+      ]
+    }
+  ]
+}

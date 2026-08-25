@@ -1,0 +1,121 @@
+[
+  {
+    "fecha": "2026-08-25T20:44:49+00:00",
+    "plantilla_id": "texto-6",
+    "tema": "comida",
+    "slides": [
+      {
+        "identificador": "面包 (miànbāo)",
+        "contenido": {
+          "CARACTER": "面包",
+          "PINYIN": "miànbāo",
+          "TRADUCCION": "bread",
+          "EJEMPLO_CARACTER": "我每天吃面包",
+          "EJEMPLO_PINYIN": "wǒ měitiān chī miànbāo",
+          "EJEMPLO_TRADUCCION": "I eat bread every day"
+        }
+      },
+      {
+        "identificador": "鱼 (yú)",
+        "contenido": {
+          "CARACTER": "鱼",
+          "PINYIN": "yú",
+          "TRADUCCION": "fish",
+          "EJEMPLO_CARACTER": "这条鱼很新鲜",
+          "EJEMPLO_PINYIN": "zhè tiáo yú hěn xīnxiān",
+          "EJEMPLO_TRADUCCION": "This fish is very fresh"
+        }
+      },
+      {
+        "identificador": "肉 (ròu)",
+        "contenido": {
+          "CARACTER": "肉",
+          "PINYIN": "ròu",
+          "TRADUCCION": "meat",
+          "EJEMPLO_CARACTER": "我不吃肉",
+          "EJEMPLO_PINYIN": "wǒ bù chī ròu",
+          "EJEMPLO_TRADUCCION": "I don't eat meat"
+        }
+      },
+      {
+        "identificador": "西瓜 (xīguā)",
+        "contenido": {
+          "CARACTER": "西瓜",
+          "PINYIN": "xīguā",
+          "TRADUCCION": "watermelon",
+          "EJEMPLO_CARACTER": "夏天吃西瓜很凉快",
+          "EJEMPLO_PINYIN": "xiàtiān chī xīguā hěn liángkuai",
+          "EJEMPLO_TRADUCCION": "Eating watermelon in summer is refreshing"
+        }
+      },
+      {
+        "identificador": "香蕉 (xiāngjiāo)",
+        "contenido": {
+          "CARACTER": "香蕉",
+          "PINYIN": "xiāngjiāo",
+          "TRADUCCION": "banana",
+          "EJEMPLO_CARACTER": "我买了一根香蕉",
+          "EJEMPLO_PINYIN": "wǒ mǎile yì gēn xiāngjiāo",
+          "EJEMPLO_TRADUCCION": "I bought a banana"
+        }
+      },
+      {
+        "identificador": "豆腐 (dòufu)",
+        "contenido": {
+          "CARACTER": "豆腐",
+          "PINYIN": "dòufu",
+          "TRADUCCION": "tofu",
+          "EJEMPLO_CARACTER": "麻婆豆腐很好吃",
+          "EJEMPLO_PINYIN": "mápó dòufu hěn hǎochī",
+          "EJEMPLO_TRADUCCION": "Mapo tofu is delicious"
+        }
+      }
+    ],
+    "url_diseno": "https://www.canva.com/d/5d31aTxwzZoaffz",
+    "notas": "Titulo del diseno en Canva: post-comida-texto6-2026-08-25. Descargado en posts/comida-texto6-2026-08-25/."
+  },
+  {
+    "fecha": "2026-08-25T20:53:34+00:00",
+    "plantilla_id": "texto-imagen-3",
+    "tema": "comida",
+    "slides": [
+      {
+        "identificador": "米饭 (mǐfàn)",
+        "contenido": {
+          "CARACTER": "米饭",
+          "PINYIN": "mǐfàn"
+        }
+      },
+      {
+        "identificador": "面条 (miàntiáo)",
+        "contenido": {
+          "CARACTER": "面条",
+          "PINYIN": "miàntiáo"
+        }
+      },
+      {
+        "identificador": "鸡蛋 (jīdàn)",
+        "contenido": {
+          "CARACTER": "鸡蛋",
+          "PINYIN": "jīdàn"
+        }
+      },
+      {
+        "identificador": "苹果 (píngguǒ)",
+        "contenido": {
+          "CARACTER": "苹果",
+          "PINYIN": "píngguǒ"
+        }
+      },
+      {
+        "identificador": "牛奶 (niúnǎi)",
+        "contenido": {
+          "CARACTER": "牛奶",
+          "PINYIN": "niúnǎi"
+        }
+      }
+    ],
+    "url_diseno": "https://www.canva.com/d/TLh-zoJNhO5T_qB",
+    "notas": "v2: corrige el post inicial. Se arreglo la geometria de la plantilla maestra (imagen invadia el texto) y se sustituyeron las 5 fotos por otras mas limpias y ajustadas al significado (CC0, via Openverse/rawpixel). Descargado en posts/comida-2026-08-25/ (sobrescribe la v1)."
+  }
+]
