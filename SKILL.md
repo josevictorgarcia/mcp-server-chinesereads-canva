@@ -81,23 +81,28 @@ del catálogo). Todo el trabajo va sobre el diseño copiado en el paso 1.
 ## 6. Exportar
 
 Llama a `get-export-formats` sobre el diseño copiado y luego `export-design`
-(con `pages` cubriendo todas las N páginas) para conseguir un único link de
-descarga con el post completo.
+(con `pages` cubriendo todas las N páginas). Canva no empaqueta un PNG
+multi-página en un solo archivo: devuelve **una URL por página**. Descarga las
+N con `curl` a una carpeta local `posts/<tema>[-<plantilla>]-<fecha>/` dentro
+del repo (esa carpeta está en `.gitignore`, no se sube a git — son imágenes
+regenerables, no código).
 
 ## 7. Registrar
 
 Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_diseno)`
 con `slides` siendo la lista de las N slides (`identificador` + `contenido` de
-cada una) y `url_diseno` el link real del paso 6. Solo después de que el diseño
-exista. Esto es lo que evita repetir palabras y temas en el futuro.
+cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
+exportación). Solo después de que el diseño exista. Esto es lo que evita
+repetir palabras y temas en el futuro.
 
 ## 8. Al terminar
 
-Resume en pocas líneas: qué plantilla usaste, el tema, cuántas slides y el
-enlace de descarga. Recuerda al usuario que revise el diseño antes de
-publicar — la sustitución de texto puede descuadrar un salto de línea, y eso se
-ve a simple vista pero el modelo no lo ve. Si alguna slide llevaba imagen
-buscada automáticamente, señálalo explícitamente: la licencia está garantizada,
-pero el acierto temático de la imagen conviene revisarlo a ojo.
+Resume en pocas líneas: qué plantilla usaste, el tema, cuántas slides y en qué
+carpeta local quedaron descargadas las imágenes. Recuerda al usuario que
+revise el diseño antes de publicar — la sustitución de texto puede descuadrar
+un salto de línea, y eso se ve a simple vista pero el modelo no lo ve. Si
+alguna slide llevaba imagen buscada automáticamente, señálalo explícitamente:
+la licencia está garantizada, pero el acierto temático de la imagen conviene
+revisarlo a ojo.
 
 La publicación en Instagram y TikTok es manual: exporta desde Canva y súbelo tú.

@@ -79,11 +79,19 @@ En Claude Code, dentro de la carpeta del proyecto:
 
 La skill `generar-post` se dispara sola. El flujo es: elegir plantilla y número
 de slides → pedir el contrato de huecos → generar contenido por slide →
-validar → duplicar N páginas y editarlas en Canva → exportar todo en un solo
-link → registrar el post completo en el historial.
+validar → duplicar N páginas y editarlas en Canva → exportar y descargar todas
+las páginas → registrar el post completo en el historial.
 
 Si el contenido no pasa la validación, se corrige y se revalida antes de tocar
 nada en Canva. Esa es la parte que evita que acabes con diseños rotos.
+
+### Dónde quedan los posts generados
+
+Canva no empaqueta un PNG multi-página en un solo archivo: el export de un
+diseño de N páginas da una URL por página. El servidor las descarga todas a
+`posts/<tema>[-<plantilla>]-<fecha>/` dentro del repo. Esa carpeta está en
+`.gitignore` (son imágenes regenerables, no hace falta llevarlas en git) —
+haz tu propia copia de seguridad si quieres conservarlas fuera del disco.
 
 ## Cómo evita repetirse
 
