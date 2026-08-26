@@ -9,5 +9,9 @@ __pycache__/
 # Exportaciones de posts (imágenes regenerables, no son código fuente)
 posts/
 
+# Historial de publicaciones: estado mutable local, no código. Cambia en cada
+# post (ruido de commits) y contiene links de edición de Canva.
+historial.json
+
 # macOS
 .DS_Store
