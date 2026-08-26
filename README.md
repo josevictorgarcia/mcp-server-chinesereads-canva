@@ -93,6 +93,38 @@ diseño de N páginas da una URL por página. El servidor las descarga todas a
 `.gitignore` (son imágenes regenerables, no hace falta llevarlas en git) —
 haz tu propia copia de seguridad si quieres conservarlas fuera del disco.
 
+## Portada
+
+Cada post lleva una portada: una foto llamativa de fondo con el título del
+post encima ("5 words you must know if you go to China") y la marca de agua
+de la cuenta. Es un diseño **aparte** (plantilla `portada` del catálogo, de una
+sola página), pero su PNG se descarga como `00-portada.png` en la misma
+carpeta del post — si el experimento no convence, se quita el paso y nada más
+cambia.
+
+La foto de fondo sale de uno de estos dos sitios:
+
+- **IA gratuita** — Pollinations.ai (modelos Flux, sin API key, sin coste): se
+  genera desde un prompt sobre el tema, el asistente **mira** el resultado y
+  regenera con otra semilla si sale mal. El tier gratuito puede limitar a
+  768×768; para Instagram es asumible. Paisajes y primeros planos salen bien;
+  escenas con personas, regular.
+- **Tu galería** — fotos tuyas de China subidas una vez como assets de Canva.
+  El asistente elige una distinta cada vez, con el mismo cooldown que las
+  palabras (`portadas_recientes`), para que no se repitan seguidas.
+
+Reglas duras en código, como siempre: `analizar_brillo` mide la luminosidad de
+la foto y decide si el título va claro u oscuro (nada de confiar en el ojo del
+modelo), y `portadas_recientes` es la memoria anti-repetición.
+
+**Preparación (una vez):** crea en Canva un diseño de 1 página con una foto de
+fondo a pantalla completa, el título de ejemplo encima, tu marca de agua de
+chinesereads y —recomendado— un degradado oscuro sutil detrás de la zona del
+título (hace legible cualquier foto). Regístralo con `anadir_plantilla` como
+`portada`, con un hueco de texto `TITULO` y un hueco `tipo: "imagen"` para el
+fondo. Si quieres usar tu galería, sube también tus fotos como assets de Canva
+(arrastrar y soltar, una vez).
+
 ## Cómo evita repetirse
 
 - **Temas** (`temas_publicados`): avisa si ya publicaste un post con ese tema
@@ -102,15 +134,20 @@ haz tu propia copia de seguridad si quieres conservarlas fuera del disco.
   `servidor_catalogo.py`) de esa plantilla se evitan. No es un bloqueo
   permanente — pasado ese número de posts, la palabra vuelve a estar
   disponible, lo justo para que nadie la recuerde.
+- **Portadas** (`portadas_recientes`): misma ventana de cooldown para la foto
+  de portada (asset de galería o prompt+semilla de IA) y para no calcar la
+  redacción de títulos recientes.
 
 ## Lo que este proyecto no hace
 
 - **No publica en Instagram ni TikTok.** El MCP de Canva llega hasta exportar a
   imagen o PDF. Publicar es otra integración (APIs de Meta y TikTok) y no es
   gratis en tiempo de montaje.
-- **No genera imágenes con IA.** Para los huecos de imagen busca fotos ya
-  existentes con licencia CC0/dominio público (Openverse); si no encuentra
-  ninguna, pide que la pongas tú.
+- **No genera imágenes con IA para las slides de contenido.** Los huecos de
+  imagen de las slides se rellenan con fotos ya existentes de licencia
+  CC0/dominio público (Openverse); si no hay ninguna, pide que la pongas tú.
+  La única imagen generada por IA es la foto de fondo de la **portada**
+  (Pollinations, gratis), y siempre pasa un filtro visual antes de usarse.
 - **No redimensiona entre formatos.** Requiere Canva Pro. Mantén una plantilla
   por formato: una de feed y otra vertical, cada una con su entrada en el
   catálogo.
@@ -128,6 +165,7 @@ import servidor_catalogo as s
 print(s.listar_plantillas())
 print(s.preparar_encargo('texto-3', 'animales', 4))
 print(s.elementos_usados('texto-3'))
+print(s.portadas_recientes())
 "
 ```
 

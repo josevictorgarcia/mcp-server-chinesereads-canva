@@ -5,7 +5,7 @@ description: Crear un post (carrusel) de Instagram o TikTok de N slides a partir
 
 # Generar un post de N slides desde plantilla
 
-Flujo de ocho pasos. No te saltes la validación ni el registro.
+Flujo de nueve pasos. No te saltes la validación ni el registro.
 
 ## 1. Elegir plantilla y determinar N
 
@@ -87,15 +87,55 @@ N con `curl` a una carpeta local `posts/<tema>[-<plantilla>]-<fecha>/` dentro
 del repo (esa carpeta está en `.gitignore`, no se sube a git — son imágenes
 regenerables, no código).
 
-## 7. Registrar
+## 7. Portada
 
-Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_diseno)`
+Todo post lleva portada salvo que el usuario diga lo contrario. Es un diseño
+**independiente** (la plantilla `portada` del catálogo, de 1 página), pero su
+PNG se guarda en la **misma carpeta** del post, como `00-portada.png`, para que
+el post quede completo en un solo sitio. Si el catálogo aún no tiene la
+plantilla `portada`, salta este paso y avísalo en el resumen final.
+
+1. **Título**: en inglés, gancho corto tipo "5 words you must know if you go
+   to China" o "4 food words in Chinese". Consulta `portadas_recientes` y varía
+   la redacción respecto a los títulos recientes. Valídalo con
+   `validar_contenido('portada', {"TITULO": ...})`.
+2. **Imagen de fondo** — dos orígenes, por preferencia del usuario:
+   - **IA gratuita (Pollinations)**: construye la URL
+     `https://image.pollinations.ai/prompt/<prompt-urlencoded>?width=1080&height=1080&model=flux&nologo=true&seed=<numero>`
+     con un prompt fotográfico relacionado con el tema y estética de China
+     (paisajes, arquitectura y primeros planos sin gente funcionan mejor que
+     escenas con personas). Descárgala con `curl` a la carpeta del post y
+     **mírala** (lee el fichero de imagen): si sale borrosa, deforme o pobre,
+     cambia la semilla o el prompt y reintenta (hasta 3 veces; si ninguna
+     convence, pasa a galería o pregunta). El tier gratuito puede servir
+     768×768 aunque pidas 1080 — es aceptable. No reutilices un prompt+seed
+     que aparezca en `portadas_recientes`.
+   - **Galería del usuario (assets de Canva)**: lista sus fotos subidas con
+     `get-assets` y elige una cuyo nombre/id **no** esté en
+     `portadas_recientes` — la rotación es lo que evita que la portada se
+     repita. Descarga su miniatura para el paso de brillo.
+3. **Brillo**: pasa el fichero descargado a `analizar_brillo`. Si recomienda
+   título "claro" u "oscuro" distinto del color por defecto de la plantilla,
+   ajústalo con `format_text` al editar. Si `contraste_justo` es `true`,
+   comprueba que el degradado/sombra de la plantilla sigue detrás del título.
+4. **Montaje**: `copy-design` de la plantilla `portada` (1 página) → sube la
+   imagen (`upload-asset-from-url` con la URL de Pollinations, o el asset ya
+   existente de galería) → `update_fill` en el hueco de imagen +
+   `replace_text` del título → `commit`. La marca de agua de chinesereads ya
+   vive en la plantilla maestra: no la toques.
+5. **Exportar y descargar** como `00-portada.png` en la carpeta del post.
+
+## 8. Registrar
+
+Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_diseno, portada=...)`
 con `slides` siendo la lista de las N slides (`identificador` + `contenido` de
 cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
-exportación). Solo después de que el diseño exista. Esto es lo que evita
-repetir palabras y temas en el futuro.
+exportación). Si hubo portada, pasa
+`portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual"}` —
+sin esto el cooldown de portadas no funciona. Solo después de que el diseño
+exista. Esto es lo que evita repetir palabras, temas y fotos de portada.
 
-## 8. Al terminar
+## 9. Al terminar
 
 Resume en pocas líneas: qué plantilla usaste, el tema, cuántas slides y en qué
 carpeta local quedaron descargadas las imágenes. Recuerda al usuario que
@@ -103,6 +143,8 @@ revise el diseño antes de publicar — la sustitución de texto puede descuadra
 un salto de línea, y eso se ve a simple vista pero el modelo no lo ve. Si
 alguna slide llevaba imagen buscada automáticamente, señálalo explícitamente:
 la licencia está garantizada, pero el acierto temático de la imagen conviene
-revisarlo a ojo.
+revisarlo a ojo. Lo mismo con una portada generada por IA: ya la filtraste
+visualmente, pero la última palabra sobre si representa bien a la cuenta es
+del usuario.
 
 La publicación en Instagram y TikTok es manual: exporta desde Canva y súbelo tú.

@@ -290,12 +290,80 @@ def elementos_usados(plantilla_id: str, cooldown: int = COOLDOWN_POSTS) -> list[
 
 
 @mcp.tool()
+def portadas_recientes(cooldown: int = COOLDOWN_POSTS) -> list[dict]:
+    """Portadas de los últimos `cooldown` posts (de cualquier plantilla), más
+    recientes primero. Cada una trae titulo, imagen y origen.
+
+    Úsalo antes de generar una portada nueva: no reutilices una `imagen` que
+    aparezca aquí (misma foto de galería o mismo prompt/semilla de IA) y varía
+    la redacción del título respecto a los recientes. Fuera de esta ventana,
+    una foto vuelve a estar disponible — igual que el cooldown de palabras.
+    """
+    entradas = [h for h in _historial() if h.get("portada")]
+    recientes = entradas[-cooldown:] if cooldown > 0 else []
+    return [
+        {
+            "titulo": e["portada"].get("titulo", ""),
+            "imagen": e["portada"].get("imagen", ""),
+            "origen": e["portada"].get("origen", ""),
+        }
+        for e in reversed(recientes)
+    ]
+
+
+@mcp.tool()
+def analizar_brillo(ruta_imagen: str) -> dict:
+    """Mide la luminosidad de una imagen local (0 = negro, 255 = blanco) y
+    recomienda el color del título de portada para que se lea bien.
+
+    Devuelve la luminancia global y por tercios horizontales (usa el tercio
+    donde va el título en tu plantilla). Regla dura en código, no a ojo del
+    modelo: luminancia < 128 → título claro (blanco); >= 128 → título oscuro.
+    En la franja intermedia (100-155) el contraste va justo: mantén el degradado
+    oscuro de la plantilla o añade sombra al texto.
+    """
+    from PIL import Image, ImageStat
+
+    ruta = Path(ruta_imagen).expanduser()
+    if not ruta.exists():
+        raise ValueError(f"No existe el fichero de imagen: {ruta}")
+
+    with Image.open(ruta) as img:
+        gris = img.convert("L")
+        ancho, alto = gris.size
+        tercio = alto // 3
+
+        def _media(caja: tuple[int, int, int, int]) -> float:
+            return round(ImageStat.Stat(gris.crop(caja)).mean[0], 1)
+
+        luminancia = {
+            "global": round(ImageStat.Stat(gris).mean[0], 1),
+            "tercio_superior": _media((0, 0, ancho, tercio)),
+            "tercio_central": _media((0, tercio, ancho, 2 * tercio)),
+            "tercio_inferior": _media((0, 2 * tercio, ancho, alto)),
+        }
+
+    media_global = luminancia["global"]
+    return {
+        "luminancia": luminancia,
+        "titulo_recomendado": "claro" if media_global < 128 else "oscuro",
+        "contraste_justo": 100 <= media_global <= 155,
+        "nota": (
+            "Aplica la recomendación sobre el tercio donde va el título en tu "
+            "plantilla, no solo sobre la media global. Si contraste_justo es "
+            "true, asegúrate de que el degradado/sombra de la plantilla está ahí."
+        ),
+    }
+
+
+@mcp.tool()
 def registrar_publicacion(
     plantilla_id: str,
     tema: str,
     slides: list[dict],
     url_diseno: str = "",
     notas: str = "",
+    portada: dict | None = None,
 ) -> dict:
     """Guarda en el historial un post completo ya creado en Canva (todas sus
     slides de una vez, en una sola llamada por post).
@@ -303,8 +371,11 @@ def registrar_publicacion(
     Llama a esto solo DESPUÉS de que el diseño exista de verdad, con la URL que
     devuelva Canva. Cada elemento de `slides` es un dict con "identificador"
     (lo que identifica esa slide, p. ej. la palabra) y "contenido" (el dict de
-    huecos de texto usado). El historial es lo que evita que repitas temas y
-    palabras.
+    huecos de texto usado). Si el post lleva portada, pásala también:
+    {"titulo": "...", "imagen": "<nombre del asset o prompt+seed de IA>",
+    "origen": "ia" | "galeria" | "manual"} — es lo que alimenta el cooldown de
+    portadas_recientes. El historial es lo que evita que repitas temas, palabras
+    y fotos de portada.
     """
     _buscar(plantilla_id)  # valida que la plantilla existe
 
@@ -314,6 +385,13 @@ def registrar_publicacion(
         if "identificador" not in slide or "contenido" not in slide:
             raise ValueError(f"slides[{i}] necesita 'identificador' y 'contenido'.")
 
+    if portada is not None:
+        for clave in ("titulo", "imagen", "origen"):
+            if not portada.get(clave):
+                raise ValueError(f"portada necesita '{clave}' (no vacío).")
+        if portada["origen"] not in ("ia", "galeria", "manual"):
+            raise ValueError("portada['origen'] debe ser 'ia', 'galeria' o 'manual'.")
+
     entrada = {
         "fecha": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "plantilla_id": plantilla_id,
@@ -322,6 +400,8 @@ def registrar_publicacion(
         "url_diseno": url_diseno,
         "notas": notas,
     }
+    if portada is not None:
+        entrada["portada"] = portada
 
     historial = _historial()
     historial.append(entrada)

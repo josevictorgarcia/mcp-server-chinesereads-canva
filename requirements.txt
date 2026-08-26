@@ -1,3 +1,7 @@
 # SDK oficial de MCP para Python. La v2 renombró FastMCP a MCPServer,
 # así que el código de este proyecto necesita 2.x.
 mcp>=2.0,<3.0
+
+# Análisis de brillo de las fotos de portada (analizar_brillo): decide en
+# código si el título debe ir claro u oscuro según la luminosidad de la foto.
+pillow>=10.0
