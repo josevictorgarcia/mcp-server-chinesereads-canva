@@ -143,11 +143,12 @@ fondo. Si quieres usar tu galería, sube también tus fotos como assets de Canva
 - **No publica en Instagram ni TikTok.** El MCP de Canva llega hasta exportar a
   imagen o PDF. Publicar es otra integración (APIs de Meta y TikTok) y no es
   gratis en tiempo de montaje.
-- **No genera imágenes con IA para las slides de contenido.** Los huecos de
-  imagen de las slides se rellenan con fotos ya existentes de licencia
-  CC0/dominio público (Openverse); si no hay ninguna, pide que la pongas tú.
-  La única imagen generada por IA es la foto de fondo de la **portada**
-  (Pollinations, gratis), y siempre pasa un filtro visual antes de usarse.
+- **No usa fotos sin licencia, nunca.** Los huecos de imagen de las slides se
+  rellenan con fotos reales de licencia CC0/dominio público (Openverse); si no
+  hay ninguna que encaje, segundo intento generándola con IA (Pollinations,
+  gratis) y, si tampoco sale bien, se te pide a ti. Toda imagen de IA pasa un
+  filtro visual antes de usarse — el servicio gratuito es irregular en calidad
+  y disponibilidad, por eso nunca es la única vía.
 - **No redimensiona entre formatos.** Requiere Canva Pro. Mantén una plantilla
   por formato: una de feed y otra vertical, cada una con su entrada en el
   catálogo.

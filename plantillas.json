@@ -131,6 +131,34 @@
         "La imagen debe representar el significado literal del carácter de forma clara y reconocible a simple vista.",
         "Todas las palabras de un mismo post deben ser del mismo campo semántico y no repetirse entre sí."
       ]
+    },
+    {
+      "id": "portada",
+      "nombre": "Portada de post",
+      "descripcion": "Portada del carrusel: foto llamativa a pantalla completa con el título del post encima y la marca de agua de chinesereads. Diseño de 1 sola página; su PNG se guarda como 00-portada.png en la carpeta del post. No es una slide de vocabulario: acompaña a un post hecho con otra plantilla.",
+      "canva_design_id": "DAHTagkooZQ",
+      "formato": "2048x2048",
+      "max_paginas": 1,
+      "huecos": [
+        {
+          "id": "TITULO",
+          "tipo": "texto",
+          "descripcion": "Título gancho del post, en inglés, tipo '5 words for your first trip to China' o '4 food words in Chinese'.",
+          "max_caracteres": 45,
+          "texto_actual": "5 words for your first trip to China "
+        },
+        {
+          "id": "FONDO",
+          "tipo": "imagen",
+          "descripcion": "Foto de fondo a pantalla completa (el único elemento de imagen de 2048x2048 de la página; el otro elemento de imagen, más pequeño y centrado en la mitad inferior, es la marca de agua de chinesereads y NO se toca). Origen: IA (Pollinations, con revisión visual y reintentos) o asset de la galería del usuario en Canva, rotando según portadas_recientes."
+        }
+      ],
+      "reglas_estilo": [
+        "Título en inglés, gancho directo y concreto, sin clickbait vacío. Varía la fórmula respecto a portadas_recientes.",
+        "Foto de estética China (paisajes, templos, linternas, comida, calles): los paisajes y primeros planos funcionan mejor que las escenas con personas.",
+        "Tras elegir la foto, pasa analizar_brillo y ajusta el color del título con format_text si hace falta: claro (#FFFFFF) sobre foto oscura, oscuro o el coral de marca sobre foto clara. El título tiene que leerse a un vistazo en miniatura de feed.",
+        "La marca de agua de chinesereads ya está en la plantilla: no se cambia ni se mueve."
+      ]
     }
   ]
 }

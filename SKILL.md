@@ -43,10 +43,18 @@ porque el texto no cabe de otro modo y la plantilla se rompe visualmente.
 **Si la plantilla tiene un hueco de tipo `imagen`:** busca en la API pública de
 Openverse (`https://api.openverse.org/v1/images/?q=<consulta>&license=cc0,pdm`)
 una imagen que represente el significado del carácter, filtrando **solo**
-licencia `cc0` o `pdm` (dominio público). Si no hay ningún resultado con esa
-licencia, no sigas con esa imagen: para y pide al usuario que la ponga él a
-mano en esa slide después. Nunca uses una imagen de licencia distinta, aunque
-el resultado parezca perfecto — es la regla que evita problemas legales.
+licencia `cc0` o `pdm` (dominio público). Nunca uses una imagen de otra
+licencia, aunque el resultado parezca perfecto — es la regla que evita
+problemas legales.
+
+Si no hay ningún resultado CC0/PDM que encaje, **segundo intento con IA**:
+genera la imagen con Pollinations (mismo formato de URL que en el paso de
+portada) con un prompt de objeto literal ("a bowl of white steamed rice,
+minimalist food photography, clean background"), descárgala y **mírala**; si
+tras 2-3 semillas ninguna es clara y reconocible, o el servicio no responde
+(se satura a ratos), para y pide la imagen al usuario. Una imagen generada
+por IA no tiene el problema de licencia, pero sí puede salir deforme — el
+filtro visual no es opcional.
 
 ## 4. Validar
 
@@ -109,7 +117,10 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      cambia la semilla o el prompt y reintenta (hasta 3 veces; si ninguna
      convence, pasa a galería o pregunta). El tier gratuito puede servir
      768×768 aunque pidas 1080 — es aceptable. No reutilices un prompt+seed
-     que aparezca en `portadas_recientes`.
+     que aparezca en `portadas_recientes`. Ojo: el servicio gratuito se cae a
+     ratos (HTTP 000/timeout); si no responde, no insistas más de un par de
+     minutos — pasa a la galería del usuario o a una foto CC0 de paisaje de
+     Openverse y díselo en el resumen.
    - **Galería del usuario (assets de Canva)**: lista sus fotos subidas con
      `get-assets` y elige una cuyo nombre/id **no** esté en
      `portadas_recientes` — la rotación es lo que evita que la portada se

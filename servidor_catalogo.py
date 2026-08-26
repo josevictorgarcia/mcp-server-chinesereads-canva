@@ -115,6 +115,7 @@ def listar_plantillas() -> list[dict]:
     Punto de partida cuando el usuario pide un post y no dice qué plantilla usar.
     Devuelve una vista resumida; para los detalles llama a obtener_plantilla.
     """
+    historial = _historial()
     return [
         {
             "id": p["id"],
@@ -123,7 +124,7 @@ def listar_plantillas() -> list[dict]:
             "formato": p.get("formato", "sin especificar"),
             "huecos": len(p.get("huecos", [])),
             "veces_usada": sum(
-                1 for h in _historial() if h.get("plantilla_id") == p["id"]
+                1 for h in historial if h.get("plantilla_id") == p["id"]
             ),
         }
         for p in _catalogo().values()
@@ -261,11 +262,13 @@ def temas_publicados(plantilla_id: str | None = None) -> list[str]:
     Úsalo para no repetir el tema completo de un post (p. ej. "deportes" ya usado
     entero). Para evitar repetir palabras/ítems concretos usa elementos_usados.
     """
-    return [
-        h["tema"]
+    temas = [
+        h.get("tema", "")
         for h in _historial()
         if plantilla_id is None or h.get("plantilla_id") == plantilla_id
     ]
+    # Sin vacíos ni duplicados, conservando el orden de publicación.
+    return list(dict.fromkeys(t for t in temas if t))
 
 
 @mcp.tool()
@@ -438,9 +441,17 @@ def anadir_plantilla(
     if any(p["id"] == plantilla_id for p in datos["plantillas"]):
         raise ValueError(f"Ya existe una plantilla con id '{plantilla_id}'.")
 
+    if max_paginas < 1:
+        raise ValueError("max_paginas debe ser al menos 1.")
+
     for h in huecos:
         if "id" not in h or "descripcion" not in h:
             raise ValueError("Cada hueco necesita al menos 'id' y 'descripcion'.")
+        tipo = h.get("tipo", "texto")
+        if tipo not in ("texto", "imagen"):
+            raise ValueError(f"El hueco '{h['id']}' tiene tipo '{tipo}'; debe ser 'texto' o 'imagen'.")
+        if tipo == "texto" and not h.get("max_caracteres"):
+            raise ValueError(f"El hueco de texto '{h['id']}' necesita max_caracteres.")
 
     nueva = {
         "id": plantilla_id,
