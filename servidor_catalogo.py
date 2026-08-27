@@ -43,14 +43,20 @@ HISTORIAL = BASE / "historial.json"
 # de posts, la palabra vuelve a estar disponible.
 COOLDOWN_POSTS = 15
 
-# Generación de imágenes con IA (Pollinations.ai). El token — opcional, del tier
-# registrado gratuito de auth.pollinations.ai — vive en un fichero local que está
-# en .gitignore. Sin token todo funciona igual, pero el tier anónimo sirve un
-# modelo pequeño ("sana", 768x768) y limita a 1 imagen cada 15 s.
-POLLINATIONS_BASE = "https://image.pollinations.ai"
+# Generación de imágenes con IA (Pollinations.ai). Dos endpoints:
+#  - gen.pollinations.ai: la plataforma actual. Requiere la clave sk_ (fichero
+#    local en .gitignore) y cobra en "pollen" (flux ~0.002/imagen; el grant
+#    diario gratuito de la cuenta da para cientos).
+#  - image.pollinations.ai: el endpoint clásico, anónimo y gratis, pero sirve
+#    solo el modelo pequeño "sana" a 768x768. Es el plan B automático cuando
+#    no hay clave, no hay saldo o el endpoint nuevo falla.
+POLLINATIONS_GEN = "https://gen.pollinations.ai"
+POLLINATIONS_LEGACY = "https://image.pollinations.ai"
 POLLINATIONS_TOKEN_FILE = BASE / ".pollinations_token"
-# Orden de preferencia entre los modelos que el servicio anuncie en /models.
-PREFERENCIA_MODELOS_IA = ("flux", "turbo", "sana")
+# Orden de preferencia entre los modelos oficiales que anuncie /image/models.
+# Los modelos "community" (proxies de terceros) se excluyen siempre: ni su
+# calidad ni el destino de los prompts están bajo control de Pollinations.
+PREFERENCIA_MODELOS_IA = ("zimage", "klein", "flux", "dreamshaper", "sana")
 # Pollinations devuelve 403 al User-Agent por defecto de urllib ("Python-urllib");
 # uno propio identificable pasa sin problema.
 POLLINATIONS_UA = "chinesereads-canva/1.0"
@@ -379,16 +385,17 @@ def _token_pollinations() -> str:
 
 
 def _modelos_pollinations(token: str) -> list[str] | None:
-    """Modelos que Pollinations anuncia ahora mismo, o None si no responde.
+    """Modelos de imagen que Pollinations anuncia ahora mismo, o None si no responde.
 
-    Con token se anuncian los modelos del tier registrado (flux de verdad);
-    en anónimo solo aparece el modelo pequeño.
+    Con clave sk_ pregunta al endpoint nuevo (catálogo completo, filtrando los
+    modelos "community" de terceros); sin clave, al clásico (solo el pequeño).
     """
     import urllib.request
 
-    peticion = urllib.request.Request(
-        f"{POLLINATIONS_BASE}/models", headers={"User-Agent": POLLINATIONS_UA}
+    url = (
+        f"{POLLINATIONS_GEN}/image/models" if token else f"{POLLINATIONS_LEGACY}/models"
     )
+    peticion = urllib.request.Request(url, headers={"User-Agent": POLLINATIONS_UA})
     if token:
         peticion.add_header("Authorization", f"Bearer {token}")
     try:
@@ -396,10 +403,24 @@ def _modelos_pollinations(token: str) -> list[str] | None:
             datos = json.loads(resp.read().decode("utf-8"))
     except Exception:
         return None
+    if isinstance(datos, dict):
+        datos = datos.get("models") or datos.get("data") or []
     if not isinstance(datos, list):
         return None
-    nombres = [m if isinstance(m, str) else m.get("name", "") for m in datos]
-    return [n for n in nombres if n]
+
+    nombres: list[str] = []
+    for m in datos:
+        if isinstance(m, str):
+            nombres.append(m)
+            continue
+        if not isinstance(m, dict) or m.get("community"):
+            continue
+        if m.get("category", "image") != "image":
+            continue
+        nombre = m.get("id") or m.get("name") or ""
+        if nombre:
+            nombres.append(nombre)
+    return nombres
 
 
 @mcp.tool()
@@ -413,17 +434,20 @@ def generar_imagen_ia(
 ) -> dict:
     """Genera una imagen con IA (Pollinations.ai) y la descarga a un fichero local.
 
-    Elige solo el mejor modelo disponible en ese momento (flux si el token
-    registrado está configurado; el servicio anuncia los modelos en vivo), se
-    autentica con el token local si existe y verifica que lo descargado es una
-    imagen real. Devuelve también `url_para_canva`: la URL exacta para
-    upload-asset-from-url (misma imagen, con el token incluido si lo hay).
+    Elige solo el mejor modelo oficial disponible en ese momento (el servicio
+    anuncia el catálogo en vivo; los "community" de terceros se excluyen), se
+    autentica con la clave local si existe y, si no hay clave o no hay saldo de
+    pollen, cae solo al endpoint clásico anónimo (modelo pequeño) en vez de
+    fallar. Verifica que lo descargado es una imagen real. Devuelve también
+    `url_para_canva`: la URL exacta para upload-asset-from-url (misma imagen,
+    con la clave incluida si se usó el endpoint nuevo).
 
     Después de llamar: MIRA la imagen descargada (léela) antes de usarla. Si sale
     borrosa o deforme, repite con otra `seed`. En el historial registra solo
     prompt+seed, nunca `url_para_canva` (lleva el token).
     """
     import random
+    import urllib.error
     import urllib.parse
     import urllib.request
 
@@ -454,41 +478,65 @@ def generar_imagen_ia(
 
     if not token:
         avisos.append(
-            "Sin token: tier anónimo (modelo pequeño, 768x768, 1 imagen/15 s). "
-            "Regístrate gratis en auth.pollinations.ai y guarda el token en "
-            f"{POLLINATIONS_TOKEN_FILE.name} para usar flux de verdad."
+            "Sin clave sk_: se usa el endpoint clásico anónimo (modelo pequeño, "
+            "768x768). Crea una clave en enter.pollinations.ai y guárdala en "
+            f"{POLLINATIONS_TOKEN_FILE.name} para acceder a los modelos buenos."
         )
 
     if seed is None:
         seed = random.randint(1, 999_999_999)
 
-    params = {
-        "model": elegido,
-        "width": width,
-        "height": height,
-        "seed": seed,
-        "nologo": "true",
-        "private": "true",
-    }
-    url_base = (
-        f"{POLLINATIONS_BASE}/prompt/{urllib.parse.quote(prompt)}"
-        f"?{urllib.parse.urlencode(params)}"
-    )
+    def _url(endpoint_nuevo: bool, modelo_url: str) -> str:
+        comunes = {"model": modelo_url, "width": width, "height": height, "seed": seed}
+        if endpoint_nuevo:
+            return (
+                f"{POLLINATIONS_GEN}/image/{urllib.parse.quote(prompt)}"
+                f"?{urllib.parse.urlencode(comunes)}"
+            )
+        return (
+            f"{POLLINATIONS_LEGACY}/prompt/{urllib.parse.quote(prompt)}"
+            f"?{urllib.parse.urlencode({**comunes, 'nologo': 'true', 'private': 'true'})}"
+        )
 
-    peticion = urllib.request.Request(
-        url_base, headers={"User-Agent": POLLINATIONS_UA}
-    )
-    if token:
-        peticion.add_header("Authorization", f"Bearer {token}")
-    try:
+    def _descargar(url: str, con_clave: bool) -> bytes:
+        peticion = urllib.request.Request(url, headers={"User-Agent": POLLINATIONS_UA})
+        if con_clave:
+            peticion.add_header("Authorization", f"Bearer {token}")
         with urllib.request.urlopen(peticion, timeout=120) as resp:
-            datos = resp.read()
-    except Exception as e:
-        raise ValueError(
+            return resp.read()
+
+    def _error_servicio(e: Exception) -> ValueError:
+        return ValueError(
             f"Pollinations no ha respondido ({e}). El servicio gratuito se satura "
             "a ratos: reintenta una vez y, si sigue caído, pasa a la galería del "
             "usuario o a una foto CC0 de Openverse."
-        ) from e
+        )
+
+    usa_gen = bool(token)
+    url_base = _url(usa_gen, elegido)
+    try:
+        datos = _descargar(url_base, usa_gen)
+    except urllib.error.HTTPError as e:
+        if usa_gen and e.code in (401, 402):
+            # Sin saldo de pollen (402) o clave rechazada (401): plan B con el
+            # endpoint clásico anónimo antes que dejar el post sin imagen.
+            motivo = "sin saldo de pollen" if e.code == 402 else "clave rechazada"
+            avisos.append(
+                f"Endpoint nuevo: {motivo} (HTTP {e.code}). Se usa el endpoint "
+                "clásico anónimo (modelo pequeño, 768x768). Revisa el saldo y el "
+                "grant diario en enter.pollinations.ai."
+            )
+            usa_gen = False
+            elegido = "sana"
+            url_base = _url(False, elegido)
+            try:
+                datos = _descargar(url_base, False)
+            except Exception as e2:
+                raise _error_servicio(e2) from e2
+        else:
+            raise _error_servicio(e) from e
+    except Exception as e:
+        raise _error_servicio(e) from e
 
     ruta = Path(ruta_destino).expanduser()
     ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -510,22 +558,23 @@ def generar_imagen_ia(
             "servicio devolvió un error. Reintenta o cambia de origen."
         ) from e
 
-    if token:
+    if usa_gen:
         avisos.append(
-            "url_para_canva incluye tu token: úsala solo en upload-asset-from-url. "
+            "url_para_canva incluye tu clave: úsala solo en upload-asset-from-url. "
             "No la registres en el historial ni la pegues en ningún sitio público."
         )
 
     return {
         "ruta": str(ruta),
         "resolucion": resolucion,
+        "endpoint": "gen.pollinations.ai" if usa_gen else "image.pollinations.ai (clásico)",
         "modelo_pedido": elegido,
         "modelo_servido": modelo_servido or "desconocido (sin metadatos EXIF)",
         "seed": seed,
         "prompt": prompt,
         "token_activo": bool(token),
         "modelos_disponibles": disponibles,
-        "url_para_canva": url_base + (f"&token={token}" if token else ""),
+        "url_para_canva": url_base + (f"&key={token}" if usa_gen else ""),
         "avisos": avisos,
         "siguiente_paso": (
             "Lee (mira) la imagen en 'ruta' antes de usarla; si no convence, "
