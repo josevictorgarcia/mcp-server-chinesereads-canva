@@ -190,6 +190,28 @@ fondo. Si quieres usar tu galería, sube también tus fotos como assets de Canva
   línea, y una imagen auto-buscada puede no acertar del todo. Abre el diseño
   antes de publicar.
 
+## Copia de seguridad: qué sobrevive a un desastre
+
+Si el ordenador muere o borras esta carpeta, esto es lo que pasa:
+
+- **Recuperable con `git clone`** (está todo en el repo): el código del
+  servidor, `plantillas.json` (con los ids de los diseños maestros y de la
+  carpeta de Canva), `SKILL.md`, la configuración MCP (`.mcp.json`) y toda la
+  documentación. Tras clonar: `python3 -m venv .venv && ./.venv/bin/pip
+  install -r requirements.txt` y reconectar el MCP de Canva (OAuth).
+- **Vive en Canva, no en tu disco**: las plantillas maestras, todos los
+  diseños generados (en `chinesereads-posts/`) y los assets subidos. Los PNG
+  de `posts/` se re-exportan desde ahí cuando quieras.
+- **Se recrea en un minuto**: la clave de Pollinations — genera otra en
+  enter.pollinations.ai y guárdala en `.pollinations_token`.
+- **Lo ÚNICO que se pierde de verdad**: `historial.json` (unos KB). Los
+  posts futuros seguirían funcionando, pero la memoria anti-repetición se
+  vacía: podrías repetir palabras, temas o portadas sin aviso, y pierdes la
+  lista de links de edición. Haz copia de este fichero de vez en cuando
+  (iCloud, Drive... cualquier sitio **privado** — nunca al repo público,
+  contiene links de edición). En el peor caso se puede reconstruir a mano
+  mirando los diseños en Canva.
+
 ## Verificar que el servidor local funciona
 
 ```bash
