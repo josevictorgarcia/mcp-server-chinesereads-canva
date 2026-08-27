@@ -106,14 +106,14 @@ La foto de fondo sale de uno de estos dos sitios:
 
 - **IA gratuita** — Pollinations.ai, vía la herramienta `generar_imagen_ia`
   del servidor local: consulta el catálogo de modelos en vivo, elige el mejor
-  oficial (zimage > klein > flux; los "community" de terceros se excluyen
-  siempre), descarga la imagen y el asistente la **mira** antes de usarla,
-  regenerando con otra semilla si sale mal. Con la clave de la cuenta (ver
-  abajo) usa la plataforma actual, que cobra en "pollen" (~0.002-0.005 por
-  imagen, cubierto de sobra por el grant diario gratuito); sin clave o sin
-  saldo, cae solo al endpoint clásico anónimo (modelo pequeño, 768×768) en
-  vez de fallar. Paisajes y primeros planos salen bien; escenas con
-  personas, regular.
+  oficial (klein > zimage > flux, elegido comparando resultados a ojo; los
+  "community" de terceros se excluyen siempre), descarga la imagen y el
+  asistente la **mira** antes de usarla, regenerando con otra semilla si
+  sale mal. Con la clave de la cuenta (ver abajo) usa la plataforma actual,
+  que cobra en "pollen" (~0.002-0.005 por imagen: el saldo inicial de una
+  cuenta nueva da para cientos); sin clave o sin saldo, cae solo al endpoint
+  clásico anónimo (modelo pequeño, 768×768) en vez de fallar. Paisajes y
+  primeros planos salen bien; escenas con personas, regular.
 - **Tu galería** — fotos tuyas de China subidas una vez como assets de Canva.
   El asistente elige una distinta cada vez, con el mismo cooldown que las
   palabras (`portadas_recientes`), para que no se repitan seguidas.
@@ -134,10 +134,11 @@ echo "TU_CLAVE_SK" > .pollinations_token
 ```
 
 Ese fichero está en `.gitignore`: no se sube a git nunca. Con la clave,
-`generar_imagen_ia` usa los modelos buenos del catálogo (zimage, FLUX.2
-Klein, flux...), que cuestan "pollen" — la moneda interna, con grant diario
-gratuito según el tier de la cuenta, suficiente para cientos de imágenes.
-Sin clave, o si el saldo está a cero, la herramienta cae automáticamente al
+`generar_imagen_ia` usa los modelos buenos del catálogo (FLUX.2 Klein,
+zimage, flux...), que cuestan "pollen" — la moneda interna. El pollen sale
+del saldo que regalan al registrarse y de las quests del panel (o de pago);
+a ~0.005 por imagen, unos pocos pollen dan para cientos de portadas. Sin
+clave, o si el saldo está a cero, la herramienta cae automáticamente al
 endpoint clásico anónimo y el flujo no se rompe.
 
 **Preparación (una vez):** crea en Canva un diseño de 1 página con una foto de

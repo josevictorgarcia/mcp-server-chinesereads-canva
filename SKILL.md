@@ -115,7 +115,7 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      con un prompt fotográfico relacionado con el tema y estética de China
      (paisajes, arquitectura y primeros planos sin gente funcionan mejor que
      escenas con personas). La herramienta elige sola el mejor modelo oficial
-     del catálogo (zimage/klein/flux si hay clave en `.pollinations_token` y
+     del catálogo (klein/zimage/flux si hay clave en `.pollinations_token` y
      saldo de pollen; si no, cae al clásico anónimo a 768×768 — aceptable, y
      el resultado dice en `endpoint` y `avisos` qué pasó), descarga la imagen y
      devuelve `url_para_canva` para el montaje. **Mira** el fichero (lee la

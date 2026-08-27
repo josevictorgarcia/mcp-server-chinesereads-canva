@@ -54,9 +54,12 @@ POLLINATIONS_GEN = "https://gen.pollinations.ai"
 POLLINATIONS_LEGACY = "https://image.pollinations.ai"
 POLLINATIONS_TOKEN_FILE = BASE / ".pollinations_token"
 # Orden de preferencia entre los modelos oficiales que anuncie /image/models.
-# Los modelos "community" (proxies de terceros) se excluyen siempre: ni su
-# calidad ni el destino de los prompts están bajo control de Pollinations.
-PREFERENCIA_MODELOS_IA = ("zimage", "klein", "flux", "dreamshaper", "sana")
+# klein (FLUX.2) primero: en la comparación visual del 2026-08-27 (mismo
+# prompt y semilla) dio la imagen más fotográfica; zimage quedó algo plástico
+# y flux (FLUX.1 Schnell) más pobre de composición. Los modelos "community"
+# (proxies de terceros) se excluyen siempre: ni su calidad ni el destino de
+# los prompts están bajo control de Pollinations.
+PREFERENCIA_MODELOS_IA = ("klein", "zimage", "flux", "dreamshaper", "sana")
 # Pollinations devuelve 403 al User-Agent por defecto de urllib ("Python-urllib");
 # uno propio identificable pasa sin problema.
 POLLINATIONS_UA = "chinesereads-canva/1.0"
