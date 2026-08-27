@@ -1,4 +1,6 @@
 {
+  "carpeta_posts_canva_id": "FAHTgEsqGrg",
+  "_comentario_carpeta": "Carpeta madre 'chinesereads-posts' en Canva: dentro se crea una subcarpeta por post (<tema>-<fecha>) y ahí se mueven sus diseños (slides + portada). Si se borra en Canva, crear otra con create-folder y actualizar este id.",
   "_comentario": "canva_design_id debe apuntar a un diseño MULTI-PÁGINA en Canva: varias páginas duplicadas con el mismo layout (hasta max_paginas). Cada hueco.texto_actual debe ser EXACTAMENTE el texto que aparece ahora en la plantilla (en cada página), para que se pueda localizar y sustituir. Los huecos con tipo 'imagen' no llevan max_caracteres; se rellenan buscando una imagen de licencia libre (CC0/dominio público) o, si no se encuentra, a mano.",
   "plantillas": [
     {
@@ -155,7 +157,7 @@
       ],
       "reglas_estilo": [
         "Título en inglés, gancho directo y concreto, sin clickbait vacío. Varía la fórmula respecto a portadas_recientes.",
-        "Foto de estética China (paisajes, templos, linternas, comida, calles): los paisajes y primeros planos funcionan mejor que las escenas con personas.",
+        "Foto de estética China ligada al tema del post (comida, transporte, mercados, naturaleza, templos, calles...). Varía la imaginería entre posts — no siempre la misma escena — y recuerda: paisajes y primeros planos funcionan mejor que escenas con personas, y la legibilidad del título manda sobre la espectacularidad de la foto.",
         "Tras elegir la foto, pasa analizar_brillo y ajusta el color del título con format_text si hace falta: claro (#FFFFFF) sobre foto oscura, oscuro o el coral de marca sobre foto clara. El título tiene que leerse a un vistazo en miniatura de feed.",
         "La marca de agua de chinesereads ya está en la plantilla: no se cambia ni se mueve."
       ]

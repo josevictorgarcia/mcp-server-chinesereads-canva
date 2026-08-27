@@ -70,16 +70,24 @@ truncar a lo bruto.
 
 Con las herramientas del servidor MCP de Canva:
 
-1. **Duplica** el diseño maestro: `copy-design(design_id=canva_design_id,
+1. **Carpeta del post en Canva**: la carpeta madre `chinesereads-posts` ya
+   existe y su id está en `plantillas.json` (`carpeta_posts_canva_id`); si
+   Canva dice que no existe, recréala con `create-folder` en `root` y
+   actualiza ese id. Crea dentro una carpeta nueva para este post
+   con el mismo nombre que la carpeta local (`<tema>[-<plantilla>]-<fecha>`).
+   Todos los diseños que crees en los pasos siguientes se mueven ahí con
+   `move-item-to-folder` — así cada post queda agrupado en Canva y no
+   suelto en la raíz.
+2. **Duplica** el diseño maestro: `copy-design(design_id=canva_design_id,
    page_numbers=[1..N])`. Esto crea un diseño nuevo de exactamente N páginas, ya
-   independiente del maestro.
-2. Por cada una de las N páginas: `start-editing-transaction` sobre el diseño
+   independiente del maestro. Muévelo a la carpeta del post.
+3. Por cada una de las N páginas: `start-editing-transaction` sobre el diseño
    nuevo, localiza los elementos de esa página cuyo texto actual coincide con el
    `texto_actual` de cada hueco, y sustitúyelos con `perform-editing-operations`
    (`replace_text` para huecos de texto). Para un hueco de imagen: sube la
    imagen encontrada con `upload-asset-from-url` y sustitúyela con `update_fill`
    sobre el elemento de imagen de esa página.
-3. `commit-editing-transaction` cuando todas las páginas estén editadas.
+4. `commit-editing-transaction` cuando todas las páginas estén editadas.
 
 Trabaja solo con elementos que ya están en la plantilla y con recursos
 gratuitos. No añadas elementos premium: salen con marca de agua en cuentas
@@ -112,9 +120,14 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
 2. **Imagen de fondo** — dos orígenes, por preferencia del usuario:
    - **IA gratuita (Pollinations)**: llama a
      `generar_imagen_ia(prompt, ruta_destino=<carpeta del post>/portada-candidata.png)`
-     con un prompt fotográfico relacionado con el tema y estética de China
-     (paisajes, arquitectura y primeros planos sin gente funcionan mejor que
-     escenas con personas). La herramienta elige sola el mejor modelo oficial
+     con un prompt fotográfico de estética China **ligado al tema del post**:
+     comida → mercado o plato; transporte → tren, estación, bicis; naturaleza
+     → paisaje... No siempre el mismo tipo de escena (los callejones con
+     farolillos quedan muy bien, pero varía la imaginería respecto a
+     `portadas_recientes`). Paisajes, arquitectura y primeros planos sin
+     gente funcionan mejor que escenas con personas. Y manda la legibilidad:
+     mejor una imagen algo menos espectacular con una zona tranquila donde
+     el título respire que una espectacular que se coma las letras. La herramienta elige sola el mejor modelo oficial
      del catálogo (klein/zimage/flux si hay clave en `.pollinations_token` y
      saldo de pollen; si no, cae al clásico anónimo a 768×768 — aceptable, y
      el resultado dice en `endpoint` y `avisos` qué pasó), descarga la imagen y
@@ -133,11 +146,13 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
    título "claro" u "oscuro" distinto del color por defecto de la plantilla,
    ajústalo con `format_text` al editar. Si `contraste_justo` es `true`,
    comprueba que el degradado/sombra de la plantilla sigue detrás del título.
-4. **Montaje**: `copy-design` de la plantilla `portada` (1 página) → sube la
-   imagen (`upload-asset-from-url` con la `url_para_canva` que devolvió
-   `generar_imagen_ia`, o el asset ya existente de galería) → `update_fill`
-   en el hueco de imagen + `replace_text` del título → `commit`. La marca de
-   agua de chinesereads ya vive en la plantilla maestra: no la toques.
+4. **Montaje**: `copy-design` de la plantilla `portada` (1 página) → muévelo
+   con `move-item-to-folder` a la misma carpeta del post en Canva que el
+   diseño de slides → sube la imagen (`upload-asset-from-url` con la
+   `url_para_canva` que devolvió `generar_imagen_ia`, o el asset ya
+   existente de galería) → `update_fill` en el hueco de imagen +
+   `replace_text` del título → `commit`. La marca de agua de chinesereads ya
+   vive en la plantilla maestra: no la toques.
 5. **Exportar y descargar** como `00-portada.png` en la carpeta del post.
 
 ## 8. Registrar

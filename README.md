@@ -93,6 +93,11 @@ diseño de N páginas da una URL por página. El servidor las descarga todas a
 `.gitignore` (son imágenes regenerables, no hace falta llevarlas en git) —
 haz tu propia copia de seguridad si quieres conservarlas fuera del disco.
 
+Dentro de Canva, los diseños de cada post (slides + portada) tampoco quedan
+sueltos: se mueven a una carpeta propia `<tema>-<fecha>` dentro de la
+carpeta madre `chinesereads-posts`, con el mismo nombre que la carpeta
+local de descargas.
+
 ## Portada
 
 Cada post lleva una portada: una foto llamativa de fondo con el título del
