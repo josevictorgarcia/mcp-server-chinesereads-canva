@@ -140,6 +140,18 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      servicio gratuito se cae a ratos; si la herramienta falla, no insistas
      más de un par de minutos — pasa a la galería del usuario o a una foto
      CC0 de paisaje de Openverse y díselo en el resumen.
+
+     **Frugalidad con el pollen**: cada generación nueva gasta saldo, así que
+     piensa el prompt con calma ANTES de generar — incluida la composición
+     (pide una zona tranquila, oscura o despejada, donde irá el título:
+     regenerar por legibilidad es el error caro típico). El objetivo es
+     acertar a la primera; el tope de 3 intentos es un máximo, no una
+     rutina. Volver a descargar un prompt+seed ya generado es gratis
+     (caché); cambiar de semilla o de prompt, no.
+
+     **Descartes**: las candidatas que no acaben en la portada no se borran —
+     muévelas a `posts/descartes/` con nombre descriptivo
+     (`<fecha>-<tema>-vN.jpg`). Son del usuario y ya están pagadas.
    - **Galería del usuario (assets de Canva)**: lista sus fotos subidas con
      `get-assets` y elige una cuyo nombre/id **no** esté en
      `portadas_recientes` — la rotación es lo que evita que la portada se

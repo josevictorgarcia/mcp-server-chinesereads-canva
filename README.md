@@ -98,6 +98,10 @@ sueltos: se mueven a una carpeta propia `<tema>-<fecha>` dentro de la
 carpeta madre `chinesereads-posts`, con el mismo nombre que la carpeta
 local de descargas.
 
+Las imágenes de IA candidatas que no acaban en la portada se conservan en
+`posts/descartes/` — ya están generadas (y pagadas en pollen), así que se
+quedan para ti en vez de borrarse.
+
 ## Portada
 
 Cada post lleva una portada: una foto llamativa de fondo con el título del
