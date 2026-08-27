@@ -43,6 +43,18 @@ HISTORIAL = BASE / "historial.json"
 # de posts, la palabra vuelve a estar disponible.
 COOLDOWN_POSTS = 15
 
+# Generación de imágenes con IA (Pollinations.ai). El token — opcional, del tier
+# registrado gratuito de auth.pollinations.ai — vive en un fichero local que está
+# en .gitignore. Sin token todo funciona igual, pero el tier anónimo sirve un
+# modelo pequeño ("sana", 768x768) y limita a 1 imagen cada 15 s.
+POLLINATIONS_BASE = "https://image.pollinations.ai"
+POLLINATIONS_TOKEN_FILE = BASE / ".pollinations_token"
+# Orden de preferencia entre los modelos que el servicio anuncie en /models.
+PREFERENCIA_MODELOS_IA = ("flux", "turbo", "sana")
+# Pollinations devuelve 403 al User-Agent por defecto de urllib ("Python-urllib");
+# uno propio identificable pasa sin problema.
+POLLINATIONS_UA = "chinesereads-canva/1.0"
+
 mcp = MCPServer(
     name="catalogo-plantillas",
     instructions=(
@@ -355,6 +367,170 @@ def analizar_brillo(ruta_imagen: str) -> dict:
             "Aplica la recomendación sobre el tercio donde va el título en tu "
             "plantilla, no solo sobre la media global. Si contraste_justo es "
             "true, asegúrate de que el degradado/sombra de la plantilla está ahí."
+        ),
+    }
+
+
+def _token_pollinations() -> str:
+    try:
+        return POLLINATIONS_TOKEN_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+def _modelos_pollinations(token: str) -> list[str] | None:
+    """Modelos que Pollinations anuncia ahora mismo, o None si no responde.
+
+    Con token se anuncian los modelos del tier registrado (flux de verdad);
+    en anónimo solo aparece el modelo pequeño.
+    """
+    import urllib.request
+
+    peticion = urllib.request.Request(
+        f"{POLLINATIONS_BASE}/models", headers={"User-Agent": POLLINATIONS_UA}
+    )
+    if token:
+        peticion.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urllib.request.urlopen(peticion, timeout=15) as resp:
+            datos = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+    if not isinstance(datos, list):
+        return None
+    nombres = [m if isinstance(m, str) else m.get("name", "") for m in datos]
+    return [n for n in nombres if n]
+
+
+@mcp.tool()
+def generar_imagen_ia(
+    prompt: str,
+    ruta_destino: str,
+    seed: int | None = None,
+    width: int = 1080,
+    height: int = 1080,
+    modelo: str | None = None,
+) -> dict:
+    """Genera una imagen con IA (Pollinations.ai) y la descarga a un fichero local.
+
+    Elige solo el mejor modelo disponible en ese momento (flux si el token
+    registrado está configurado; el servicio anuncia los modelos en vivo), se
+    autentica con el token local si existe y verifica que lo descargado es una
+    imagen real. Devuelve también `url_para_canva`: la URL exacta para
+    upload-asset-from-url (misma imagen, con el token incluido si lo hay).
+
+    Después de llamar: MIRA la imagen descargada (léela) antes de usarla. Si sale
+    borrosa o deforme, repite con otra `seed`. En el historial registra solo
+    prompt+seed, nunca `url_para_canva` (lleva el token).
+    """
+    import random
+    import urllib.parse
+    import urllib.request
+
+    if not prompt.strip():
+        raise ValueError("El prompt no puede estar vacío.")
+
+    token = _token_pollinations()
+    disponibles = _modelos_pollinations(token)
+    avisos: list[str] = []
+
+    if modelo:
+        elegido = modelo
+        if disponibles is not None and modelo not in disponibles:
+            avisos.append(
+                f"'{modelo}' no está entre los modelos anunciados ahora mismo "
+                f"({', '.join(disponibles)}); el servicio puede servir otro en su lugar."
+            )
+    elif disponibles:
+        elegido = next(
+            (m for m in PREFERENCIA_MODELOS_IA if m in disponibles), disponibles[0]
+        )
+    else:
+        elegido = PREFERENCIA_MODELOS_IA[0]
+        avisos.append(
+            "El servicio no ha devuelto la lista de modelos (¿caído o saturado?); "
+            f"se pide '{elegido}' a ciegas."
+        )
+
+    if not token:
+        avisos.append(
+            "Sin token: tier anónimo (modelo pequeño, 768x768, 1 imagen/15 s). "
+            "Regístrate gratis en auth.pollinations.ai y guarda el token en "
+            f"{POLLINATIONS_TOKEN_FILE.name} para usar flux de verdad."
+        )
+
+    if seed is None:
+        seed = random.randint(1, 999_999_999)
+
+    params = {
+        "model": elegido,
+        "width": width,
+        "height": height,
+        "seed": seed,
+        "nologo": "true",
+        "private": "true",
+    }
+    url_base = (
+        f"{POLLINATIONS_BASE}/prompt/{urllib.parse.quote(prompt)}"
+        f"?{urllib.parse.urlencode(params)}"
+    )
+
+    peticion = urllib.request.Request(
+        url_base, headers={"User-Agent": POLLINATIONS_UA}
+    )
+    if token:
+        peticion.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urllib.request.urlopen(peticion, timeout=120) as resp:
+            datos = resp.read()
+    except Exception as e:
+        raise ValueError(
+            f"Pollinations no ha respondido ({e}). El servicio gratuito se satura "
+            "a ratos: reintenta una vez y, si sigue caído, pasa a la galería del "
+            "usuario o a una foto CC0 de Openverse."
+        ) from e
+
+    ruta = Path(ruta_destino).expanduser()
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_bytes(datos)
+
+    from PIL import Image
+
+    try:
+        with Image.open(ruta) as img:
+            resolucion = f"{img.width}x{img.height}"
+            exif = img.getexif()
+            # Pollinations firma en EXIF qué modelo generó la imagen de verdad
+            # (Make/Model); el tier anónimo degrada en silencio, esto lo delata.
+            modelo_servido = str(exif.get(271) or exif.get(272) or "").strip()
+    except Exception as e:
+        ruta.unlink(missing_ok=True)
+        raise ValueError(
+            f"Lo descargado no es una imagen válida ({e}); probablemente el "
+            "servicio devolvió un error. Reintenta o cambia de origen."
+        ) from e
+
+    if token:
+        avisos.append(
+            "url_para_canva incluye tu token: úsala solo en upload-asset-from-url. "
+            "No la registres en el historial ni la pegues en ningún sitio público."
+        )
+
+    return {
+        "ruta": str(ruta),
+        "resolucion": resolucion,
+        "modelo_pedido": elegido,
+        "modelo_servido": modelo_servido or "desconocido (sin metadatos EXIF)",
+        "seed": seed,
+        "prompt": prompt,
+        "token_activo": bool(token),
+        "modelos_disponibles": disponibles,
+        "url_para_canva": url_base + (f"&token={token}" if token else ""),
+        "avisos": avisos,
+        "siguiente_paso": (
+            "Lee (mira) la imagen en 'ruta' antes de usarla; si no convence, "
+            "repite con otra seed (2-3 intentos máximo). Para registrar la "
+            "portada usa prompt+seed como 'imagen', nunca url_para_canva."
         ),
     }
 

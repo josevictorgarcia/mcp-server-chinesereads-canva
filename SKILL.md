@@ -48,13 +48,15 @@ licencia, aunque el resultado parezca perfecto — es la regla que evita
 problemas legales.
 
 Si no hay ningún resultado CC0/PDM que encaje, **segundo intento con IA**:
-genera la imagen con Pollinations (mismo formato de URL que en el paso de
-portada) con un prompt de objeto literal ("a bowl of white steamed rice,
-minimalist food photography, clean background"), descárgala y **mírala**; si
-tras 2-3 semillas ninguna es clara y reconocible, o el servicio no responde
-(se satura a ratos), para y pide la imagen al usuario. Una imagen generada
-por IA no tiene el problema de licencia, pero sí puede salir deforme — el
-filtro visual no es opcional.
+llama a `generar_imagen_ia(prompt, ruta_destino)` con un prompt de objeto
+literal ("a bowl of white steamed rice, minimalist food photography, clean
+background") y la ruta dentro de la carpeta del post. La herramienta elige el
+mejor modelo disponible, descarga la imagen y devuelve `url_para_canva` para
+el `upload-asset-from-url` posterior. **Mira** el fichero descargado; si tras
+2-3 semillas ninguna es clara y reconocible, o el servicio no responde (se
+satura a ratos), para y pide la imagen al usuario. Una imagen generada por IA
+no tiene el problema de licencia, pero sí puede salir deforme — el filtro
+visual no es opcional.
 
 ## 4. Validar
 
@@ -108,19 +110,20 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
    la redacción respecto a los títulos recientes. Valídalo con
    `validar_contenido('portada', {"TITULO": ...})`.
 2. **Imagen de fondo** — dos orígenes, por preferencia del usuario:
-   - **IA gratuita (Pollinations)**: construye la URL
-     `https://image.pollinations.ai/prompt/<prompt-urlencoded>?width=1080&height=1080&model=flux&nologo=true&seed=<numero>`
+   - **IA gratuita (Pollinations)**: llama a
+     `generar_imagen_ia(prompt, ruta_destino=<carpeta del post>/portada-candidata.png)`
      con un prompt fotográfico relacionado con el tema y estética de China
      (paisajes, arquitectura y primeros planos sin gente funcionan mejor que
-     escenas con personas). Descárgala con `curl` a la carpeta del post y
-     **mírala** (lee el fichero de imagen): si sale borrosa, deforme o pobre,
-     cambia la semilla o el prompt y reintenta (hasta 3 veces; si ninguna
-     convence, pasa a galería o pregunta). El tier gratuito puede servir
-     768×768 aunque pidas 1080 — es aceptable. No reutilices un prompt+seed
-     que aparezca en `portadas_recientes`. Ojo: el servicio gratuito se cae a
-     ratos (HTTP 000/timeout); si no responde, no insistas más de un par de
-     minutos — pasa a la galería del usuario o a una foto CC0 de paisaje de
-     Openverse y díselo en el resumen.
+     escenas con personas). La herramienta elige sola el mejor modelo
+     disponible (flux si hay token registrado en `.pollinations_token`; sin
+     token, el anónimo sirve 768×768 — aceptable), descarga la imagen y
+     devuelve `url_para_canva` para el montaje. **Mira** el fichero (lee la
+     imagen): si sale borrosa, deforme o pobre, reintenta con otra `seed`
+     (hasta 3 veces; si ninguna convence, pasa a galería o pregunta). No
+     reutilices un prompt+seed que aparezca en `portadas_recientes`. Ojo: el
+     servicio gratuito se cae a ratos; si la herramienta falla, no insistas
+     más de un par de minutos — pasa a la galería del usuario o a una foto
+     CC0 de paisaje de Openverse y díselo en el resumen.
    - **Galería del usuario (assets de Canva)**: lista sus fotos subidas con
      `get-assets` y elige una cuyo nombre/id **no** esté en
      `portadas_recientes` — la rotación es lo que evita que la portada se
@@ -130,10 +133,10 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
    ajústalo con `format_text` al editar. Si `contraste_justo` es `true`,
    comprueba que el degradado/sombra de la plantilla sigue detrás del título.
 4. **Montaje**: `copy-design` de la plantilla `portada` (1 página) → sube la
-   imagen (`upload-asset-from-url` con la URL de Pollinations, o el asset ya
-   existente de galería) → `update_fill` en el hueco de imagen +
-   `replace_text` del título → `commit`. La marca de agua de chinesereads ya
-   vive en la plantilla maestra: no la toques.
+   imagen (`upload-asset-from-url` con la `url_para_canva` que devolvió
+   `generar_imagen_ia`, o el asset ya existente de galería) → `update_fill`
+   en el hueco de imagen + `replace_text` del título → `commit`. La marca de
+   agua de chinesereads ya vive en la plantilla maestra: no la toques.
 5. **Exportar y descargar** como `00-portada.png` en la carpeta del post.
 
 ## 8. Registrar
@@ -143,7 +146,8 @@ con `slides` siendo la lista de las N slides (`identificador` + `contenido` de
 cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
 exportación). Si hubo portada, pasa
 `portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual"}` —
-sin esto el cooldown de portadas no funciona. Solo después de que el diseño
+sin esto el cooldown de portadas no funciona. Para una portada de IA, `imagen`
+es el prompt+seed, **nunca** la `url_para_canva` (contiene el token). Solo después de que el diseño
 exista. Esto es lo que evita repetir palabras, temas y fotos de portada.
 
 ## 9. Al terminar

@@ -13,5 +13,8 @@ posts/
 # post (ruido de commits) y contiene links de edición de Canva.
 historial.json
 
+# Token de Pollinations.ai: credencial local, jamás en git
+.pollinations_token
+
 # macOS
 .DS_Store

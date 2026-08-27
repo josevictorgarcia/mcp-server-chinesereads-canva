@@ -104,11 +104,14 @@ cambia.
 
 La foto de fondo sale de uno de estos dos sitios:
 
-- **IA gratuita** — Pollinations.ai (modelos Flux, sin API key, sin coste): se
-  genera desde un prompt sobre el tema, el asistente **mira** el resultado y
-  regenera con otra semilla si sale mal. El tier gratuito puede limitar a
-  768×768; para Instagram es asumible. Paisajes y primeros planos salen bien;
-  escenas con personas, regular.
+- **IA gratuita** — Pollinations.ai, vía la herramienta `generar_imagen_ia`
+  del servidor local: consulta qué modelos ofrece el servicio en ese momento,
+  elige el mejor (flux > turbo > sana), descarga la imagen y el asistente la
+  **mira** antes de usarla, regenerando con otra semilla si sale mal. Sin
+  registro funciona, pero el tier anónimo sirve un modelo pequeño a 768×768;
+  con el registro gratuito (ver abajo) se obtiene flux de verdad, sin marca
+  de agua y con mejor límite de peticiones. Paisajes y primeros planos salen
+  bien; escenas con personas, regular.
 - **Tu galería** — fotos tuyas de China subidas una vez como assets de Canva.
   El asistente elige una distinta cada vez, con el mismo cooldown que las
   palabras (`portadas_recientes`), para que no se repitan seguidas.
@@ -116,6 +119,20 @@ La foto de fondo sale de uno de estos dos sitios:
 Reglas duras en código, como siempre: `analizar_brillo` mide la luminosidad de
 la foto y decide si el título va claro u oscuro (nada de confiar en el ojo del
 modelo), y `portadas_recientes` es la memoria anti-repetición.
+
+**Mejor modelo de IA (opcional, gratis, una vez):** regístrate en
+[auth.pollinations.ai](https://auth.pollinations.ai) con tu cuenta de GitHub
+(OAuth solo de identidad: no da acceso a tus repos y se puede revocar en
+GitHub → Settings → Applications), copia el token y guárdalo en un fichero
+`.pollinations_token` en la raíz del repo:
+
+```bash
+echo "TU_TOKEN" > .pollinations_token
+```
+
+Ese fichero está en `.gitignore`: no se sube a git nunca. Con el token,
+`generar_imagen_ia` pasa automáticamente al modelo flux real; sin él, todo
+sigue funcionando con el tier anónimo.
 
 **Preparación (una vez):** crea en Canva un diseño de 1 página con una foto de
 fondo a pantalla completa, el título de ejemplo encima, tu marca de agua de
