@@ -120,7 +120,9 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
 2. **Imagen de fondo** — dos orígenes, por preferencia del usuario:
    - **IA gratuita (Pollinations)**: llama a
      `generar_imagen_ia(prompt, ruta_destino=<carpeta del post>/portada-candidata.png)`
-     con un prompt fotográfico de estética China **ligado al tema del post**:
+     con un prompt **escrito con guiones en vez de espacios** (una URL sin
+     percent-encoding es la única que el fetcher de Canva descarga bien) y
+     fotográfico de estética China **ligado al tema del post**:
      comida → mercado o plato; transporte → tren, estación, bicis; naturaleza
      → paisaje... No siempre el mismo tipo de escena (los callejones con
      farolillos quedan muy bien, pero varía la imaginería respecto a
@@ -163,7 +165,7 @@ cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
 exportación). Si hubo portada, pasa
 `portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual"}` —
 sin esto el cooldown de portadas no funciona. Para una portada de IA, `imagen`
-es el prompt+seed, **nunca** la `url_para_canva` (contiene el token). Solo después de que el diseño
+es el prompt+seed (y el modelo). Solo después de que el diseño
 exista. Esto es lo que evita repetir palabras, temas y fotos de portada.
 
 ## 9. Al terminar

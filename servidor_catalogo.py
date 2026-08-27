@@ -442,8 +442,14 @@ def generar_imagen_ia(
     autentica con la clave local si existe y, si no hay clave o no hay saldo de
     pollen, cae solo al endpoint clásico anónimo (modelo pequeño) en vez de
     fallar. Verifica que lo descargado es una imagen real. Devuelve también
-    `url_para_canva`: la URL exacta para upload-asset-from-url (misma imagen,
-    con la clave incluida si se usó el endpoint nuevo).
+    `url_para_canva`: la URL exacta para upload-asset-from-url — SIN la clave,
+    porque esta descarga deja la imagen en la caché pública del servicio y de
+    ahí la puede leer cualquiera (verificado 2026-08-27).
+
+    Escribe el prompt CON GUIONES en vez de espacios o comas: una URL sin
+    caracteres percent-encoded sobrevive intacta a los normalizadores de URLs
+    (el fetcher de Canva reescribe las URLs codificadas, falla la caché y
+    recibe un 401).
 
     Después de llamar: MIRA la imagen descargada (léela) antes de usarla. Si sale
     borrosa o deforme, repite con otra `seed`. En el historial registra solo
@@ -561,10 +567,11 @@ def generar_imagen_ia(
             "servicio devolvió un error. Reintenta o cambia de origen."
         ) from e
 
-    if usa_gen:
+    if usa_gen and (" " in prompt or "," in prompt):
         avisos.append(
-            "url_para_canva incluye tu clave: úsala solo en upload-asset-from-url. "
-            "No la registres en el historial ni la pegues en ningún sitio público."
+            "El prompt lleva espacios/comas: la URL queda percent-encoded y el "
+            "fetcher de Canva suele romperla (falla la caché → 401). Para subir "
+            "a Canva, regenera con el prompt en guiones."
         )
 
     return {
@@ -577,12 +584,13 @@ def generar_imagen_ia(
         "prompt": prompt,
         "token_activo": bool(token),
         "modelos_disponibles": disponibles,
-        "url_para_canva": url_base + (f"&key={token}" if usa_gen else ""),
+        "url_para_canva": url_base,
         "avisos": avisos,
         "siguiente_paso": (
             "Lee (mira) la imagen en 'ruta' antes de usarla; si no convence, "
-            "repite con otra seed (2-3 intentos máximo). Para registrar la "
-            "portada usa prompt+seed como 'imagen', nunca url_para_canva."
+            "repite con otra seed (2-3 intentos máximo). url_para_canva no "
+            "lleva la clave: la imagen ya está en la caché pública del "
+            "servicio. Para registrar la portada usa prompt+seed como 'imagen'."
         ),
     }
 
