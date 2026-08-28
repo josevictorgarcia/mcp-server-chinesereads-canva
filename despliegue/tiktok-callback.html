@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
-<title>Autorización de TikTok</title>
+<title>ChineseReads — TikTok authorisation</title>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto;
          padding: 0 1.5rem; line-height: 1.6; color: #222; }
@@ -12,33 +12,33 @@
   .err { color: #b91c1c; }
   .nota { font-size: .9rem; color: #555; }
 </style>
-<h1>Autorización de TikTok</h1>
-<p id="mensaje">Leyendo la respuesta…</p>
+<h1>TikTok authorisation complete</h1>
+<p id="mensaje">Reading the response…</p>
 <code id="code" hidden></code>
 <p class="nota" id="nota" hidden>
-  El código caduca en pocos minutos y por sí solo no sirve de nada: hace falta
-  además la clave secreta de la app, que vive únicamente en el servidor.
+  This one-time authorisation code expires in a few minutes and is useless on
+  its own: exchanging it for an access token also requires the client secret,
+  which never leaves our server.
 </p>
 <script>
-  // Página estática y sin backend: solo muestra en pantalla el código que
-  // TikTok devuelve en la URL. No guarda nada, no envía nada a ningún sitio.
-  // Se usa textContent (nunca innerHTML) para que el contenido de la URL no
-  // pueda interpretarse como HTML.
+  // Static page, no backend: it only displays the authorisation code that
+  // TikTok returns in the URL. Nothing is stored and nothing is sent anywhere.
+  // textContent (never innerHTML) so URL contents can't be treated as markup.
   const p = new URLSearchParams(location.search);
   const code = p.get("code");
   const error = p.get("error_description") || p.get("error");
   const mensaje = document.getElementById("mensaje");
   if (code) {
-    mensaje.textContent = "Listo. Copia este código y pégaselo a Claude:";
+    mensaje.textContent = "Authorisation code received:";
     const salida = document.getElementById("code");
     salida.textContent = code;
     salida.hidden = false;
     document.getElementById("nota").hidden = false;
   } else if (error) {
     mensaje.className = "err";
-    mensaje.textContent = "TikTok ha devuelto un error: " + error;
+    mensaje.textContent = "TikTok returned an error: " + error;
   } else {
-    mensaje.textContent = "Esta página solo sirve como retorno del proceso de "
-      + "autorización de TikTok. No hay nada que ver aquí.";
+    mensaje.textContent = "This page is only the redirect target of the TikTok "
+      + "authorisation flow. There is nothing to see here.";
   }
 </script>
