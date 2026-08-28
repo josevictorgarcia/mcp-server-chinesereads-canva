@@ -189,9 +189,26 @@ no hace falta desde 2024.
 
 ## Lo que queda pendiente
 
-**La auditoría (app review).** Es lo único. Sin ella, todo funciona pero
-los posts salen en privado; tú los haces públicos desde la app del móvil
-con dos toques, o los dejas así.
+**La auditoría (app review).** Es lo único, pero tiene una consecuencia
+práctica que conviene entender bien, porque no es la que parece.
+
+Sin auditoría, la API **no publica en cuentas públicas**. Comprobado en el
+primer intento real (2026-08-29):
+
+```
+HTTP 403 ... {"error":{"code":"unaudited_client_can_only_post_to_private_accounts"}}
+```
+
+No depende de nuestro `privacy_level`, sino de la **privacidad de la
+cuenta**: mientras `@chinesereadsapp` sea pública, la API se niega. Para
+publicar por API antes de la auditoría hay que poner la cuenta en **privado**
+(en la app: Configuración → Privacidad → Cuenta privada). El post entra
+como `SELF_ONLY`; después puedes volver a poner la cuenta en pública y
+hacer público ese post desde la app.
+
+Es decir: con la cuenta pública, TikTok queda en pausa hasta la auditoría —
+Instagram sigue funcionando con normalidad, y los TikToks públicos pueden
+salir mientras tanto por Metricool.
 
 Para pedirla hacen falta dos cosas que ahora ya se pueden preparar:
 
