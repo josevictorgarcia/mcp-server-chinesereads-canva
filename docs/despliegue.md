@@ -118,33 +118,56 @@ irreemplazable: tráetelo de la máquina anterior.
 
 ## Mapa: qué queda dónde
 
-```
-/root/2025-ChineseTexts/                  ← LA WEB (repo ajeno)
-├── .git/info/exclude                     ← +1 línea (exclusión local)
-└── docker/
-    ├── Caddyfile                         ← INTACTO, nunca se toca
-    ├── docker-compose.yml                ← INTACTO, nunca se toca
-    └── docker-compose.override.yml       ← NUEVO, lo único añadido aquí
+Estructura real del servidor. Los ficheros marcados con 🔒 son secretos con
+permisos 600; los marcados con 🌐 son lo único accesible desde internet.
 
-/home/chinesereads/                       ← usuario dedicado, sin sudo
-├── publicador/                           ← este repo
-│   ├── publicacion_config.json           ← TOKENS (600)
-│   ├── historial.json                    ← memoria anti-repetición (600)
-│   ├── .pollinations_token               ← clave de imágenes (600)
-│   ├── .venv/                            (Pillow + MCP)
-│   ├── cola/                             ← lo ÚNICO servido por HTTPS
-│   ├── publicados/                       ← se borran a los 7 días
-│   └── publicador.log
-└── .claude/  .claude.json                ← sesión de Claude Code
+```
+/root/2025-ChineseTexts/                   ← LA WEB (repo ajeno, no se toca)
+├── .git/info/exclude                      ← +1 línea (exclusión local)
+└── docker/
+    ├── Caddyfile                          ← INTACTO
+    ├── docker-compose.yml                 ← INTACTO
+    └── docker-compose.override.yml        ← NUEVO: publica la cola
+
+/home/chinesereads/                        ← usuario dedicado, sin sudo
+├── .claude/  .claude.json                 ← sesión de Claude Code (MCP, OAuth de Canva)
+└── publicador/                            ← este repo, clonado
+    │
+    ├── publicador.py                      ← publica (Python de sistema, sin dependencias)
+    ├── servidor_catalogo.py               ← servidor MCP local (catálogo, validación)
+    ├── generacion_autonoma.sh             ← genera con Claude si la cola está vacía
+    ├── plantillas.json                    ← catálogo: ids de Canva, huecos, reglas
+    ├── SKILL.md  PROMPT_AUTONOMO.md       ← el flujo y el encargo autónomo
+    ├── .mcp.json  requirements.txt
+    ├── README.md
+    │
+    ├── 🔒 publicacion_config.json         ← tokens de Instagram y TikTok
+    ├── 🔒 .pollinations_token             ← clave de generación de imágenes
+    ├── 🔒 historial.json                  ← memoria anti-repetición (irreemplazable)
+    │
+    ├── 🌐 cola/                           ← posts pendientes: LO ÚNICO público
+    ├── publicados/                        ← ya publicados, se borran a los 7 días
+    ├── posts/                             ← PNG de la generación autónoma (se podan)
+    ├── publicador.log
+    │
+    ├── docs/                              ← toda la documentación
+    ├── despliegue/                        ← deploy.sh, verificar.sh, unidades, plantillas
+    └── .venv/                             ← Pillow + MCP (76 MB, solo para generar)
 
 /etc/
-├── chinesereads-generador.env            ← token de Claude (root, 600)
-└── systemd/system/chinesereads-*.{service,timer}
+├── 🔒 chinesereads-generador.env          ← token de Claude (de root, no del usuario)
+└── systemd/system/
+    ├── chinesereads-publicador.{service,timer}   ← 20:00 hora española
+    └── chinesereads-generador.{service,timer}    ← 19:00 hora española
 ```
 
-Fíjate en que **los secretos están fuera de la carpeta publicada**: Caddy
-solo tiene montada `cola/`, no su carpeta madre. Por eso intentar descargar
-`publicacion_config.json` desde internet devuelve la home de la web.
+Lo importante de este dibujo: **los tres secretos del proyecto están un
+nivel por encima de `cola/`**, que es la única carpeta montada en Caddy. Para
+el servidor web, la carpeta madre sencillamente no existe — por eso pedir
+`chinesereads.com/publicacion_config.json` devuelve la portada de la web y
+no el fichero. El cuarto secreto, el token de Claude, vive en `/etc` y es de
+`root`: systemd lo lee antes de bajar privilegios, así que ni el usuario del
+proyecto puede leerlo desde una shell.
 
 ## Generación autónoma (opcional)
 
