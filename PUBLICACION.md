@@ -284,6 +284,19 @@ rsync -av posts/transporte-publico-2026-08-27/ \
 
 (siempre que dentro haya un `meta.json`; sin él, el publicador la ignora).
 
+### Formato de las imágenes (importante)
+
+**Instagram solo admite JPEG** ("JPEG is the only image format supported") y
+**TikTok admite JPEG/WebP, máximo 1080p y 20 MB por imagen**. Canva exporta
+PNG de 2048 px, que las dos rechazarían — por eso el paso 10 del flujo llama
+antes a `preparar_para_cola`, que deja en `<carpeta del post>/_cola/` los
+JPEG a 1080 px que sí se publican (los PNG originales se quedan como
+archivo local). Lo que se sube a la cola es siempre esa carpeta `_cola/`.
+
+Como red de seguridad, `publicador.py` comprueba cada imagen encolada
+(extensión, cabecera real del fichero y tamaño) antes de llamar a ninguna
+API: si algo no es JPEG de verdad, no publica y lo dice en el log.
+
 ### Formato de `meta.json`
 
 ```json

@@ -382,6 +382,64 @@ def elegir_final(candidatos: list[str]) -> dict:
 
 
 @mcp.tool()
+def preparar_para_cola(carpeta_post: str, max_lado: int = 1080,
+                       calidad: int = 90) -> dict:
+    """Convierte las imágenes de un post a lo que aceptan Instagram y TikTok,
+    dejándolas listas en `<carpeta_post>/_cola/` para encolarlas.
+
+    Regla dura en código, no criterio del modelo: Instagram **solo admite
+    JPEG** (nada de PNG) y TikTok admite JPEG/WebP con un máximo de 1080p y
+    20 MB por imagen. Los PNG de 2048 px que exporta Canva fallarían en
+    ambas, así que aquí se convierten a JPEG y se reescalan a `max_lado`.
+
+    Los originales no se tocan: el PNG a máxima calidad sigue en la carpeta
+    del post como archivo. `_cola/` es solo la copia lista para publicar
+    (mucho más ligera, que además viaja antes por rsync).
+    """
+    from PIL import Image
+
+    carpeta = Path(carpeta_post).expanduser()
+    if not carpeta.is_dir():
+        raise ValueError(f"No existe la carpeta del post: {carpeta}")
+
+    destino = carpeta / "_cola"
+    destino.mkdir(exist_ok=True)
+
+    extensiones = {".png", ".jpg", ".jpeg", ".webp"}
+    originales = sorted(p for p in carpeta.iterdir()
+                        if p.suffix.lower() in extensiones and p.is_file())
+    if not originales:
+        raise ValueError(f"No hay imágenes en {carpeta}.")
+
+    preparadas, avisos = [], []
+    for original in originales:
+        salida = destino / f"{original.stem}.jpg"
+        with Image.open(original) as img:
+            img = img.convert("RGB")  # JPEG no admite transparencia
+            if max(img.size) > max_lado:
+                proporcion = max_lado / max(img.size)
+                nuevo = (round(img.width * proporcion),
+                         round(img.height * proporcion))
+                img = img.resize(nuevo, Image.LANCZOS)
+            img.save(salida, "JPEG", quality=calidad, optimize=True)
+        tamano_mb = round(salida.stat().st_size / 1_048_576, 2)
+        if tamano_mb > 20:
+            avisos.append(f"{salida.name} pesa {tamano_mb} MB: TikTok admite "
+                          "20 MB como máximo. Baja `calidad`.")
+        preparadas.append({"fichero": salida.name, "mb": tamano_mb})
+
+    return {
+        "carpeta_cola": str(destino),
+        "imagenes": preparadas,
+        "total": len(preparadas),
+        "avisos": avisos,
+        "siguiente_paso": ("escribe meta.json dentro de esta carpeta _cola/ "
+                           "(con `imagenes` nombrando estos .jpg) y encola "
+                           "ESTA carpeta, no la del post."),
+    }
+
+
+@mcp.tool()
 def analizar_brillo(ruta_imagen: str) -> dict:
     """Mide la luminosidad de una imagen local (0 = negro, 255 = blanco) y
     recomienda el color del título de portada para que se lea bien.

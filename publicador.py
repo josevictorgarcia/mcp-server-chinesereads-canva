@@ -158,6 +158,31 @@ def posts_en_cola() -> list[Path]:
     return [c for _, _, c in sorted(listos)]
 
 
+def _validar_formatos(carpeta: Path, nombres: list[str]) -> None:
+    """Comprueba que las imágenes son JPEG de verdad antes de tocar ninguna
+    API. Instagram SOLO admite JPEG y TikTok JPEG/WebP (máx. 20 MB): mejor
+    fallar aquí con un mensaje claro que recibir un error opaco de Meta a
+    mitad de la publicación. La conversión se hace al generar el post
+    (herramienta preparar_para_cola del servidor de catálogo)."""
+    problemas = []
+    for nombre in nombres:
+        ruta = carpeta / nombre
+        if not ruta.exists():
+            problemas.append(f"{nombre}: no existe en la carpeta encolada")
+            continue
+        if ruta.suffix.lower() not in (".jpg", ".jpeg"):
+            problemas.append(f"{nombre}: Instagram solo admite JPEG")
+            continue
+        with ruta.open("rb") as f:
+            if f.read(3) != b"\xff\xd8\xff":
+                problemas.append(f"{nombre}: la extensión dice JPEG pero el "
+                                 "contenido no lo es")
+        if ruta.stat().st_size > 20 * 1_048_576:
+            problemas.append(f"{nombre}: pesa más de 20 MB (límite de TikTok)")
+    if problemas:
+        raise RuntimeError("Imágenes no publicables: " + "; ".join(problemas))
+
+
 def _url_publica(cfg: dict, carpeta: Path, nombre: str) -> str:
     base = cfg["base_url_publica"].rstrip("/")
     return f"{base}/{urllib.parse.quote(carpeta.name)}/{urllib.parse.quote(nombre)}"
@@ -411,6 +436,13 @@ def cmd_publicar(dry_run: bool, solo: str) -> int:
         return 0
 
     nombres = _imagenes_del_post(carpeta, meta)
+    try:
+        _validar_formatos(carpeta, nombres)
+    except RuntimeError as e:
+        _log(f"{carpeta.name}: ERROR — {e}")
+        _log("El post se queda en la cola sin publicar: regenera las "
+             "imágenes con preparar_para_cola y vuelve a encolarlo.")
+        return 1
     _log(f"Publicando {carpeta.name} ({len(nombres)} imágenes) en: "
          f"{', '.join(faltan)}")
 

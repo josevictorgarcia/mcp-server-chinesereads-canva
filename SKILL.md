@@ -227,19 +227,25 @@ el resumen final.
      `hashtags_por_defecto` de la config. Puedes añadir en `hashtags` del
      meta.json 2-3 específicos del tema además de los por defecto
      (cópialos de la config y añade los tuyos) — nunca más de ~12 en total.
-2. **`meta.json`** en la carpeta local del post, con el formato documentado
-   en PUBLICACION.md: `tema`, `titulo` (el de la portada), `caption` (sin
-   hashtags), `hashtags` (opcional, ver arriba), `imagenes` (en orden:
-   portada primero, luego las slides y `99-final.png` la última si la hay),
-   `creado` (fecha de hoy).
-3. **Subir a la cola**:
-   - Si `vps.ssh` tiene valor (estás en el Mac): `rsync -av <carpeta local>/
-     <vps.ssh>:<vps.ruta_cola>/<nombre carpeta>/`. Si el rsync falla (VPS
-     caído, sin red), no es un error del post: dilo en el resumen y deja el
-     comando listo para que el usuario lo lance luego.
-   - Si `vps.ssh` está vacío (estás EN el VPS, modo autónomo): copia la
-     carpeta del post a `cola/<nombre carpeta>/` en la raíz del repo y
-     comprueba con `python3 publicador.py cola` que aparece.
+2. **Convertir las imágenes**: llama a `preparar_para_cola(<carpeta del
+   post>)`. Instagram solo admite **JPEG** y TikTok limita a 1080p y 20 MB,
+   así que los PNG de 2048 px de Canva no valen para publicar: la
+   herramienta deja en `<carpeta del post>/_cola/` los `.jpg` a 1080 px
+   listos (los PNG originales se quedan intactos como archivo).
+3. **`meta.json`** dentro de esa carpeta `_cola/`, con el formato
+   documentado en PUBLICACION.md: `tema`, `titulo` (el de la portada),
+   `caption` (sin hashtags), `hashtags` (opcional, ver arriba), `imagenes`
+   (los **.jpg**, en orden: portada primero, luego las slides y
+   `99-final.jpg` la última si la hay), `creado` (fecha de hoy).
+4. **Subir a la cola** (siempre la carpeta `_cola/`, nunca la del post
+   entero — los PNG no se publican y ocuparían el triple):
+   - Si `vps.ssh` tiene valor (estás en el Mac): `rsync -av <carpeta del
+     post>/_cola/ <vps.ssh>:<vps.ruta_cola>/<nombre del post>/`. Si el
+     rsync falla (VPS caído, sin red), no es un error del post: dilo en el
+     resumen y deja el comando listo para que el usuario lo lance luego.
+   - Si `vps.ssh` está vacío (estás EN el VPS, modo autónomo): copia
+     `_cola/` a `cola/<nombre del post>/` en la raíz del repo y comprueba
+     con `python3 publicador.py cola` que aparece.
 
 El post se publicará automáticamente a las 8:00 (hora española) del primer
 día en que sea el más antiguo de la cola. Si el usuario quiere retenerlo
