@@ -186,12 +186,12 @@ Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
 ## Publicación automática (Instagram y TikTok)
 
 El proyecto incluye un publicador autónomo (`publicador.py`, sin MCP y sin
-dependencias) pensado para vivir en un VPS: cada post generado se encola con
-su descripción y hashtags ya decididos (`meta.json`), y un cron diario a las
-8:00 (hora española) publica el más antiguo de la cola por las APIs
-oficiales de Meta y TikTok. Un segundo cron opcional a las 7:00
-(`generacion_autonoma.sh`) arranca Claude Code en headless para generar el
-post del día **solo si la cola está vacía** — red de seguridad para los días
+dependencias) que ya vive en el VPS de chinesereads.com: cada post generado
+se encola con su descripción y hashtags ya decididos (`meta.json`), y un
+temporizador de systemd a las 8:00 (hora española) publica el más antiguo de
+la cola por las APIs oficiales de Meta y TikTok. Un segundo temporizador
+opcional a las 7:00 (`generacion_autonoma.sh`) arranca Claude Code en
+headless para generar el post del día **solo si la cola está vacía** — red de seguridad para los días
 en que no enciendes el ordenador. El VPS se autolimpia (los posts publicados
 se borran a los 7 días; la copia permanente son los diseños y descartes en
 Canva). Setup completo (apps, tokens, dominio, cron, convivencia con una web

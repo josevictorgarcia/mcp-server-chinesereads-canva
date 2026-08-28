@@ -115,50 +115,79 @@ las 10 primeras y lo avisa en el log) y 100 publicaciones por API al día
 
 Instagram no tiene ese matiz: público desde el primer día.
 
-## Montaje en el VPS
+## Montaje en el VPS (ya hecho el 2026-08-28)
 
-```bash
-# 1. Clonar el repo (el publicador no necesita venv ni dependencias)
-git clone https://github.com/josevictorgarcia/mcp-server-chinesereads-canva.git
-cd mcp-server-chinesereads-canva
+Así quedó instalado en el servidor de chinesereads.com (Ubuntu 24.04,
+`root@65.21.59.130`). Sirve como referencia para reproducirlo si hiciera
+falta rehacerlo.
 
-# 2. Config real (rellenar tokens según arriba)
-cp publicacion_config.ejemplo.json publicacion_config.json
+**1. Repo del publicador** en `/root/chinesereads-publicador` (no necesita
+venv ni dependencias: solo Python 3 de sistema). La cola vive en
+`/root/chinesereads-publicador/cola`, fuera del repo de la web.
 
-# 3. Servir la cola por HTTPS (las APIs descargan las imágenes de URLs
-#    públicas). Con el servidor web que ya sirve chinesereads.com, basta
-#    un symlink dentro de su raíz de documentos:
-mkdir -p cola
-ln -s "$PWD/cola" /var/www/chinesereads.com/cola-chinesereads
-#    → base_url_publica = https://chinesereads.com/cola-chinesereads
-#    (si tu nginx no sigue symlinks o la web no sirve ficheros estáticos,
-#    usa en su lugar un bloque:  location /cola-chinesereads/ {
-#      alias /ruta/al/repo/cola/; }  y recarga nginx)
+**2. Servir la cola por HTTPS sin tocar la web.** La web va en Docker con
+Caddy en contenedor, y su `Caddyfile` está versionado en el repo de la web
+(`codeurjc-students/2025-ChineseTexts`), así que editarlo rompería los
+`git pull` del despliegue. En vez de eso se añadió un
+`docker-compose.override.yml` — fichero **nuevo y sin versionar**, que
+Docker Compose fusiona solo y que sobrevive a los despliegues — montando la
+cola dentro del `/srv` que Caddy ya sirve:
 
-# 4. Probar sin publicar
-python3 publicador.py estado
-python3 publicador.py publicar --dry-run   # comprueba también que la URL
-                                           # se ve desde fuera
-
-# 5. Cron diario: generar a las 7:00 si hace falta, publicar a las 8:00
-#    (crontab -e)
-CRON_TZ=Europe/Madrid
-0 7 * * * /ruta/al/repo/generacion_autonoma.sh
-0 8 * * * cd /ruta/al/repo && /usr/bin/python3 publicador.py publicar >> publicador.log 2>&1
+```yaml
+# /root/2025-ChineseTexts/docker/docker-compose.override.yml
+services:
+  caddy:
+    volumes:
+      - /root/chinesereads-publicador/cola:/srv/cola-chinesereads:ro
 ```
 
-Si tu cron no soporta `CRON_TZ` (los de Debian/Ubuntu sí), pon la hora en
-la zona del servidor o usa un timer de systemd. El minuto exacto da igual —
-"alrededor de las 8" es justo lo que queremos. La línea de las 7:00 es
-opcional: sin ella, el sistema publica solo lo que tú generes (modo cola
-pura).
+Para aplicarlo (lo mismo que hace `deploy.sh` de rutina, ~2 s de parpadeo):
 
-## Generación autónoma: el cron "te llama" a Claude
+```bash
+cd /root/2025-ChineseTexts/docker
+docker compose --env-file .env up -d --force-recreate --no-deps caddy
+```
+
+→ `base_url_publica = https://chinesereads.com/cola-chinesereads`
+(verificado: sirve los JPEG con `Content-Type: image/jpeg`).
+
+**3. Config**: `/root/chinesereads-publicador/publicacion_config.json`,
+`chmod 600`, con `vps.ssh` vacío (este ES el VPS). Comprobar con
+`python3 publicador.py estado`.
+
+**4. Disparo diario con systemd, no con cron.** El cron de Debian/Ubuntu
+**no** entiende `CRON_TZ` (eso es de cronie/RedHat) y el servidor va en UTC:
+con cron, el horario de verano movería la hora dos veces al año. systemd sí
+admite zona horaria, y además no toca el crontab existente (donde vive el
+backup diario de la base de datos de la web):
+
+```ini
+# /etc/systemd/system/chinesereads-publicador.timer
+[Timer]
+OnCalendar=*-*-* 08:00:00 Europe/Madrid
+Persistent=true
+RandomizedDelaySec=300
+```
+
+```bash
+systemctl daemon-reload
+systemctl enable --now chinesereads-publicador.timer
+systemctl list-timers chinesereads-publicador.timer   # ver próximo disparo
+journalctl -u chinesereads-publicador.service -n 30   # ver qué pasó
+systemctl start chinesereads-publicador.service       # publicar ahora mismo
+```
+
+El servicio (`chinesereads-publicador.service`) es un `oneshot` que ejecuta
+`publicador.py publicar` en el directorio del repo. Mientras no haya tokens
+configurados, termina con código 1 y el log dice "No hay ninguna red
+configurada" — es lo esperado, no un fallo del montaje.
+
+## Generación autónoma: el temporizador "te llama" a Claude
 
 Tu pregunta exacta era: *"¿yo no te llamo, sino que el cronjob te activa
 automáticamente?"* — sí, exactamente así, con **Claude Code en modo
 headless** (`claude -p "..."`): la misma herramienta que usas en el Mac,
-instalada en el VPS, ejecutada por cron sin interfaz. El guion
+instalada en el VPS, disparada por un temporizador sin interfaz. El guion
 `generacion_autonoma.sh` comprueba la cola y, solo si está vacía, lanza
 Claude con el encargo de `PROMPT_AUTONOMO.md`: elegir un tema variado
 (consultando el historial para no repetir mundos), generar el post completo
@@ -193,6 +222,19 @@ ssh -L 8090:localhost:8090 usuario@tu-vps   # (el puerto exacto lo dice el flujo
 #   → el enlace OAuth se abre en el navegador del Mac gracias al túnel
 chmod +x generacion_autonoma.sh
 ```
+
+Y su temporizador, gemelo del de publicación pero una hora antes:
+
+```ini
+# /etc/systemd/system/chinesereads-generador.timer
+[Timer]
+OnCalendar=*-*-* 07:00:00 Europe/Madrid
+Persistent=true
+```
+
+(el `.service` correspondiente ejecuta `/root/chinesereads-publicador/generacion_autonoma.sh`).
+Es opcional: sin él, el sistema publica solo lo que generes tú — modo cola
+pura, que es como conviene empezar.
 
 Dos cosas que debes saber y aceptar del modo autónomo:
 

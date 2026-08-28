@@ -10,10 +10,10 @@
 #   - .venv del repo montado y MCP de Canva autorizado (una vez, interactivo)
 #   - .pollinations_token y publicacion_config.json presentes
 #
-# Cron sugerido (crontab -e):
-#   CRON_TZ=Europe/Madrid
-#   0 7 * * * /ruta/al/repo/generacion_autonoma.sh
-#   0 8 * * * cd /ruta/al/repo && /usr/bin/python3 publicador.py publicar >> publicador.log 2>&1
+# Disparo: timer de systemd a las 07:00 Europe/Madrid, una hora antes del de
+# publicación (ver PUBLICACION.md). Con cron NO: el de Debian/Ubuntu ignora
+# CRON_TZ y el servidor va en UTC, así que el horario de verano desplazaría
+# la hora dos veces al año.
 
 set -u
 cd "$(dirname "$0")"
