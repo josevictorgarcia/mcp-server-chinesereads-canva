@@ -11,9 +11,8 @@ contrato, contenido, validación, Canva, exportación, portada, slide final,
 registro, encolado y resumen). Las reglas de ahí mandan; esto de aquí solo decide QUÉ
 post toca hoy.
 
-1. **Plantilla**: alterna entre `texto-6` y `texto-3` respecto al último
-   post del historial (consulta `temas_publicados` / el historial). Usa
-   `texto-imagen-3` solo si el tema es muy visual y Openverse acompaña.
+1. **Plantilla**: siempre `texto-6`. Es la preferencia del usuario y la
+   marcada como `por_defecto` en el catálogo; no la cambies por tu cuenta.
 2. **Número de slides**: 5 o 6, el que mejor cuadre con el tema.
 3. **Tema**: un campo semántico útil para quien aprende chino, VARIADO
    respecto a los temas recientes (`temas_publicados`). Rota entre mundos

@@ -115,6 +115,11 @@ def _normalizar(texto: str) -> str:
     return "".join(c for c in sin_tildes if not unicodedata.combining(c)).strip()
 
 
+def _plantilla_por_defecto() -> str:
+    """La plantilla que se usa salvo que el usuario pida otra explícitamente."""
+    return _leer_json(PLANTILLAS, {}).get("plantilla_por_defecto", "")
+
+
 def _buscar(plantilla_id: str) -> dict:
     catalogo = _catalogo()
     if plantilla_id not in catalogo:
@@ -148,6 +153,10 @@ def listar_plantillas() -> list[dict]:
             "veces_usada": sum(
                 1 for h in historial if h.get("plantilla_id") == p["id"]
             ),
+            "por_defecto": p["id"] == _plantilla_por_defecto(),
+            "desactivada": bool(p.get("desactivada")),
+            **({"motivo_desactivada": p["motivo_desactivada"]}
+               if p.get("motivo_desactivada") else {}),
         }
         for p in _catalogo().values()
     ]
@@ -180,8 +189,19 @@ def preparar_encargo(plantilla_id: str, tema: str, numero_slides: int) -> dict:
 
     No genera el contenido. Genéralo tú a partir de este contrato, una vez por
     slide, y valida cada slide de texto con validar_contenido antes de tocar Canva.
+
+    Salvo que el usuario pida otra cosa explícitamente, la plantilla es la
+    marcada como `plantilla_por_defecto` en el catálogo. Las plantillas
+    desactivadas se rechazan aquí: es preferencia del usuario, no del modelo.
     """
     p = _buscar(plantilla_id)
+
+    if p.get("desactivada"):
+        raise ValueError(
+            f"La plantilla '{plantilla_id}' está desactivada por decisión del "
+            f"usuario: {p.get('motivo_desactivada', 'sin motivo anotado')} "
+            f"Usa '{_plantilla_por_defecto()}' en su lugar."
+        )
 
     if numero_slides < 1:
         raise ValueError("numero_slides debe ser al menos 1.")

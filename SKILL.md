@@ -9,8 +9,10 @@ Flujo de once pasos. No te saltes la validación ni el registro.
 
 ## 1. Elegir plantilla y determinar N
 
-Si el usuario no dice cuál plantilla, llama a `listar_plantillas` y elige por la
-descripción. Si dos encajan, pregunta en vez de adivinar.
+**Por defecto, `texto-6`**: es la preferencia del usuario para todos los
+posts. `listar_plantillas` la marca con `por_defecto: true`. Usa otra solo
+si el usuario la pide por su nombre. Las que salgan con
+`desactivada: true` no se pueden usar — `preparar_encargo` las rechaza.
 
 El número de slides (N) lo dice el usuario en la propia petición ("5 palabras",
 "6 redes sociales..."). Si no da un número explícito, pregúntaselo — no lo

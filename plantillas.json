@@ -136,7 +136,9 @@
         "Pinyin siempre con marcas de tono (sǎo zhǒu, no sao zhou).",
         "La imagen debe representar el significado literal del carácter de forma clara y reconocible a simple vista.",
         "Todas las palabras de un mismo post deben ser del mismo campo semántico y no repetirse entre sí."
-      ]
+      ],
+      "desactivada": true,
+      "motivo_desactivada": "El usuario no quiere posts con imágenes en las slides (2026-08-29). Para reactivarla, quitar este campo."
     },
     {
       "id": "portada",
@@ -166,5 +168,7 @@
         "La marca de agua de chinesereads ya está en la plantilla: no se cambia ni se mueve."
       ]
     }
-  ]
+  ],
+  "plantilla_por_defecto": "texto-6",
+  "_comentario_plantilla_por_defecto": "Preferencia del usuario (2026-08-29): TODOS los posts se hacen con texto-6 salvo que él pida otra cosa explícitamente. Las plantillas con 'desactivada': true no se pueden usar (preparar_encargo las rechaza)."
 }
