@@ -118,8 +118,9 @@ Instagram no tiene ese matiz: público desde el primer día.
 ## Montaje en el VPS (ya hecho el 2026-08-28)
 
 Así quedó instalado en el servidor de chinesereads.com (Ubuntu 24.04,
-`root@65.21.59.130`). Sirve como referencia para reproducirlo si hiciera
-falta rehacerlo.
+`root@65.21.59.130`). Los ficheros que viven fuera de este repo (el override
+de Docker y las unidades de systemd) están copiados en
+[`despliegue/`](despliegue/) para poder rehacerlo sin depender del servidor.
 
 **1. Repo del publicador** en `/root/chinesereads-publicador` (no necesita
 venv ni dependencias: solo Python 3 de sistema). La cola vive en

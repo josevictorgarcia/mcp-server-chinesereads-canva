@@ -1,0 +1,14 @@
+# Añadido local del servidor (NO está en el repo de la web y no se toca con
+# git pull; docker compose lo fusiona solo con docker-compose.yml).
+#
+# Único propósito: publicar por HTTPS la cola de posts de chinesereads-canva
+# en https://chinesereads.com/cola-chinesereads/, porque las APIs de
+# Instagram y TikTok descargan las imágenes desde una URL pública.
+#
+# Se monta dentro del /srv que Caddy ya sirve, así que no hace falta tocar el
+# Caddyfile. Solo lectura: Caddy nunca escribe ahí. La carpeta real vive en
+# /root/chinesereads-publicador/cola, fuera de los repos.
+services:
+  caddy:
+    volumes:
+      - /root/chinesereads-publicador/cola:/srv/cola-chinesereads:ro
