@@ -144,3 +144,11 @@ python3 publicador.py publicar --solo instagram   # (o --solo tiktok)
 
 Si una red falla y la otra no, el post se queda en la cola y al día
 siguiente **solo se reintenta la que falló** — no se duplica la publicada.
+Pero una red que falla siempre no puede bloquear la cola eternamente: tras
+**3 intentos** se da por perdida, se anota en el log y el post se archiva
+igualmente para dejar paso a los siguientes.
+
+Si sabes que una red no va a funcionar durante un tiempo, mejor **pausarla**
+que dejarla fallar: pon `"pausada": true` en su sección de
+`publicacion_config.json` y el publicador la ignora por completo. Es lo que
+está hecho ahora mismo con TikTok, a la espera de la auditoría.

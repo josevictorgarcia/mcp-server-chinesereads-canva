@@ -362,11 +362,19 @@ def tt_publicar(cfg: dict, carpeta: Path, meta: dict) -> str:
 
 # ------------------------------------------------------------------ comandos
 
+MAX_INTENTOS = 3   # tras estos fallos seguidos, se deja de intentar una red
+
+
 def _redes_configuradas(cfg: dict) -> list[str]:
+    """Redes con credenciales y no pausadas. Una red se pausa poniendo
+    `"pausada": true` en su sección de la config — útil, por ejemplo,
+    mientras TikTok no aprueba la auditoría."""
     redes = []
-    if cfg.get("instagram", {}).get("access_token"):
+    if (cfg.get("instagram", {}).get("access_token")
+            and not cfg["instagram"].get("pausada")):
         redes.append("instagram")
-    if cfg.get("tiktok", {}).get("refresh_token"):
+    if (cfg.get("tiktok", {}).get("refresh_token")
+            and not cfg["tiktok"].get("pausada")):
         redes.append("tiktok")
     return redes
 
@@ -456,6 +464,7 @@ def cmd_publicar(dry_run: bool, solo: str) -> int:
         return 0
 
     fallos = 0
+    intentos = meta.setdefault("intentos_fallidos", {})
     for red in faltan:
         try:
             if red == "instagram":
@@ -465,18 +474,31 @@ def cmd_publicar(dry_run: bool, solo: str) -> int:
                 tt_refrescar_token(cfg)
                 resultado = tt_publicar(cfg, carpeta, meta)
             ya[red] = {"id": resultado, "fecha": _ahora().isoformat()}
+            intentos.pop(red, None)
             _guardar_meta(carpeta, meta)
             _log(f"{red}: publicado ({resultado}).")
         except RuntimeError as e:
             fallos += 1
-            _log(f"{red}: ERROR — {e}")
+            intentos[red] = intentos.get(red, 0) + 1
+            _guardar_meta(carpeta, meta)
+            _log(f"{red}: ERROR (intento {intentos[red]}/{MAX_INTENTOS}) — {e}")
 
-    if all(r in ya for r in redes):
+    # Una red que falla siempre no puede bloquear la cola indefinidamente: si
+    # se agotan los intentos, se da por perdida y el post sigue su camino.
+    agotadas = [r for r in faltan if intentos.get(r, 0) >= MAX_INTENTOS]
+    if agotadas:
+        _log(f"Se abandona {', '.join(agotadas)} en {carpeta.name} tras "
+             f"{MAX_INTENTOS} intentos; el post no bloqueará la cola.")
+
+    pendientes_reales = [r for r in redes
+                         if r not in ya and intentos.get(r, 0) < MAX_INTENTOS]
+    if not pendientes_reales:
         _archivar(carpeta)
-        _log(f"{carpeta.name} archivado en publicados/.")
+        _log(f"{carpeta.name} archivado en publicados/"
+             f"{' (con redes sin publicar)' if agotadas else ''}.")
     else:
-        _log(f"{carpeta.name} se queda en la cola para reintentar "
-             "las redes que fallaron.")
+        _log(f"{carpeta.name} se queda en la cola para reintentar: "
+             f"{', '.join(pendientes_reales)}.")
     return 1 if fallos else 0
 
 

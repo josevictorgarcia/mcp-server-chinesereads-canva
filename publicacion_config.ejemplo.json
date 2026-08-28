@@ -18,7 +18,9 @@
     "access_token": "",
     "access_token_caduca": "",
     "refresh_token": "",
-    "privacy_level": "SELF_ONLY"
+    "privacy_level": "SELF_ONLY",
+    "pausada": false,
+    "_comentario_pausada": "true = el publicador ignora esta red. Util mientras TikTok no apruebe la auditoria (una app sin auditar no puede publicar en cuentas publicas)."
   },
   "hashtags_por_defecto": [
     "#learnchinese",
