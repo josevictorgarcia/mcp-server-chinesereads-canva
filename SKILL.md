@@ -215,18 +215,32 @@ Si existe `publicacion_config.json` en la raíz del repo con la sección
 PUBLICACION.md). Si el fichero no existe, salta este paso sin más y dilo en
 el resumen final.
 
-1. **Caption** (descripción de la publicación), en inglés:
-   - Primera línea: gancho corto (puede variar el título de la portada, no
-     calcarlo).
-   - Después, la lista de las palabras del post, una por línea:
-     `汉字 (pinyin) — meaning`. Es la chuleta que hace que guarden el post.
-   - Cierre breve con llamada a la acción (save this post / follow
-     @chinesereads for more), sin sonar a spam.
-   - **Hashtags**: si el usuario dio hashtags en la petición, usa ESOS.
-     Si no, no los escribas en la caption: el publicador añade solo los
-     `hashtags_por_defecto` de la config. Puedes añadir en `hashtags` del
-     meta.json 2-3 específicos del tema además de los por defecto
-     (cópialos de la config y añade los tuyos) — nunca más de ~12 en total.
+1. **Caption** (descripción de la publicación), en inglés y **en la voz de
+   la cuenta** (@chinesereadsapp). Su patrón real, corto y sin adornos:
+
+   ```
+   How to express surprise in chinese
+
+   Follow for more!
+
+   #learnchinese #chineseexpressions #dku #chineselanguage #chineselanguagelearning
+   ```
+
+   - Primera línea: gancho corto o pregunta directa ("Have you ever
+     mistaken them?", "Did you know all of them? 🤔"). Puede variar el
+     título de la portada, no calcarlo.
+   - Una línea de llamada a la acción que invite a comentar o seguir
+     ("Let me know in the comments!", "Comment if you knew them!",
+     "Follow for more!"). Los comentarios tempranos ayudan al alcance.
+   - Cuando encaje, el plug de la web tal y como lo escribe él:
+     "Learn chinese with chinesereads.com".
+   - **Nada de listas de palabras**: sus captions son breves; el
+     vocabulario ya está en las slides.
+   - **Hashtags**: si el usuario dio hashtags en la petición, usa ESOS. Si
+     no, no los escribas en la caption: el publicador añade los
+     `hashtags_por_defecto`. En `hashtags` del meta.json puedes poner una
+     mezcla de esos y 2-3 específicos del tema — **unos 5 en total**, que
+     es lo que usa la cuenta. Nada de bloques de 20 hashtags.
 2. **Convertir las imágenes**: llama a `preparar_para_cola(<carpeta del
    post>)`. Instagram solo admite **JPEG** y TikTok limita a 1080p y 20 MB,
    así que los PNG de 2048 px de Canva no valen para publicar: la
