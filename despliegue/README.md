@@ -192,10 +192,19 @@ Esto es trabajo de navegador, una sola vez. Resultado: dos datos
 
 1. **My Apps → Create App**.
 2. Nombre: `chinesereads-publisher`. Email de contacto: el tuyo.
-3. Te pregunta qué quiere hacer la app. Elige la opción de **Instagram**
-   (según la versión de la pantalla: "Access the Instagram API" o similar).
-   Si no aparece, elige **"Other"** → tipo **"Business"** y añade el
-   producto Instagram después desde el panel.
+3. Te pregunta qué quiere hacer la app ("use cases"). **Con marcar solo el
+   de Instagram basta**: ese caso de uso ya trae consigo los permisos que
+   necesitamos (`instagram_business_basic` e
+   `instagram_business_content_publish`). No añadas Facebook Login ni
+   otros: cuantos menos permisos pida la app, menos superficie expuesta y
+   menos posibilidades de que Meta pida revisión. Siempre se pueden añadir
+   después desde el panel si hicieran falta.
+   Si esa opción no aparece, elige **"Other"** → tipo **"Business"** y
+   añade el producto Instagram luego desde el menú lateral.
+
+**Cuántas apps puedes tener**: no son infinitas, pero sobran — el límite es
+de **15 apps** por cuenta de desarrollador (sin cuenta de empresa
+verificada), y las archivadas también cuentan. Aquí solo necesitas una.
 
 ### 2.4 Generar el token
 
