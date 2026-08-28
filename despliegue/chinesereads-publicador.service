@@ -1,12 +1,16 @@
 [Unit]
 Description=Publica el post mas antiguo de la cola de chinesereads en Instagram y TikTok
-Documentation=file:/root/chinesereads-publicador/PUBLICACION.md
+Documentation=file:/home/chinesereads/publicador/PUBLICACION.md
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/root/chinesereads-publicador
+# Usuario sin privilegios: Claude Code se niega a ejecutarse como root
+# con permisos automaticos, y el publicador tampoco necesita root.
+User=chinesereads
+Group=chinesereads
+WorkingDirectory=/home/chinesereads/publicador
 ExecStart=/usr/bin/python3 publicador.py publicar
 # Sin reintentos automaticos: si falla, el post se queda en la cola y el
 # siguiente disparo del timer (manana) reintenta solo las redes que fallaron.

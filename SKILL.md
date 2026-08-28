@@ -24,7 +24,7 @@ lo rechazará si te pasas, pero avisa antes si ya sabes que N es demasiado alto)
 publicó algo mientras tanto (si no, repetirías palabras o portadas):
 
 ```bash
-rsync -a --update <vps.ssh>:/root/chinesereads-publicador/historial.json ./historial.json
+rsync -a --update <vps.ssh>:/home/chinesereads/publicador/historial.json ./historial.json
 ```
 
 `--update` solo sobrescribe si el del servidor es más nuevo, así que nunca
@@ -275,7 +275,7 @@ el resumen final.
 
 5. **Sube el historial actualizado** al servidor, para que el generador
    autónomo conozca lo que acabas de publicar:
-   `rsync -a --update ./historial.json <vps.ssh>:/root/chinesereads-publicador/historial.json`
+   `rsync -a --update ./historial.json <vps.ssh>:/home/chinesereads/publicador/historial.json`
    (omítelo si estás EN el VPS: ahí ya es el mismo fichero).
 
 6. **Enséñaselo al usuario**: manda las imágenes del post

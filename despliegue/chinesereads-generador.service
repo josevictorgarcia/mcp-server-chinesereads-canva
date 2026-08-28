@@ -1,15 +1,19 @@
 [Unit]
 Description=Genera el post del dia con Claude Code si la cola esta vacia
-Documentation=file:/root/chinesereads-publicador/PUBLICACION.md
+Documentation=file:/home/chinesereads/publicador/PUBLICACION.md
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/root/chinesereads-publicador
+# Usuario sin privilegios: Claude Code se niega a ejecutarse como root
+# con permisos automaticos, y el publicador tampoco necesita root.
+User=chinesereads
+Group=chinesereads
+WorkingDirectory=/home/chinesereads/publicador
 # Credenciales de Claude (token de suscripcion o ANTHROPIC_API_KEY).
 # Fichero aparte con chmod 600: nunca en el repo.
 EnvironmentFile=/etc/chinesereads-generador.env
-ExecStart=/root/chinesereads-publicador/generacion_autonoma.sh
+ExecStart=/home/chinesereads/publicador/generacion_autonoma.sh
 # Generar un post lleva varios minutos (Canva, imagenes, exportaciones).
 TimeoutStartSec=2700

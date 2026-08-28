@@ -11,38 +11,58 @@ Montado el 2026-08-28.
 
 ## Parte 0 — Mapa: qué hay y dónde
 
-Nada de esto vive dentro de la carpeta de tu web. Son tres sitios
-distintos, y cada uno tiene su razón de ser:
+Nada de esto vive dentro de la carpeta de tu web, y nada corre como `root`.
+Son tres sitios distintos, cada uno con su razón de ser:
 
 ```
-/root/
-├── 2025-ChineseTexts/                    ← TU WEB (repo de la universidad)
-│   ├── .git/info/exclude                 ← [MODIFICADO] +1 línea, ver abajo
-│   └── docker/
-│       ├── Caddyfile                     ← INTACTO, ni se toca
-│       ├── docker-compose.yml            ← INTACTO, ni se toca
-│       └── docker-compose.override.yml   ← [NUEVO] lo único añadido aquí
-│
-├── chinesereads-publicador/              ← [NUEVO] este repo, clonado
+/root/2025-ChineseTexts/                  ← TU WEB (repo de la universidad)
+├── .git/info/exclude                     ← [MODIFICADO] +1 línea, ver abajo
+└── docker/
+    ├── Caddyfile                         ← INTACTO, ni se toca
+    ├── docker-compose.yml                ← INTACTO, ni se toca
+    └── docker-compose.override.yml       ← [NUEVO] lo único añadido aquí
+
+/home/chinesereads/                       ← [NUEVO] usuario dedicado, sin sudo
+├── publicador/                           ← este repo, clonado
 │   ├── publicador.py                     (el que publica)
 │   ├── publicacion_config.json           ← LOS TOKENS (chmod 600, nunca a git)
-│   ├── generacion_autonoma.sh            (generación con Claude, opcional)
+│   ├── historial.json                    ← memoria anti-repetición (chmod 600)
+│   ├── .pollinations_token               ← clave de imágenes (chmod 600)
+│   ├── .venv/                            (Pillow + MCP, para generar)
+│   ├── generacion_autonoma.sh            (generación con Claude)
 │   ├── PROMPT_AUTONOMO.md                (el encargo para Claude)
-│   ├── cola/                             ← posts pendientes (se sirven por HTTPS)
-│   ├── publicados/                       ← ya publicados, se borran a los 7 días
+│   ├── cola/                             ← posts pendientes (servidos por HTTPS)
+│   ├── publicados/                       ← publicados, se borran a los 7 días
 │   └── publicador.log
-│
-└── (backups/ y 2025-ChineseTexts eran tuyos de antes)
+├── .claude/  .claude.json                ← sesión de Claude Code del usuario
+└── (su home; nada más)
 
-/etc/systemd/system/
-├── chinesereads-publicador.service       ← [NUEVO] ejecuta publicador.py
-└── chinesereads-publicador.timer         ← [NUEVO] lo dispara a las 8:00
+/etc/
+├── chinesereads-generador.env            ← [NUEVO] token de Claude (root, 600)
+└── systemd/system/
+    ├── chinesereads-publicador.service   ← publica (User=chinesereads)
+    ├── chinesereads-publicador.timer     ← 8:00 hora española
+    ├── chinesereads-generador.service    ← genera (User=chinesereads)
+    └── chinesereads-generador.timer      ← 7:00 hora española
 ```
 
-**Por qué el publicador va en `/root/chinesereads-publicador` y no dentro de
+**Por qué un usuario dedicado y no `root`**: Claude Code **se niega a
+ejecutarse como root** con permisos automáticos
+(`--dangerously-skip-permissions cannot be used with root/sudo privileges`),
+y con razón: un agente autónomo no debe tener el servidor entero a su
+alcance. `chinesereads` no está en `sudo` y solo posee su propia carpeta, así
+que el radio de acción del generador queda acotado a este proyecto. El
+publicador tampoco necesita root, así que corre con el mismo usuario.
+
+**Por qué el publicador va en `/home/chinesereads/publicador` y no dentro de
 la web**: son dos proyectos independientes, con repos distintos. Mezclarlos
 significaría que un `git pull` de uno pueda romper el otro. Separados, la
 web no sabe que esto existe (salvo por una línea de configuración de Caddy).
+
+**Nota sobre el fichero de entorno**: `/etc/chinesereads-generador.env` es de
+`root` con permisos 600 a propósito — systemd lo lee como root *antes* de
+bajar privilegios, así que el usuario `chinesereads` nunca puede leer el
+token desde una shell.
 
 **Por qué el override SÍ tiene que estar dentro de `docker/` de la web**:
 Docker Compose solo carga automáticamente un `docker-compose.override.yml`
@@ -53,13 +73,17 @@ alternativa; a cambio, es un fichero nuevo que no modifica ninguno tuyo.
 
 ## Parte 1 — Montarlo desde cero en un servidor
 
-### 1.1 Clonar el publicador
+### 1.1 Usuario dedicado y clonado del publicador
 
 ```bash
-git clone https://github.com/josevictorgarcia/mcp-server-chinesereads-canva.git \
-  /root/chinesereads-publicador
-cd /root/chinesereads-publicador
-mkdir -p cola
+useradd -m -s /bin/bash chinesereads      # sin sudo, a propósito
+chmod 755 /home/chinesereads              # para que Caddy (root) pueda leer la cola
+
+sudo -u chinesereads git clone \
+  https://github.com/josevictorgarcia/mcp-server-chinesereads-canva.git \
+  /home/chinesereads/publicador
+cd /home/chinesereads/publicador
+sudo -u chinesereads mkdir -p cola
 chmod +x generacion_autonoma.sh
 ```
 
@@ -83,7 +107,7 @@ dentro. Crea `/root/2025-ChineseTexts/docker/docker-compose.override.yml`
 services:
   caddy:
     volumes:
-      - /root/chinesereads-publicador/cola:/srv/cola-chinesereads:ro
+      - /home/chinesereads/publicador/cola:/srv/cola-chinesereads:ro
 ```
 
 Aplícalo recreando **solo** el contenedor de Caddy (2 segundos; es lo mismo
@@ -104,9 +128,9 @@ echo "docker/docker-compose.override.yml" >> /root/2025-ChineseTexts/.git/info/e
 Comprueba que funciona:
 
 ```bash
-echo hola > /root/chinesereads-publicador/cola/prueba.txt
+echo hola > /home/chinesereads/publicador/cola/prueba.txt
 curl https://chinesereads.com/cola-chinesereads/prueba.txt   # → hola
-rm /root/chinesereads-publicador/cola/prueba.txt
+rm /home/chinesereads/publicador/cola/prueba.txt
 ```
 
 **Por qué NO se toca el `Caddyfile`**: está versionado en el repo de la web
@@ -117,7 +141,7 @@ overwritten" y te dejaría el despliegue bloqueado.
 ### 1.3 Configuración con los tokens
 
 ```bash
-cd /root/chinesereads-publicador
+cd /home/chinesereads/publicador
 cp publicacion_config.ejemplo.json publicacion_config.json
 chmod 600 publicacion_config.json      # solo root puede leerlo
 nano publicacion_config.json
@@ -242,7 +266,7 @@ minutos).
 ### 2.6 Primera prueba
 
 ```bash
-cd /root/chinesereads-publicador
+cd /home/chinesereads/publicador
 python3 publicador.py estado                 # ¿ve la red instagram?
 python3 publicador.py publicar --dry-run     # sin publicar: revisa caption y URLs
 systemctl start chinesereads-publicador.service   # publicar ya, sin esperar al timer
@@ -328,7 +352,7 @@ chmod 600 /etc/chinesereads-generador.env
 ### 4.2 El resto del entorno
 
 ```bash
-cd /root/chinesereads-publicador
+cd /home/chinesereads/publicador
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt     # Pillow y el SDK de MCP
 ```
@@ -337,7 +361,8 @@ Copia la clave de Pollinations desde tu Mac (nunca por git):
 
 ```bash
 # desde el Mac
-scp .pollinations_token root@65.21.59.130:/root/chinesereads-publicador/
+scp .pollinations_token root@65.21.59.130:/home/chinesereads/publicador/
+ssh root@65.21.59.130 'chown chinesereads: /home/chinesereads/publicador/.pollinations_token && chmod 600 /home/chinesereads/publicador/.pollinations_token'
 ```
 
 El MCP de Canva necesita su OAuth **una vez, con navegador**. Desde el Mac,
@@ -346,8 +371,27 @@ abre un túnel para que el enlace de autorización pueda volver al servidor:
 ```bash
 ssh -L 8090:localhost:8090 root@65.21.59.130
 # ya dentro:
-cd /root/chinesereads-publicador && claude
+cd /home/chinesereads/publicador && claude
 # → /mcp → conectar canva → se abre el enlace en el navegador del Mac
+```
+
+Los servidores MCP declarados en `.mcp.json` requieren aprobación **por
+usuario y por ruta del proyecto**. Si `claude mcp list` dice *"Pending
+approval"*, se aprueban desde una sesión interactiva de `claude` o, sin
+interfaz, marcándolos en `~/.claude.json` del usuario:
+
+```bash
+sudo -u chinesereads python3 -c "
+import json
+ruta = '/home/chinesereads/.claude.json'
+c = json.load(open(ruta))
+p = c['projects']['/home/chinesereads/publicador']
+p['enabledMcpjsonServers'] = ['catalogo-plantillas', 'canva']
+p['hasTrustDialogAccepted'] = True
+json.dump(c, open(ruta, 'w'), indent=2)
+"
+sudo -u chinesereads bash -c "cd /home/chinesereads/publicador && claude mcp list"
+# los tres deben decir ✔ Connected
 ```
 
 ### 4.3 El historial compartido
@@ -360,8 +404,8 @@ otro lado es más nuevo): lo baja del VPS antes de generar y lo sube después
 de registrar. La copia inicial se hizo con:
 
 ```bash
-scp historial.json root@65.21.59.130:/root/chinesereads-publicador/
-ssh root@65.21.59.130 'chmod 600 /root/chinesereads-publicador/historial.json'
+scp historial.json root@65.21.59.130:/home/chinesereads/publicador/
+ssh root@65.21.59.130 'chown chinesereads: /home/chinesereads/publicador/historial.json && chmod 600 /home/chinesereads/publicador/historial.json'
 ```
 
 ### 4.4 Su temporizador
@@ -400,7 +444,7 @@ systemctl list-timers chinesereads-publicador.timer
 journalctl -u chinesereads-publicador.service -n 50
 
 # Estado general y cola
-cd /root/chinesereads-publicador
+cd /home/chinesereads/publicador
 python3 publicador.py estado
 python3 publicador.py cola
 
@@ -439,7 +483,7 @@ rm /root/2025-ChineseTexts/docker/docker-compose.override.yml
 cd /root/2025-ChineseTexts/docker
 docker compose --env-file .env up -d --force-recreate --no-deps caddy
 
-rm -rf /root/chinesereads-publicador
+rm -rf /home/chinesereads/publicador
 ```
 
 (La línea añadida a `/root/2025-ChineseTexts/.git/info/exclude` es

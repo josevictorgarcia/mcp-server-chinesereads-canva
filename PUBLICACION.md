@@ -122,9 +122,9 @@ Así quedó instalado en el servidor de chinesereads.com (Ubuntu 24.04,
 de Docker y las unidades de systemd) están copiados en
 [`despliegue/`](despliegue/) para poder rehacerlo sin depender del servidor.
 
-**1. Repo del publicador** en `/root/chinesereads-publicador` (no necesita
+**1. Repo del publicador** en `/home/chinesereads/publicador` (no necesita
 venv ni dependencias: solo Python 3 de sistema). La cola vive en
-`/root/chinesereads-publicador/cola`, fuera del repo de la web.
+`/home/chinesereads/publicador/cola`, fuera del repo de la web.
 
 **2. Servir la cola por HTTPS sin tocar la web.** La web va en Docker con
 Caddy en contenedor, y su `Caddyfile` está versionado en el repo de la web
@@ -139,7 +139,7 @@ cola dentro del `/srv` que Caddy ya sirve:
 services:
   caddy:
     volumes:
-      - /root/chinesereads-publicador/cola:/srv/cola-chinesereads:ro
+      - /home/chinesereads/publicador/cola:/srv/cola-chinesereads:ro
 ```
 
 Para aplicarlo (lo mismo que hace `deploy.sh` de rutina, ~2 s de parpadeo):
@@ -152,7 +152,7 @@ docker compose --env-file .env up -d --force-recreate --no-deps caddy
 → `base_url_publica = https://chinesereads.com/cola-chinesereads`
 (verificado: sirve los JPEG con `Content-Type: image/jpeg`).
 
-**3. Config**: `/root/chinesereads-publicador/publicacion_config.json`,
+**3. Config**: `/home/chinesereads/publicador/publicacion_config.json`,
 `chmod 600`, con `vps.ssh` vacío (este ES el VPS). Comprobar con
 `python3 publicador.py estado`.
 
@@ -234,7 +234,7 @@ OnCalendar=*-*-* 07:00:00 Europe/Madrid
 Persistent=true
 ```
 
-(el `.service` correspondiente ejecuta `/root/chinesereads-publicador/generacion_autonoma.sh`).
+(el `.service` correspondiente ejecuta `/home/chinesereads/publicador/generacion_autonoma.sh`).
 Es opcional: sin él, el sistema publica solo lo que generes tú — modo cola
 pura, que es como conviene empezar.
 

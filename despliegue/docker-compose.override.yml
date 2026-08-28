@@ -7,8 +7,8 @@
 #
 # Se monta dentro del /srv que Caddy ya sirve, así que no hace falta tocar el
 # Caddyfile. Solo lectura: Caddy nunca escribe ahí. La carpeta real vive en
-# /root/chinesereads-publicador/cola, fuera de los repos.
+# /home/chinesereads/publicador/cola, fuera de los repos.
 services:
   caddy:
     volumes:
-      - /root/chinesereads-publicador/cola:/srv/cola-chinesereads:ro
+      - /home/chinesereads/publicador/cola:/srv/cola-chinesereads:ro
