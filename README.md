@@ -4,8 +4,24 @@ Pides *"5 palabras en chino sobre deportes"* y sale un carrusel nuevo de 5
 slides en tu cuenta de Canva, con la plantilla intacta y sin repetir palabras
 recientes.
 
+Y no se queda ahí: el post se publica solo en Instagram y TikTok a las 20:00.
+
 Coste: **0 €**. Canva Free + el servidor MCP oficial de Canva + este servidor
 local. Sin redimensionado, sin autofill de Enterprise, sin recursos premium.
+
+## Documentación
+
+| | |
+|---|---|
+| [docs/local.md](docs/local.md) | Instalar y usarlo en tu Mac |
+| [docs/despliegue.md](docs/despliegue.md) | Montar el servidor desde cero |
+| [docs/configuracion.md](docs/configuracion.md) | Todos los secretos: qué, de dónde y dónde va |
+| [docs/instagram.md](docs/instagram.md) · [docs/tiktok.md](docs/tiktok.md) | Cada red: conexión, autenticación y pendientes |
+| [docs/publicacion.md](docs/publicacion.md) | Cómo funciona la publicación automática |
+| [docs/pollinations.md](docs/pollinations.md) | Imágenes con IA y su coste |
+| [SKILL.md](SKILL.md) | El flujo de once pasos que genera un post |
+
+Índice completo en [docs/](docs/).
 
 ## Cómo está montado
 
@@ -26,19 +42,16 @@ modelo.** Contar caracteres es justo el tipo de cosa que un LLM hace regular.
 ```bash
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
-```
-
-Conecta Canva desde Claude (Ajustes → Conectores → Canva) o, en Claude Code:
-
-```bash
 claude mcp add --transport http canva https://mcp.canva.com/mcp
 ```
 
-Se abre el OAuth de Canva en el navegador. No hay que crear ninguna app ni
-gestionar API keys.
+Se abre el OAuth de Canva en el navegador; no hay que crear ninguna app. El
+servidor local ya está declarado en `.mcp.json`, así que Claude Code lo
+levanta solo al abrir el proyecto: comprueba con `/mcp` que aparecen los dos.
 
-El servidor local ya está declarado en `.mcp.json`, así que Claude Code lo
-levanta solo al abrir el proyecto. Comprueba con `/mcp` que aparecen los dos.
+Paso a paso completo (config, ssh al servidor, cómo pedir un post) en
+[docs/local.md](docs/local.md). Para montar el servidor:
+[docs/despliegue.md](docs/despliegue.md).
 
 ## Configurar tus plantillas
 
@@ -148,7 +161,7 @@ Ese fichero está en `.gitignore`: no se sube a git nunca. Con la clave,
 zimage, flux...), que cuestan "pollen" — la moneda prepago del servicio.
 Precios, cómo conseguir pollen y qué pasa exactamente cuando se acaba
 (spoiler: nada grave, no hay saldo negativo y el flujo no se rompe): ver
-[POLLINATIONS.md](POLLINATIONS.md).
+[docs/pollinations.md](docs/pollinations.md).
 
 **Preparación (una vez):** crea en Canva un diseño de 1 página con una foto de
 fondo a pantalla completa, el título de ejemplo encima, tu marca de agua de
@@ -185,18 +198,20 @@ Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
 
 ## Publicación automática (Instagram y TikTok)
 
-El proyecto incluye un publicador autónomo (`publicador.py`, sin MCP y sin
-dependencias) que ya vive en el VPS de chinesereads.com: cada post generado
-se encola con su descripción y hashtags ya decididos (`meta.json`), y un
-temporizador de systemd a las 20:00 (hora española) publica el más antiguo de
-la cola por las APIs oficiales de Meta y TikTok. Un segundo temporizador
-opcional a las 19:00 (`generacion_autonoma.sh`) arranca Claude Code en
-headless para generar el post del día **solo si la cola está vacía** — red de seguridad para los días
-en que no enciendes el ordenador. El VPS se autolimpia (los posts publicados
-se borran a los 7 días; la copia permanente son los diseños y descartes en
-Canva). Setup completo (apps, tokens, dominio, cron, convivencia con una web
-en producción) y la respuesta a "¿publicar por API baja el alcance?" (no):
-ver [PUBLICACION.md](PUBLICACION.md).
+Los posts no se quedan en Canva: se publican solos. `publicador.py` (sin MCP
+y sin dependencias) vive en el VPS de chinesereads.com y, cada día a las
+20:00 hora española, publica el post más antiguo de la cola por las APIs
+oficiales de Meta y TikTok. Un segundo temporizador a las 19:00 genera el
+post del día **solo si la cola está vacía**, como red de seguridad para
+cuando no enciendes el ordenador.
+
+Montar todo esto en un servidor nuevo es un solo comando:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/josevictorgarcia/mcp-server-chinesereads-canva/main/despliegue/deploy.sh | sudo bash
+```
+
+Documentación completa en [`docs/`](docs/) — ver el índice abajo.
 
 ## Lo que este proyecto no hace
 
@@ -222,10 +237,13 @@ ver [PUBLICACION.md](PUBLICACION.md).
 Si el ordenador muere o borras esta carpeta, esto es lo que pasa:
 
 - **Recuperable con `git clone`** (está todo en el repo): el código del
-  servidor, `plantillas.json` (con los ids de los diseños maestros y de la
-  carpeta de Canva), `SKILL.md`, la configuración MCP (`.mcp.json`) y toda la
-  documentación. Tras clonar: `python3 -m venv .venv && ./.venv/bin/pip
-  install -r requirements.txt` y reconectar el MCP de Canva (OAuth).
+  servidor, `plantillas.json` (con los ids de los diseños maestros y de las
+  carpetas de Canva), `SKILL.md`, la configuración MCP (`.mcp.json`), toda la
+  documentación y **el despliegue completo del servidor**
+  ([`despliegue/`](despliegue/)). En el Mac: `python3 -m venv .venv &&
+  ./.venv/bin/pip install -r requirements.txt` y reconectar el MCP de Canva.
+  En un servidor nuevo: `deploy.sh` y la lista de
+  [docs/configuracion.md](docs/configuracion.md).
 - **Vive en Canva, no en tu disco**: las plantillas maestras, todos los
   diseños generados (en `chinesereads-posts/`) y los assets subidos. Los PNG
   de `posts/` se re-exportan desde ahí cuando quieras.
@@ -250,10 +268,9 @@ Si el ordenador muere o borras esta carpeta, esto es lo que pasa:
 import servidor_catalogo as s
 print(s.listar_plantillas())
 print(s.preparar_encargo('texto-3', 'animales', 4))
-print(s.elementos_usados('texto-3'))
-print(s.portadas_recientes())
 "
 ```
 
 Debe listar tus plantillas y devolver el contrato de una petición de 4 slides
-para `texto-3`.
+para `texto-3`. Si tocas `servidor_catalogo.py`, reconecta con `/mcp`: el
+subproceso en marcha es el anterior.

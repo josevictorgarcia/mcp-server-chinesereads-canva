@@ -25,7 +25,7 @@ permanente vive en Canva (los diseños del post) y, si quieres, en tu Mac.
 
 Configuración en publicacion_config.json (copiar de
 publicacion_config.ejemplo.json y rellenar). Contiene tokens: está en
-.gitignore y jamás debe subirse a git. Guía completa: PUBLICACION.md.
+.gitignore y jamás debe subirse a git. Guía completa: docs/publicacion.md.
 """
 
 import json
@@ -49,7 +49,7 @@ IG_GRAPH = "https://graph.instagram.com/v23.0"
 IG_REFRESH = "https://graph.instagram.com/refresh_access_token"
 TIKTOK_API = "https://open.tiktokapis.com/v2"
 
-# Límites duros de cada plataforma (documentados en PUBLICACION.md).
+# Límites duros de cada plataforma (documentados en docs/publicacion.md).
 IG_MAX_IMAGENES = 10
 IG_MAX_CAPTION = 2200
 TT_MAX_IMAGENES = 35
@@ -108,7 +108,7 @@ def cargar_config() -> dict:
     if not CONFIG.exists():
         raise SystemExit(
             "No existe publicacion_config.json. Copia "
-            "publicacion_config.ejemplo.json, rellénalo (ver PUBLICACION.md) "
+            "publicacion_config.ejemplo.json, rellénalo (ver docs/configuracion.md) "
             "y vuelve a intentarlo."
         )
     return json.loads(CONFIG.read_text(encoding="utf-8"))
@@ -419,7 +419,7 @@ def cmd_publicar(dry_run: bool, solo: str) -> int:
         redes = [r for r in redes if r == solo]
     if not redes:
         _log("No hay ninguna red configurada que publicar. Revisa "
-             "publicacion_config.json (ver PUBLICACION.md).")
+             "publicacion_config.json (ver docs/configuracion.md).")
         return 1
     pendientes = posts_en_cola()
     if not pendientes:

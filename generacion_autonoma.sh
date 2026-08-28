@@ -1,17 +1,17 @@
 #!/bin/bash
 # Generación autónoma de un post con Claude Code en modo headless.
 #
-# Pensado para un cron en el VPS ANTES del cron de publicación (p. ej. 7:00
-# generar, 8:00 publicar). Solo genera si la cola está vacía: los posts que
+# Se dispara en el VPS una hora ANTES de la publicación (19:00 generar,
+# 20:00 publicar). Solo genera si la cola está vacía: los posts que
 # generes tú a mano siempre tienen prioridad y el bot no gasta nada.
 #
-# Requisitos en el VPS (guía completa en PUBLICACION.md):
+# Requisitos en el VPS (guía completa en docs/despliegue.md):
 #   - Claude Code instalado y autenticado (claude setup-token)
 #   - .venv del repo montado y MCP de Canva autorizado (una vez, interactivo)
 #   - .pollinations_token y publicacion_config.json presentes
 #
-# Disparo: timer de systemd a las 07:00 Europe/Madrid, una hora antes del de
-# publicación (ver PUBLICACION.md). Con cron NO: el de Debian/Ubuntu ignora
+# Disparo: timer de systemd a las 19:00 Europe/Madrid, una hora antes del de
+# publicación (ver docs/publicacion.md). Con cron NO: el de Debian/Ubuntu ignora
 # CRON_TZ y el servidor va en UTC, así que el horario de verano desplazaría
 # la hora dos veces al año.
 

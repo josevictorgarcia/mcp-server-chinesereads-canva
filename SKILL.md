@@ -224,7 +224,7 @@ slide de cierre.
 
 Si existe `publicacion_config.json` en la raíz del repo con la sección
 `vps` rellena, el post se encola para que el VPS lo publique solo (ver
-PUBLICACION.md). Si el fichero no existe, salta este paso sin más y dilo en
+docs/publicacion.md). Si el fichero no existe, salta este paso sin más y dilo en
 el resumen final.
 
 1. **Caption** (descripción de la publicación), en inglés y **en la voz de
@@ -259,7 +259,7 @@ el resumen final.
    herramienta deja en `<carpeta del post>/_cola/` los `.jpg` a 1080 px
    listos (los PNG originales se quedan intactos como archivo).
 3. **`meta.json`** dentro de esa carpeta `_cola/`, con el formato
-   documentado en PUBLICACION.md: `tema`, `titulo` (el de la portada),
+   documentado en docs/publicacion.md: `tema`, `titulo` (el de la portada),
    `caption` (sin hashtags), `hashtags` (opcional, ver arriba), `imagenes`
    (los **.jpg**, en orden: portada primero, luego las slides y
    `99-final.jpg` la última si la hay), `creado` (fecha de hoy).
