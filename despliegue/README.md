@@ -1,54 +1,430 @@
-# Ficheros que viven en el VPS
+# Guía completa del servidor, desde cero
 
-Copias de referencia de todo lo que se instaló **fuera** de este repo en el
-servidor de chinesereads.com (`root@65.21.59.130`, Ubuntu 24.04) el
-2026-08-28. Están aquí para que nada dependa solo del servidor: si hubiera
-que rehacerlo, se copian a su sitio y listo. El detalle del porqué de cada
-decisión está en [PUBLICACION.md](../PUBLICACION.md).
+Todo lo que hay instalado en el VPS de chinesereads.com y cómo rehacerlo
+paso a paso si un día hay que montarlo de nuevo (servidor nuevo, desastre,
+o simplemente entender qué hay dónde).
 
-| Fichero | Dónde va en el servidor | Para qué |
-|---|---|---|
-| `docker-compose.override.yml` | `/root/2025-ChineseTexts/docker/` | Publica la cola en `https://chinesereads.com/cola-chinesereads/` montándola en el `/srv` de Caddy |
-| `chinesereads-publicador.service` | `/etc/systemd/system/` | Ejecuta `publicador.py publicar` |
-| `chinesereads-publicador.timer` | `/etc/systemd/system/` | Lo dispara a las 8:00 hora española |
+Servidor actual: **Ubuntu 24.04, `root@65.21.59.130`** (Hetzner, 8 GB RAM).
+Montado el 2026-08-28.
 
-Lo único que NO está aquí (ni puede estarlo) es
-`publicacion_config.json`: contiene los tokens de Instagram y TikTok. Vive
-solo en el servidor con `chmod 600` y en tu Mac. Su plantilla vacía es
-`publicacion_config.ejemplo.json`, en la raíz del repo.
+---
 
-## Sobre el override de Docker
+## Parte 0 — Mapa: qué hay y dónde
 
-Es la pieza más delicada, así que conviene entenderla:
+Nada de esto vive dentro de la carpeta de tu web. Son tres sitios
+distintos, y cada uno tiene su razón de ser:
 
-- Es un fichero **nuevo y sin versionar** dentro del repo de la web
-  (`codeurjc-students/2025-ChineseTexts`). No modifica ningún fichero de
-  ese repo — en particular **no toca el `Caddyfile`**, que se actualiza con
-  cada `git pull` del despliegue.
-- Docker Compose lo fusiona automáticamente con `docker-compose.yml`
-  (comportamiento estándar: cualquier `docker-compose.override.yml` en el
-  mismo directorio se aplica solo), así que los despliegues normales lo
-  respetan sin hacer nada especial.
-- Está listado en `/root/2025-ChineseTexts/.git/info/exclude` (exclusión
-  local de git, no versionada) para que no aparezca en `git status` ni se
-  cuele en un `git add -A` de la web.
+```
+/root/
+├── 2025-ChineseTexts/                    ← TU WEB (repo de la universidad)
+│   ├── .git/info/exclude                 ← [MODIFICADO] +1 línea, ver abajo
+│   └── docker/
+│       ├── Caddyfile                     ← INTACTO, ni se toca
+│       ├── docker-compose.yml            ← INTACTO, ni se toca
+│       └── docker-compose.override.yml   ← [NUEVO] lo único añadido aquí
+│
+├── chinesereads-publicador/              ← [NUEVO] este repo, clonado
+│   ├── publicador.py                     (el que publica)
+│   ├── publicacion_config.json           ← LOS TOKENS (chmod 600, nunca a git)
+│   ├── generacion_autonoma.sh            (generación con Claude, opcional)
+│   ├── PROMPT_AUTONOMO.md                (el encargo para Claude)
+│   ├── cola/                             ← posts pendientes (se sirven por HTTPS)
+│   ├── publicados/                       ← ya publicados, se borran a los 7 días
+│   └── publicador.log
+│
+└── (backups/ y 2025-ChineseTexts eran tuyos de antes)
 
-Aplicar un cambio en él:
+/etc/systemd/system/
+├── chinesereads-publicador.service       ← [NUEVO] ejecuta publicador.py
+└── chinesereads-publicador.timer         ← [NUEVO] lo dispara a las 8:00
+```
+
+**Por qué el publicador va en `/root/chinesereads-publicador` y no dentro de
+la web**: son dos proyectos independientes, con repos distintos. Mezclarlos
+significaría que un `git pull` de uno pueda romper el otro. Separados, la
+web no sabe que esto existe (salvo por una línea de configuración de Caddy).
+
+**Por qué el override SÍ tiene que estar dentro de `docker/` de la web**:
+Docker Compose solo carga automáticamente un `docker-compose.override.yml`
+que esté **en el mismo directorio** que el `docker-compose.yml`. No hay
+alternativa; a cambio, es un fichero nuevo que no modifica ninguno tuyo.
+
+---
+
+## Parte 1 — Montarlo desde cero en un servidor
+
+### 1.1 Clonar el publicador
+
+```bash
+git clone https://github.com/josevictorgarcia/mcp-server-chinesereads-canva.git \
+  /root/chinesereads-publicador
+cd /root/chinesereads-publicador
+mkdir -p cola
+chmod +x generacion_autonoma.sh
+```
+
+No necesita entorno virtual ni dependencias: `publicador.py` usa solo la
+biblioteca estándar de Python 3 (el sistema ya trae 3.12). El `venv` y
+`requirements.txt` solo hacen falta si vas a activar la generación autónoma
+(Parte 4).
+
+### 1.2 Publicar la cola por HTTPS
+
+Las APIs de Instagram y TikTok **no reciben ficheros**: descargan las
+imágenes de una URL pública. Por eso la carpeta `cola/` tiene que ser
+accesible desde internet.
+
+Tu web va en Docker con Caddy dentro de un contenedor, y Caddy ya sirve todo
+lo que encuentra en su carpeta `/srv`. Así que basta con montar la cola ahí
+dentro. Crea `/root/2025-ChineseTexts/docker/docker-compose.override.yml`
+(copia el de esta carpeta):
+
+```yaml
+services:
+  caddy:
+    volumes:
+      - /root/chinesereads-publicador/cola:/srv/cola-chinesereads:ro
+```
+
+Aplícalo recreando **solo** el contenedor de Caddy (2 segundos; es lo mismo
+que hace tu `deploy.sh` en cada despliegue):
 
 ```bash
 cd /root/2025-ChineseTexts/docker
 docker compose --env-file .env up -d --force-recreate --no-deps caddy
 ```
 
-Deshacerlo todo (volver al estado original de la web): borrar el fichero y
-ejecutar ese mismo comando.
-
-## Comprobaciones útiles
+Y evita que ese fichero ensucie el git de tu web (exclusión **local**, no
+versionada, no toca el `.gitignore` del repo):
 
 ```bash
-systemctl list-timers chinesereads-publicador.timer   # próximo disparo
-journalctl -u chinesereads-publicador.service -n 30   # qué pasó
-systemctl start chinesereads-publicador.service       # publicar ahora
-cd /root/chinesereads-publicador && python3 publicador.py estado
-docker exec docker-caddy-1 ls /srv/cola-chinesereads  # ¿montaje vivo?
+echo "docker/docker-compose.override.yml" >> /root/2025-ChineseTexts/.git/info/exclude
 ```
+
+Comprueba que funciona:
+
+```bash
+echo hola > /root/chinesereads-publicador/cola/prueba.txt
+curl https://chinesereads.com/cola-chinesereads/prueba.txt   # → hola
+rm /root/chinesereads-publicador/cola/prueba.txt
+```
+
+**Por qué NO se toca el `Caddyfile`**: está versionado en el repo de la web
+(`codeurjc-students/2025-ChineseTexts`) y cada despliegue hace `git pull`.
+Una edición local ahí haría fallar el pull con "your local changes would be
+overwritten" y te dejaría el despliegue bloqueado.
+
+### 1.3 Configuración con los tokens
+
+```bash
+cd /root/chinesereads-publicador
+cp publicacion_config.ejemplo.json publicacion_config.json
+chmod 600 publicacion_config.json      # solo root puede leerlo
+nano publicacion_config.json
+```
+
+Campos importantes:
+
+- `base_url_publica`: `https://chinesereads.com/cola-chinesereads`
+- `dias_retencion`: `7` (días que se guarda un post ya publicado antes de
+  borrarse del servidor; la copia permanente está en Canva)
+- `vps.ssh` y `vps.ruta_cola`: **vacíos** en el servidor (este ES el VPS).
+  En el Mac sí van rellenos, para que el rsync sepa a dónde subir.
+- `instagram` y `tiktok`: los tokens de las Partes 2 y 3.
+
+Este fichero es **el único que no está en GitHub**, porque contiene
+credenciales. Si lo pierdes, se regenera repitiendo las Partes 2 y 3.
+
+Comprueba:
+
+```bash
+python3 publicador.py estado
+```
+
+### 1.4 El disparo diario (systemd, no cron)
+
+Copia `chinesereads-publicador.service` y `.timer` de esta carpeta a
+`/etc/systemd/system/` y actívalos:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now chinesereads-publicador.timer
+systemctl list-timers chinesereads-publicador.timer    # ver próximo disparo
+```
+
+**Por qué systemd y no cron**: el cron de Debian/Ubuntu **ignora `CRON_TZ`**
+(esa variable es de cronie, el cron de RedHat) y este servidor va en UTC.
+Con cron, "las 8:00" se desplazarían una hora dos veces al año con el
+cambio de horario. systemd sí entiende `OnCalendar=*-*-* 08:00:00
+Europe/Madrid`. Ventaja extra: no toca tu `crontab`, donde vive el backup
+diario de la base de datos de la web.
+
+---
+
+## Parte 2 — La app de Instagram (Meta), paso a paso
+
+Esto es trabajo de navegador, una sola vez. Resultado: dos datos
+(`user_id` y `access_token`) que van a `publicacion_config.json`.
+
+### 2.1 Requisitos previos
+
+1. **Cuenta de Instagram profesional** (Creator o Business). Se cambia
+   gratis en la app: Configuración → Tipo de cuenta y herramientas. Una
+   cuenta personal no puede publicar por API.
+2. **Un perfil de Facebook** (facebook.com). Ojo con la confusión: una
+   "cuenta de Meta" con email (la de Quest/Horizon) **no sirve** —
+   `developers.facebook.com` exige un perfil de Facebook. Puede ser mínimo:
+   sin publicaciones, sin amigos y **sin página**. Con la API nueva
+   ("Instagram API with Instagram Login") **no hace falta página de
+   Facebook**, que era el requisito antiguo y el motivo por el que mucha
+   documentación vieja lo pide.
+
+### 2.2 Registrarse como desarrollador
+
+1. Entra en **developers.facebook.com** con ese perfil de Facebook.
+2. Arriba a la derecha: **"Get Started"** / "Comenzar". Aceptas los
+   términos y puede pedirte verificar con móvil o tarjeta (trámite
+   estándar, no cobra nada).
+3. Hecho esto aparece el menú **"My Apps"** (`developers.facebook.com/apps`).
+   Si no lo ves, es que el registro de desarrollador no llegó a completarse.
+
+### 2.3 Crear la app
+
+1. **My Apps → Create App**.
+2. Nombre: `chinesereads-publisher`. Email de contacto: el tuyo.
+3. Te pregunta qué quiere hacer la app. Elige la opción de **Instagram**
+   (según la versión de la pantalla: "Access the Instagram API" o similar).
+   Si no aparece, elige **"Other"** → tipo **"Business"** y añade el
+   producto Instagram después desde el panel.
+
+### 2.4 Generar el token
+
+1. En el menú lateral de la app: **Instagram → API setup with Instagram
+   login**.
+2. Paso *"Generate access token"*: pulsa **Add account**, inicia sesión con
+   `chinesereads` y autoriza. Los permisos que deben aparecer son
+   `instagram_business_basic` e `instagram_business_content_publish`.
+3. Copia el **access token** y el **Instagram User ID** numérico que muestra
+   esa misma pantalla.
+4. Los otros pasos de esa página (webhooks, Instagram business login) **no
+   hacen falta** para publicar.
+
+**No hace falta App Review** mientras publiques en tu propia cuenta con la
+app en modo desarrollo. La revisión de Meta solo es necesaria para publicar
+en cuentas de terceros.
+
+### 2.5 Guardarlo
+
+En `publicacion_config.json`:
+
+```json
+"instagram": {
+  "user_id": "1784...",
+  "access_token": "IGAA...",
+  "token_refrescado": ""
+}
+```
+
+El token dura **60 días**, pero `publicador.py` lo renueva solo cada 7 días
+mientras el timer siga corriendo, así que en la práctica no caduca nunca. Si
+el sistema estuviera parado más de 60 días, se genera otro en el panel (2
+minutos).
+
+### 2.6 Primera prueba
+
+```bash
+cd /root/chinesereads-publicador
+python3 publicador.py estado                 # ¿ve la red instagram?
+python3 publicador.py publicar --dry-run     # sin publicar: revisa caption y URLs
+systemctl start chinesereads-publicador.service   # publicar ya, sin esperar al timer
+journalctl -u chinesereads-publicador.service -n 30
+```
+
+Consejo: haz la primera con **la cuenta de Instagram en privado**. Ves el
+resultado real sin que lo vea nadie, y luego la vuelves a poner pública.
+
+---
+
+## Parte 3 — TikTok
+
+Más burocracia que Instagram, por eso conviene dejarlo para después de tener
+Instagram funcionando.
+
+1. **developers.tiktok.com** → crear app.
+2. Añadir el producto **Content Posting API** (scope `video.publish`, que
+   cubre también las fotos) y **Login Kit**.
+3. **Verificar el dominio** `chinesereads.com` en el panel: TikTok solo
+   descarga fotos (`PULL_FROM_URL`) desde dominios verificados. Te dará un
+   fichero o un registro DNS que colocar; como las imágenes se sirven desde
+   tu propio servidor, se puede hacer.
+4. Autorizar tu cuenta una vez por OAuth (Login Kit) y guardar en la config
+   `client_key`, `client_secret` y `refresh_token`.
+5. **El matiz clave**: una app **sin auditar** solo publica en `SELF_ONLY`
+   (privado, solo tú lo ves; luego puedes hacerlo público a mano en la app).
+   Para publicación directa pública hay que pedir el **audit** de la app —
+   formulario de revisión, tarda días o semanas. Plan sensato: empezar en
+   `SELF_ONLY`, pedir el audit y, cuando lo aprueben, cambiar
+   `privacy_level` a `PUBLIC_TO_EVERYONE`.
+
+Mientras llega el audit, tu cuenta de **Metricool** sirve de puente: es
+partner auditado de TikTok, así que puedes programar los TikToks públicos
+arrastrando los JPEG de `_cola/`.
+
+El access token de TikTok dura 24 h y el script lo renueva en cada ejecución
+con el `refresh_token` (que dura un año y va rotando: el publicador guarda
+siempre el nuevo automáticamente).
+
+---
+
+## Parte 4 — Claude en el servidor (generación autónoma)
+
+Esto es **opcional**. Sin ello, el servidor publica lo que tú generes desde
+el Mac; con ello, si algún día la cola está vacía a las 7:00, el propio
+servidor genera el post del día.
+
+### 4.1 ¿Hace falta una clave de Claude? Sí, una de las dos
+
+En el servidor no hay ninguna sesión iniciada, así que Claude Code necesita
+credenciales propias. Dos caminos:
+
+| Opción | Cómo | Cuándo elegirla |
+|---|---|---|
+| **Tu suscripción** (recomendada) | `claude setup-token` genera un token OAuth de larga duración (≈1 año) | Ya pagas Claude; el consumo sale de tu cuota, sin factura nueva |
+| **Clave de API** | Crear una en console.anthropic.com y exportar `ANTHROPIC_API_KEY` | Prefieres pago por uso separado de tu cuota personal |
+
+`claude setup-token` funciona sin navegador en el servidor: imprime una URL,
+la abres en el Mac, autorizas y pegas el código de vuelta en la terminal.
+
+El token se guarda como variable de entorno para el servicio. **No lo metas
+en el repo**: ponlo en un fichero aparte solo legible por root.
+
+```bash
+# En el servidor
+npm install -g @anthropic-ai/claude-code    # Node 20 ya está instalado
+claude setup-token                          # sigue las instrucciones
+
+# Guardar el token para el servicio automático
+echo 'CLAUDE_CODE_OAUTH_TOKEN=el-token-que-te-dio' > /etc/chinesereads-generador.env
+chmod 600 /etc/chinesereads-generador.env
+```
+
+### 4.2 El resto del entorno
+
+```bash
+cd /root/chinesereads-publicador
+python3 -m venv .venv
+./.venv/bin/pip install -r requirements.txt     # Pillow y el SDK de MCP
+```
+
+Copia la clave de Pollinations desde tu Mac (nunca por git):
+
+```bash
+# desde el Mac
+scp .pollinations_token root@65.21.59.130:/root/chinesereads-publicador/
+```
+
+El MCP de Canva necesita su OAuth **una vez, con navegador**. Desde el Mac,
+abre un túnel para que el enlace de autorización pueda volver al servidor:
+
+```bash
+ssh -L 8090:localhost:8090 root@65.21.59.130
+# ya dentro:
+cd /root/chinesereads-publicador && claude
+# → /mcp → conectar canva → se abre el enlace en el navegador del Mac
+```
+
+### 4.3 Su temporizador
+
+Igual que el de publicación pero una hora antes, y con el fichero de entorno:
+
+```ini
+# /etc/systemd/system/chinesereads-generador.service
+[Service]
+Type=oneshot
+WorkingDirectory=/root/chinesereads-publicador
+EnvironmentFile=/etc/chinesereads-generador.env
+ExecStart=/root/chinesereads-publicador/generacion_autonoma.sh
+
+# /etc/systemd/system/chinesereads-generador.timer
+[Timer]
+OnCalendar=*-*-* 07:00:00 Europe/Madrid
+Persistent=true
+```
+
+`generacion_autonoma.sh` comprueba primero si hay algo en la cola: si tú ya
+generaste posts, **no hace nada** (ni gasta cuota ni pollen). Solo actúa
+como red de seguridad.
+
+Dos cosas que conviene tener claras antes de activarlo: corre con
+`--dangerously-skip-permissions` (en modo automático no hay nadie que
+apruebe cada paso), y publica sin que un humano lo revise antes. Por eso las
+reglas duras van en código y el encargo dice "todo o nada": ante cualquier
+fallo, aborta y ese día no se publica.
+
+---
+
+## Parte 5 — Comprobaciones y averías
+
+```bash
+# ¿Cuándo se publica y qué pasó la última vez?
+systemctl list-timers chinesereads-publicador.timer
+journalctl -u chinesereads-publicador.service -n 50
+
+# Estado general y cola
+cd /root/chinesereads-publicador
+python3 publicador.py estado
+python3 publicador.py cola
+
+# Publicar ahora mismo, sin esperar
+systemctl start chinesereads-publicador.service
+
+# ¿Sigue viva la cola pública?
+docker exec docker-caddy-1 ls /srv/cola-chinesereads
+curl -I https://chinesereads.com/cola-chinesereads/<carpeta>/00-portada.jpg
+```
+
+Errores típicos:
+
+- **"No hay ninguna red configurada"** → faltan tokens en
+  `publicacion_config.json`.
+- **"Imágenes no publicables: ... solo admite JPEG"** → el post se encoló
+  sin pasar por `preparar_para_cola`. Instagram solo acepta JPEG y TikTok
+  limita a 1080p/20 MB; se regenera la carpeta `_cola/` y se vuelve a subir.
+- **"Invalid OAuth access token"** → token de Instagram caducado o mal
+  copiado: genera otro en el panel de Meta.
+- **La cola no se ve por HTTPS** → el contenedor de Caddy perdió el
+  montaje: `docker compose --env-file .env up -d --force-recreate --no-deps caddy`.
+
+---
+
+## Parte 6 — Desmontarlo todo
+
+Para dejar el servidor exactamente como estaba:
+
+```bash
+systemctl disable --now chinesereads-publicador.timer
+rm /etc/systemd/system/chinesereads-publicador.{service,timer}
+systemctl daemon-reload
+
+rm /root/2025-ChineseTexts/docker/docker-compose.override.yml
+cd /root/2025-ChineseTexts/docker
+docker compose --env-file .env up -d --force-recreate --no-deps caddy
+
+rm -rf /root/chinesereads-publicador
+```
+
+(La línea añadida a `/root/2025-ChineseTexts/.git/info/exclude` es
+inofensiva, pero puedes quitarla también.)
+
+---
+
+## Ficheros de referencia en esta carpeta
+
+| Fichero | Dónde va |
+|---|---|
+| `docker-compose.override.yml` | `/root/2025-ChineseTexts/docker/` |
+| `chinesereads-publicador.service` | `/etc/systemd/system/` |
+| `chinesereads-publicador.timer` | `/etc/systemd/system/` |
+
+El "porqué" de cada decisión y la parte de estrategia (alcance, hashtags,
+shadowban, Metricool) están en [PUBLICACION.md](../PUBLICACION.md).

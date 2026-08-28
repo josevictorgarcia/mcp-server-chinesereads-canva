@@ -201,15 +201,16 @@ compras, emociones...) y, **muy de vez en cuando** (como mucho 1 de cada
 tendencia buscado en internet, tipo "5 words to text your boyfriend in
 Chinese" — siempre brand-safe: sin política, polémicas ni marcas.
 
-Montaje en el VPS (una vez, además del apartado anterior):
+Montaje en el VPS (una vez, además del apartado anterior; paso a paso
+detallado en [despliegue/README.md](despliegue/README.md), Parte 4):
 
 ```bash
-# Claude Code necesita Node 18+
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash - && sudo apt install -y nodejs
+# Claude Code necesita Node 18+ (el servidor ya tiene Node 20)
 npm install -g @anthropic-ai/claude-code
 
-# Autenticación con tu suscripción de Claude (genera un token de larga
-# duración; se hace una vez, siguiendo lo que imprima el comando)
+# Credenciales propias para el servidor: o tu suscripción (token OAuth de
+# ~1 año, imprime una URL que abres en el Mac) o una ANTHROPIC_API_KEY de
+# console.anthropic.com si prefieres pago por uso aparte.
 claude setup-token
 
 # El entorno del generador: venv del servidor local + clave de Pollinations
