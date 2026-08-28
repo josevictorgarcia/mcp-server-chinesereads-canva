@@ -41,6 +41,7 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 COLA = BASE / "cola"
 PUBLICADOS = BASE / "publicados"
+POSTS = BASE / "posts"
 CONFIG = BASE / "publicacion_config.json"
 LOG = BASE / "publicador.log"
 
@@ -508,6 +509,30 @@ def _limpiar_publicados(cfg: dict) -> None:
             shutil.rmtree(carpeta, ignore_errors=True)
             _log(f"Limpieza: {carpeta.name} borrado del servidor "
                  f"({dias} días desde su publicación; sigue en Canva).")
+
+    _limpiar_posts_del_servidor(dias, limite)
+
+
+def _limpiar_posts_del_servidor(dias: int, limite: datetime) -> None:
+    """Borra también los PNG originales que deja la generación autónoma en
+    `posts/`. Solo aplica en el VPS: en el Mac esa carpeta es el archivo del
+    usuario y no se toca nunca (se distingue por `vps.ssh`, que está vacío
+    en el servidor y relleno en el Mac). La copia permanente de todo post
+    está en Canva."""
+    cfg = cargar_config()
+    if cfg.get("vps", {}).get("ssh"):
+        return                      # estamos en el Mac: no tocar nada
+    if not POSTS.is_dir():
+        return
+    for carpeta in POSTS.iterdir():
+        if not carpeta.is_dir() or carpeta.name == "descartes":
+            continue
+        modificada = datetime.fromtimestamp(carpeta.stat().st_mtime,
+                                            tz=timezone.utc)
+        if modificada < limite:
+            shutil.rmtree(carpeta, ignore_errors=True)
+            _log(f"Limpieza: posts/{carpeta.name} borrado del servidor "
+                 f"({dias} días sin cambios; los diseños siguen en Canva).")
 
 
 def main() -> int:

@@ -32,10 +32,20 @@ if ! command -v claude >/dev/null 2>&1; then
     exit 1
 fi
 
+# CLAUDE_MODELO permite fijar el modelo (p. ej. "sonnet" para abaratar la
+# generación diaria, u "opus" para la máxima calidad). Si no se define, se
+# usa el que Claude Code tenga por defecto.
+MODELO_ARG=""
+if [ -n "${CLAUDE_MODELO:-}" ]; then
+    MODELO_ARG="--model ${CLAUDE_MODELO}"
+fi
+
 # --dangerously-skip-permissions: necesario en headless (no hay nadie que
 # apruebe permisos). Ejecutar siempre con un usuario SIN privilegios cuyo
 # único cometido sea este repo.
+# shellcheck disable=SC2086  # MODELO_ARG debe expandirse en dos palabras
 claude -p "$(cat PROMPT_AUTONOMO.md)" \
+    $MODELO_ARG \
     --dangerously-skip-permissions \
     >> "$LOG" 2>&1
 CODIGO=$?

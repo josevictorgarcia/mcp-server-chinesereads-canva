@@ -301,6 +301,14 @@ credenciales propias. Dos caminos:
 | **Tu suscripción** (recomendada) | `claude setup-token` genera un token OAuth de larga duración (≈1 año) | Ya pagas Claude; el consumo sale de tu cuota, sin factura nueva |
 | **Clave de API** | Crear una en console.anthropic.com y exportar `ANTHROPIC_API_KEY` | Prefieres pago por uso separado de tu cuota personal |
 
+No son lo mismo: el token de suscripción es "tu cuenta funcionando en el
+servidor" (mismos modelos y límites que en tu Mac, sin factura aparte); la
+clave de API es una **cuenta de facturación distinta**, con saldo propio y
+pago por uso, que da acceso a todos los modelos de la API. Con cualquiera de
+las dos, el modelo concreto se puede fijar con la variable `CLAUDE_MODELO`
+en el fichero de entorno (`sonnet` abarata la generación diaria, `opus` da
+la máxima calidad); sin ella se usa el modelo por defecto de Claude Code.
+
 `claude setup-token` funciona sin navegador en el servidor: imprime una URL,
 la abres en el Mac, autorizas y pegas el código de vuelta en la terminal.
 
