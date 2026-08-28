@@ -1,11 +1,11 @@
 [Unit]
-Description=Publicacion diaria de chinesereads a las 8:00 hora espanola
+Description=Publicacion diaria de chinesereads a las 20:00 hora espanola
 
 [Timer]
 # El cron de Debian/Ubuntu NO entiende CRON_TZ (eso es de cronie), y el
 # servidor va en UTC: con cron, el horario de verano desplazaria la hora una
 # hora dos veces al ano. systemd si admite la zona en OnCalendar.
-OnCalendar=*-*-* 08:00:00 Europe/Madrid
+OnCalendar=*-*-* 20:00:00 Europe/Madrid
 # Si el servidor estuvo apagado a esa hora, se ejecuta al arrancar.
 Persistent=true
 # Reparte el arranque unos minutos para no clavar siempre el mismo segundo.

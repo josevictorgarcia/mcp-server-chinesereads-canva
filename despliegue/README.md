@@ -178,7 +178,7 @@ systemctl list-timers chinesereads-publicador.timer    # ver próximo disparo
 
 **Por qué systemd y no cron**: el cron de Debian/Ubuntu **ignora `CRON_TZ`**
 (esa variable es de cronie, el cron de RedHat) y este servidor va en UTC.
-Con cron, "las 8:00" se desplazarían una hora dos veces al año con el
+Con cron, "las 20:00" se desplazarían una hora dos veces al año con el
 cambio de horario. systemd sí entiende `OnCalendar=*-*-* 08:00:00
 Europe/Madrid`. Ventaja extra: no toca tu `crontab`, donde vive el backup
 diario de la base de datos de la web.
@@ -312,7 +312,7 @@ siempre el nuevo automáticamente).
 ## Parte 4 — Claude en el servidor (generación autónoma)
 
 Esto es **opcional**. Sin ello, el servidor publica lo que tú generes desde
-el Mac; con ello, si algún día la cola está vacía a las 7:00, el propio
+el Mac; con ello, si algún día la cola está vacía a las 19:00, el propio
 servidor genera el post del día.
 
 ### 4.1 ¿Hace falta una clave de Claude? Sí, una de las dos

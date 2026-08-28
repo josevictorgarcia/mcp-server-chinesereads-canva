@@ -284,7 +284,7 @@ el resumen final.
    oportunidad de revisarlo antes de que salga solo: la API de Instagram no
    crea borradores, así que lo que hay en la cola se publica tal cual.
 
-El post se publicará automáticamente a las 8:00 (hora española) del primer
+El post se publicará automáticamente a las 20:00 (hora española) del primer
 día en que sea el más antiguo de la cola. Si el usuario quiere retenerlo
 hasta una fecha, o revisarlo con calma antes, pon `no_publicar_antes_de` en
 el meta.json (así se queda en la cola sin publicarse hasta esa fecha).
@@ -302,6 +302,6 @@ visualmente, pero la última palabra sobre si representa bien a la cuenta es
 del usuario.
 
 Si el post quedó encolado (paso 10), di cuándo saldrá (posición en la cola ×
-1 post/día a las 8:00) y recuerda que sigue a tiempo de retocarlo en Canva y
+1 post/día a las 20:00) y recuerda que sigue a tiempo de retocarlo en Canva y
 reexportar antes de esa hora. Si no hay publicación automática configurada,
 la subida a Instagram y TikTok es manual.

@@ -8,7 +8,7 @@ Cómo pasan los posts de la carpeta `posts/` a estar publicados solos a las
 **Cola + cron.** Cuando generas un post con Claude, además de descargarse
 las imágenes se escribe un `meta.json` con la descripción y los hashtags ya
 decididos, y la carpeta entera se sube por `rsync` a una cola en el VPS.
-Cada día a las 8:00 un cron ejecuta `publicador.py publicar`, que coge el
+Cada día a las 20:00 un cron ejecuta `publicador.py publicar`, que coge el
 post **más antiguo** de la cola, lo publica en Instagram (carrusel) y TikTok
 (carrusel de fotos) con las APIs oficiales, y lo archiva en `publicados/`.
 
@@ -24,7 +24,7 @@ estar una semana sin tocar el ordenador y la cuenta sigue publicando a
 diario.
 
 ¿Y si la cola se vacía? Ahí entra la **generación autónoma** (sección más
-abajo): un segundo cron a las 7:00 comprueba la cola y, solo si está vacía,
+abajo): un segundo cron a las 19:00 comprueba la cola y, solo si está vacía,
 arranca Claude Code en modo headless en el propio VPS para generar el post
 del día completo (palabras, portada, caption) y encolarlo. Tus posts
 manuales siempre tienen prioridad — el bot solo actúa de red de seguridad.
@@ -55,7 +55,7 @@ que hace este proyecto.
   oficial, un post al día de contenido original.
 - Lo que SÍ pierdes al automatizar es estar presente el primer cuarto de
   hora para contestar comentarios — la interacción temprana sí ayuda.
-  Solución barata: el post sale a las 8:00; cuando te despiertes, contesta
+  Solución barata: el post sale a las 20:00; cuando te despiertes, contesta
   los comentarios desde el móvil.
 - TikTok igual: la API de publicación es oficial y los posts auditados se
   tratan como cualquier otro. La protección de TikTok es previa (el audit
@@ -165,7 +165,7 @@ backup diario de la base de datos de la web):
 ```ini
 # /etc/systemd/system/chinesereads-publicador.timer
 [Timer]
-OnCalendar=*-*-* 08:00:00 Europe/Madrid
+OnCalendar=*-*-* 20:00:00 Europe/Madrid
 Persistent=true
 RandomizedDelaySec=300
 ```
@@ -230,7 +230,7 @@ Y su temporizador, gemelo del de publicación pero una hora antes:
 ```ini
 # /etc/systemd/system/chinesereads-generador.timer
 [Timer]
-OnCalendar=*-*-* 07:00:00 Europe/Madrid
+OnCalendar=*-*-* 19:00:00 Europe/Madrid
 Persistent=true
 ```
 
@@ -266,7 +266,7 @@ No, y este es el porqué punto por punto:
 - **Disco**: acotado por diseño — la cola son unos pocos posts (~20 MB
   cada uno) y `publicados/` se autolimpia a los 7 días.
 - **CPU/RAM**: el publicador es despreciable. La generación autónoma
-  (Node + Claude) sí consume durante unos minutos al día a las 7:00 —
+  (Node + Claude) sí consume durante unos minutos al día a las 19:00 —
   en un VPS pequeño se nota como un pico breve, no como carga sostenida.
   Si tu VPS va muy justo, mueve la generación a una hora valle.
 - **Cron**: entradas nuevas en tu crontab; las existentes no se tocan.
@@ -299,7 +299,7 @@ Cada paso deja algo funcionando por sí mismo; puedes parar donde quieras.
    chinesereads.com + OAuth → primero en `SELF_ONLY`, y pedir el audit.
    Mientras llega: TikTok a mano vía Metricool si quieres.
 5. **VPS parte 2 (generación autónoma)**: Node + Claude Code +
-   `setup-token` + venv + OAuth de Canva por túnel ssh + cron de las 7:00.
+   `setup-token` + venv + OAuth de Canva por túnel ssh + temporizador de las 19:00.
    → Desde aquí, el sistema entero funciona sin tu ordenador.
 
 Para los pasos 2 y 4 (los paneles de Meta y TikTok), hazlos conmigo en una
