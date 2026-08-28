@@ -5,7 +5,7 @@ description: Crear un post (carrusel) de Instagram o TikTok de N slides a partir
 
 # Generar un post de N slides desde plantilla
 
-Flujo de nueve pasos. No te saltes la validación ni el registro.
+Flujo de diez pasos. No te saltes la validación ni el registro.
 
 ## 1. Elegir plantilla y determinar N
 
@@ -180,7 +180,39 @@ sin esto el cooldown de portadas no funciona. Para una portada de IA, `imagen`
 es el prompt+seed (y el modelo). Solo después de que el diseño
 exista. Esto es lo que evita repetir palabras, temas y fotos de portada.
 
-## 9. Al terminar
+## 9. Encolar para publicación automática
+
+Si existe `publicacion_config.json` en la raíz del repo con la sección
+`vps` rellena, el post se encola para que el VPS lo publique solo (ver
+PUBLICACION.md). Si el fichero no existe, salta este paso sin más y dilo en
+el resumen final.
+
+1. **Caption** (descripción de la publicación), en inglés:
+   - Primera línea: gancho corto (puede variar el título de la portada, no
+     calcarlo).
+   - Después, la lista de las palabras del post, una por línea:
+     `汉字 (pinyin) — meaning`. Es la chuleta que hace que guarden el post.
+   - Cierre breve con llamada a la acción (save this post / follow
+     @chinesereads for more), sin sonar a spam.
+   - **Hashtags**: si el usuario dio hashtags en la petición, usa ESOS.
+     Si no, no los escribas en la caption: el publicador añade solo los
+     `hashtags_por_defecto` de la config. Puedes añadir en `hashtags` del
+     meta.json 2-3 específicos del tema además de los por defecto
+     (cópialos de la config y añade los tuyos) — nunca más de ~12 en total.
+2. **`meta.json`** en la carpeta local del post, con el formato documentado
+   en PUBLICACION.md: `tema`, `titulo` (el de la portada), `caption` (sin
+   hashtags), `hashtags` (opcional, ver arriba), `imagenes` (en orden,
+   portada primero), `creado` (fecha de hoy).
+3. **Subir a la cola**: `rsync -av <carpeta local>/ <vps.ssh>:<vps.ruta_cola>/<nombre carpeta>/`
+   con los valores de `publicacion_config.json`. Si el rsync falla (VPS
+   caído, sin red), no es un error del post: dilo en el resumen y deja el
+   comando listo para que el usuario lo lance luego.
+
+El post se publicará automáticamente a las 8:00 (hora española) del primer
+día en que sea el más antiguo de la cola. Si el usuario quiere retenerlo
+hasta una fecha, pon `no_publicar_antes_de` en el meta.json.
+
+## 10. Al terminar
 
 Resume en pocas líneas: qué plantilla usaste, el tema, cuántas slides y en qué
 carpeta local quedaron descargadas las imágenes. Recuerda al usuario que
@@ -192,4 +224,7 @@ revisarlo a ojo. Lo mismo con una portada generada por IA: ya la filtraste
 visualmente, pero la última palabra sobre si representa bien a la cuenta es
 del usuario.
 
-La publicación en Instagram y TikTok es manual: exporta desde Canva y súbelo tú.
+Si el post quedó encolado (paso 9), di cuándo saldrá (posición en la cola ×
+1 post/día a las 8:00) y recuerda que sigue a tiempo de retocarlo en Canva y
+reexportar antes de esa hora. Si no hay publicación automática configurada,
+la subida a Instagram y TikTok es manual.

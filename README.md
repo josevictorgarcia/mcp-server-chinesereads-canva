@@ -170,11 +170,18 @@ fondo. Si quieres usar tu galería, sube también tus fotos como assets de Canva
   de portada (asset de galería o prompt+semilla de IA) y para no calcar la
   redacción de títulos recientes.
 
+## Publicación automática (Instagram y TikTok)
+
+El proyecto incluye un publicador autónomo (`publicador.py`, sin MCP y sin
+dependencias) pensado para vivir en un VPS: cada post generado se encola con
+su descripción y hashtags ya decididos (`meta.json`), y un cron diario a las
+8:00 (hora española) publica el más antiguo de la cola por las APIs
+oficiales de Meta y TikTok. Setup completo (apps, tokens, dominio, cron) y
+la respuesta a "¿publicar por API baja el alcance?" (no): ver
+[PUBLICACION.md](PUBLICACION.md).
+
 ## Lo que este proyecto no hace
 
-- **No publica en Instagram ni TikTok.** El MCP de Canva llega hasta exportar a
-  imagen o PDF. Publicar es otra integración (APIs de Meta y TikTok) y no es
-  gratis en tiempo de montaje.
 - **No usa fotos sin licencia, nunca.** Los huecos de imagen de las slides se
   rellenan con fotos reales de licencia CC0/dominio público (Openverse); si no
   hay ninguna que encaje, segundo intento generándola con IA (Pollinations,
@@ -184,8 +191,10 @@ fondo. Si quieres usar tu galería, sube también tus fotos como assets de Canva
 - **No redimensiona entre formatos.** Requiere Canva Pro. Mantén una plantilla
   por formato: una de feed y otra vertical, cada una con su entrada en el
   catálogo.
-- **No corre solo.** El MCP responde cuando tú abres una conversación. No hay
-  nada programado generando posts de madrugada.
+- **No genera posts solo.** La generación (elegir palabras, redactar,
+  validar) ocurre cuando tú la pides en una conversación. Lo que sí corre
+  solo es la **publicación** de lo ya generado y encolado (ver arriba) — por
+  eso conviene llevar unos posts de colchón en la cola.
 - **No sustituye la revisión.** Cambiar texto puede descuadrar un salto de
   línea, y una imagen auto-buscada puede no acertar del todo. Abre el diseño
   antes de publicar.
@@ -203,7 +212,11 @@ Si el ordenador muere o borras esta carpeta, esto es lo que pasa:
   diseños generados (en `chinesereads-posts/`) y los assets subidos. Los PNG
   de `posts/` se re-exportan desde ahí cuando quieras.
 - **Se recrea en un minuto**: la clave de Pollinations — genera otra en
-  enter.pollinations.ai y guárdala en `.pollinations_token`.
+  enter.pollinations.ai y guárdala en `.pollinations_token`. Lo mismo con
+  los tokens de Instagram/TikTok de `publicacion_config.json` (se regeneran
+  en los paneles de Meta y TikTok), aunque una copia privada de ese fichero
+  ahorra el trámite. Ojo: la copia viva del publicador es la del **VPS** —
+  si muere el Mac, la publicación diaria ni se entera.
 - **Lo ÚNICO que se pierde de verdad**: `historial.json` (unos KB). Los
   posts futuros seguirían funcionando, pero la memoria anti-repetición se
   vacía: podrías repetir palabras, temas o portadas sin aviso, y pierdes la

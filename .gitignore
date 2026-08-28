@@ -16,5 +16,12 @@ historial.json
 # Token de Pollinations.ai: credencial local, jamás en git
 .pollinations_token
 
+# Publicación automática: config con tokens de Instagram/TikTok, la cola de
+# posts pendientes y los ya publicados. Credenciales y contenido, no código.
+publicacion_config.json
+cola/
+publicados/
+publicador.log
+
 # macOS
 .DS_Store

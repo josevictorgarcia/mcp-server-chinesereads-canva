@@ -1,0 +1,32 @@
+{
+  "_comentario": "Copia este fichero a publicacion_config.json y rellénalo (guía paso a paso en PUBLICACION.md). El fichero real está en .gitignore porque contiene tokens: JAMÁS subirlo a git. Deja vacía la sección de una red que aún no quieras usar.",
+  "base_url_publica": "https://tu-dominio.com/cola-chinesereads",
+  "vps": {
+    "_comentario": "Solo se usa desde el Mac, para encolar posts con rsync al generar cada uno. En el VPS puede quedarse vacío.",
+    "ssh": "usuario@tu-vps",
+    "ruta_cola": "/ruta/en/el/vps/mcp-server-chinesereads-canva/cola"
+  },
+  "instagram": {
+    "user_id": "",
+    "access_token": "",
+    "token_refrescado": ""
+  },
+  "tiktok": {
+    "client_key": "",
+    "client_secret": "",
+    "access_token": "",
+    "access_token_caduca": "",
+    "refresh_token": "",
+    "privacy_level": "SELF_ONLY"
+  },
+  "hashtags_por_defecto": [
+    "#learnchinese",
+    "#chineselanguage",
+    "#mandarin",
+    "#chinesevocabulary",
+    "#hsk",
+    "#studychinese",
+    "#chineseforbeginners",
+    "#chinesewords"
+  ]
+}
