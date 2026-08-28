@@ -151,7 +151,12 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
 
      **Descartes**: las candidatas que no acaben en la portada no se borran —
      muévelas a `posts/descartes/` con nombre descriptivo
-     (`<fecha>-<tema>-vN.jpg`). Son del usuario y ya están pagadas.
+     (`<fecha>-<tema>-vN.jpg`). Son del usuario y ya están pagadas. Además,
+     súbelas a Canva (la copia que sobrevive aunque se limpie el disco):
+     `upload-asset-from-url` con la `url_para_canva` de cada candidata
+     (gratis: es caché) y nombre `descarte-<fecha>-<tema>-vN`, y mueve el
+     asset con `move-item-to-folder` a la carpeta `descartes` de Canva
+     (id en `plantillas.json` → `carpeta_descartes_canva_id`).
    - **Galería del usuario (assets de Canva)**: lista sus fotos subidas con
      `get-assets` y elige una cuyo nombre/id **no** esté en
      `portadas_recientes` — la rotación es lo que evita que la portada se
@@ -203,10 +208,14 @@ el resumen final.
    en PUBLICACION.md: `tema`, `titulo` (el de la portada), `caption` (sin
    hashtags), `hashtags` (opcional, ver arriba), `imagenes` (en orden,
    portada primero), `creado` (fecha de hoy).
-3. **Subir a la cola**: `rsync -av <carpeta local>/ <vps.ssh>:<vps.ruta_cola>/<nombre carpeta>/`
-   con los valores de `publicacion_config.json`. Si el rsync falla (VPS
-   caído, sin red), no es un error del post: dilo en el resumen y deja el
-   comando listo para que el usuario lo lance luego.
+3. **Subir a la cola**:
+   - Si `vps.ssh` tiene valor (estás en el Mac): `rsync -av <carpeta local>/
+     <vps.ssh>:<vps.ruta_cola>/<nombre carpeta>/`. Si el rsync falla (VPS
+     caído, sin red), no es un error del post: dilo en el resumen y deja el
+     comando listo para que el usuario lo lance luego.
+   - Si `vps.ssh` está vacío (estás EN el VPS, modo autónomo): copia la
+     carpeta del post a `cola/<nombre carpeta>/` en la raíz del repo y
+     comprueba con `python3 publicador.py cola` que aparece.
 
 El post se publicará automáticamente a las 8:00 (hora española) del primer
 día en que sea el más antiguo de la cola. Si el usuario quiere retenerlo

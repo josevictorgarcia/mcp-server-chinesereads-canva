@@ -176,9 +176,14 @@ El proyecto incluye un publicador autónomo (`publicador.py`, sin MCP y sin
 dependencias) pensado para vivir en un VPS: cada post generado se encola con
 su descripción y hashtags ya decididos (`meta.json`), y un cron diario a las
 8:00 (hora española) publica el más antiguo de la cola por las APIs
-oficiales de Meta y TikTok. Setup completo (apps, tokens, dominio, cron) y
-la respuesta a "¿publicar por API baja el alcance?" (no): ver
-[PUBLICACION.md](PUBLICACION.md).
+oficiales de Meta y TikTok. Un segundo cron opcional a las 7:00
+(`generacion_autonoma.sh`) arranca Claude Code en headless para generar el
+post del día **solo si la cola está vacía** — red de seguridad para los días
+en que no enciendes el ordenador. El VPS se autolimpia (los posts publicados
+se borran a los 7 días; la copia permanente son los diseños y descartes en
+Canva). Setup completo (apps, tokens, dominio, cron, convivencia con una web
+en producción) y la respuesta a "¿publicar por API baja el alcance?" (no):
+ver [PUBLICACION.md](PUBLICACION.md).
 
 ## Lo que este proyecto no hace
 
@@ -191,10 +196,10 @@ la respuesta a "¿publicar por API baja el alcance?" (no): ver
 - **No redimensiona entre formatos.** Requiere Canva Pro. Mantén una plantilla
   por formato: una de feed y otra vertical, cada una con su entrada en el
   catálogo.
-- **No genera posts solo.** La generación (elegir palabras, redactar,
-  validar) ocurre cuando tú la pides en una conversación. Lo que sí corre
-  solo es la **publicación** de lo ya generado y encolado (ver arriba) — por
-  eso conviene llevar unos posts de colchón en la cola.
+- **No improvisa sin reglas.** Tanto si el post lo pides tú como si lo
+  genera el cron autónomo del VPS, las reglas duras (longitudes, licencias,
+  cooldowns de palabras y portadas) las comprueba código — el modo autónomo
+  solo entra si la cola está vacía y aborta ante cualquier fallo a medias.
 - **No sustituye la revisión.** Cambiar texto puede descuadrar un salto de
   línea, y una imagen auto-buscada puede no acertar del todo. Abre el diseño
   antes de publicar.

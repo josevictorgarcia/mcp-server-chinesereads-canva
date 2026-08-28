@@ -14,9 +14,14 @@ que se generó junto al post.
 Uso:
   python3 publicador.py estado              comprueba config, tokens y cola
   python3 publicador.py cola                lista los posts pendientes
+  python3 publicador.py pendientes          imprime solo el nº de posts en cola
   python3 publicador.py publicar            publica el post más antiguo
   python3 publicador.py publicar --dry-run  simula sin publicar nada
   python3 publicador.py publicar --solo instagram   (o --solo tiktok)
+
+El disco no se llena: tras publicar, el post pasa a publicados/ y se borra
+del servidor a los `dias_retencion` días (7 por defecto). La copia
+permanente vive en Canva (los diseños del post) y, si quieres, en tu Mac.
 
 Configuración en publicacion_config.json (copiar de
 publicacion_config.ejemplo.json y rellenar). Contiene tokens: está en
@@ -381,6 +386,8 @@ def _comprobar_url(url: str) -> str:
 
 def cmd_publicar(dry_run: bool, solo: str) -> int:
     cfg = cargar_config()
+    if not dry_run:
+        _limpiar_publicados(cfg)
     redes = _redes_configuradas(cfg)
     if solo:
         redes = [r for r in redes if r == solo]
@@ -445,9 +452,36 @@ def _archivar(carpeta: Path) -> None:
     shutil.move(str(carpeta), str(PUBLICADOS / carpeta.name))
 
 
+def _limpiar_publicados(cfg: dict) -> None:
+    """Borra del servidor los posts publicados hace más de `dias_retencion`
+    días. La copia que cuenta está en Canva (diseños del post); esto es solo
+    higiene de disco del VPS."""
+    dias = int(cfg.get("dias_retencion", 7))
+    if dias <= 0 or not PUBLICADOS.is_dir():
+        return
+    limite = _ahora() - timedelta(days=dias)
+    for carpeta in PUBLICADOS.iterdir():
+        if not carpeta.is_dir():
+            continue
+        try:
+            meta = _cargar_meta(carpeta)
+            fechas = [d.get("fecha", "") for d in meta.get("publicado", {}).values()]
+            ultima = max((datetime.fromisoformat(f) for f in fechas if f),
+                         default=None)
+        except (OSError, json.JSONDecodeError, ValueError):
+            ultima = None
+        if ultima is None:
+            ultima = datetime.fromtimestamp(carpeta.stat().st_mtime, tz=timezone.utc)
+        if ultima < limite:
+            shutil.rmtree(carpeta, ignore_errors=True)
+            _log(f"Limpieza: {carpeta.name} borrado del servidor "
+                 f"({dias} días desde su publicación; sigue en Canva).")
+
+
 def main() -> int:
     argumentos = sys.argv[1:]
-    if not argumentos or argumentos[0] not in ("estado", "cola", "publicar"):
+    if not argumentos or argumentos[0] not in ("estado", "cola", "pendientes",
+                                               "publicar"):
         print(__doc__)
         return 2
     comando = argumentos[0]
@@ -455,6 +489,9 @@ def main() -> int:
         return cmd_estado()
     if comando == "cola":
         return cmd_cola()
+    if comando == "pendientes":
+        print(len(posts_en_cola()))
+        return 0
     dry_run = "--dry-run" in argumentos
     solo = ""
     if "--solo" in argumentos:

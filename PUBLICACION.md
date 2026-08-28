@@ -21,8 +21,20 @@ post; el VPS solo aprieta el botón.
 Consecuencia importante del modelo de cola: **el post de mañana se genera
 hoy** (o cualquier día antes). Si mantienes 3-5 posts en la cola, puedes
 estar una semana sin tocar el ordenador y la cuenta sigue publicando a
-diario. Si la cola se vacía, ese día simplemente no se publica nada (el
-script lo deja anotado en `publicador.log` y no pasa nada más).
+diario.
+
+¿Y si la cola se vacía? Ahí entra la **generación autónoma** (sección más
+abajo): un segundo cron a las 7:00 comprueba la cola y, solo si está vacía,
+arranca Claude Code en modo headless en el propio VPS para generar el post
+del día completo (palabras, portada, caption) y encolarlo. Tus posts
+manuales siempre tienen prioridad — el bot solo actúa de red de seguridad.
+
+El disco del VPS no se llena: tras publicar, cada post pasa a `publicados/`
+y el propio publicador lo **borra a los `dias_retencion` días** (7 por
+defecto, configurable). La copia permanente es Canva: los diseños de cada
+post viven en la carpeta `chinesereads-posts` y las imágenes de IA
+descartadas se suben como assets a su carpeta `descartes` — el VPS solo
+guarda lo transitorio.
 
 ## ¿Publicar por API reduce el alcance? ¿Shadowban?
 
@@ -114,24 +126,141 @@ cd mcp-server-chinesereads-canva
 cp publicacion_config.ejemplo.json publicacion_config.json
 
 # 3. Servir la cola por HTTPS (las APIs descargan las imágenes de URLs
-#    públicas). Con nginx/Apache ya sirviendo tu web, basta un symlink:
+#    públicas). Con el servidor web que ya sirve chinesereads.com, basta
+#    un symlink dentro de su raíz de documentos:
 mkdir -p cola
-ln -s "$PWD/cola" /var/www/tu-web/cola-chinesereads
-#    → base_url_publica = https://tu-dominio.com/cola-chinesereads
+ln -s "$PWD/cola" /var/www/chinesereads.com/cola-chinesereads
+#    → base_url_publica = https://chinesereads.com/cola-chinesereads
+#    (si tu nginx no sigue symlinks o la web no sirve ficheros estáticos,
+#    usa en su lugar un bloque:  location /cola-chinesereads/ {
+#      alias /ruta/al/repo/cola/; }  y recarga nginx)
 
 # 4. Probar sin publicar
 python3 publicador.py estado
 python3 publicador.py publicar --dry-run   # comprueba también que la URL
                                            # se ve desde fuera
 
-# 5. Cron diario a las 8:00 hora española (crontab -e)
+# 5. Cron diario: generar a las 7:00 si hace falta, publicar a las 8:00
+#    (crontab -e)
 CRON_TZ=Europe/Madrid
+0 7 * * * /ruta/al/repo/generacion_autonoma.sh
 0 8 * * * cd /ruta/al/repo && /usr/bin/python3 publicador.py publicar >> publicador.log 2>&1
 ```
 
 Si tu cron no soporta `CRON_TZ` (los de Debian/Ubuntu sí), pon la hora en
 la zona del servidor o usa un timer de systemd. El minuto exacto da igual —
-"alrededor de las 8" es justo lo que queremos.
+"alrededor de las 8" es justo lo que queremos. La línea de las 7:00 es
+opcional: sin ella, el sistema publica solo lo que tú generes (modo cola
+pura).
+
+## Generación autónoma: el cron "te llama" a Claude
+
+Tu pregunta exacta era: *"¿yo no te llamo, sino que el cronjob te activa
+automáticamente?"* — sí, exactamente así, con **Claude Code en modo
+headless** (`claude -p "..."`): la misma herramienta que usas en el Mac,
+instalada en el VPS, ejecutada por cron sin interfaz. El guion
+`generacion_autonoma.sh` comprueba la cola y, solo si está vacía, lanza
+Claude con el encargo de `PROMPT_AUTONOMO.md`: elegir un tema variado
+(consultando el historial para no repetir mundos), generar el post completo
+con la skill de siempre —validaciones en código incluidas—, y encolarlo.
+
+`PROMPT_AUTONOMO.md` codifica también tu política de contenido: temas
+rotando entre mundos distintos (comida, viajes, familia, números, clima,
+compras, emociones...) y, **muy de vez en cuando** (como mucho 1 de cada
+8-10 posts, y solo si no hay otro reciente), un post con ángulo de
+tendencia buscado en internet, tipo "5 words to text your boyfriend in
+Chinese" — siempre brand-safe: sin política, polémicas ni marcas.
+
+Montaje en el VPS (una vez, además del apartado anterior):
+
+```bash
+# Claude Code necesita Node 18+
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash - && sudo apt install -y nodejs
+npm install -g @anthropic-ai/claude-code
+
+# Autenticación con tu suscripción de Claude (genera un token de larga
+# duración; se hace una vez, siguiendo lo que imprima el comando)
+claude setup-token
+
+# El entorno del generador: venv del servidor local + clave de Pollinations
+cd /ruta/al/repo
+python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+# copia .pollinations_token desde el Mac (scp) — jamás por git
+
+# El MCP de Canva necesita su OAuth UNA vez, con navegador. Desde tu Mac:
+ssh -L 8090:localhost:8090 usuario@tu-vps   # (el puerto exacto lo dice el flujo)
+#   → en esa sesión: cd /ruta/al/repo && claude   → /mcp → conectar canva
+#   → el enlace OAuth se abre en el navegador del Mac gracias al túnel
+chmod +x generacion_autonoma.sh
+```
+
+Dos cosas que debes saber y aceptar del modo autónomo:
+
+- Corre con `--dangerously-skip-permissions` (en headless no hay nadie que
+  apruebe cada paso). Por eso: **usuario Linux propio sin privilegios**,
+  que solo tenga este repo. Así el radio de acción queda acotado.
+- Un post autónomo se publica **sin que un humano lo revise antes**. Las
+  reglas duras (validación de longitudes, licencias, cooldowns) van en
+  código y no dependen del modelo, pero un desliz estético es posible.
+  Mitigación ya incluida: tus posts manuales tienen prioridad (el bot solo
+  actúa con la cola vacía) y la orden es "todo o nada" — ante cualquier
+  fallo a medias, aborta y ese día no se publica, que es mejor que
+  publicar algo roto.
+
+## ¿Chocará con mi web en producción?
+
+No, y este es el porqué punto por punto:
+
+- **Puertos**: el publicador y el generador no abren ninguno — solo hacen
+  peticiones salientes (Meta, TikTok, Canva, Pollinations). Tu web sigue
+  siendo la única dueña del 80/443.
+- **Servidor web**: lo único que se añade es servir la carpeta `cola/`
+  bajo `https://chinesereads.com/cola-chinesereads/` (symlink o `alias`).
+  Es una ruta nueva que no existía: no puede pisar nada de la web actual.
+- **Ficheros**: el repo vive en su propio directorio (p. ej.
+  `~/mcp-server-chinesereads-canva`), sin tocar el de la web.
+- **Disco**: acotado por diseño — la cola son unos pocos posts (~20 MB
+  cada uno) y `publicados/` se autolimpia a los 7 días.
+- **CPU/RAM**: el publicador es despreciable. La generación autónoma
+  (Node + Claude) sí consume durante unos minutos al día a las 7:00 —
+  en un VPS pequeño se nota como un pico breve, no como carga sostenida.
+  Si tu VPS va muy justo, mueve la generación a una hora valle.
+- **Cron**: entradas nuevas en tu crontab; las existentes no se tocan.
+
+## ¿Y Metricool?
+
+Lo investigué porque lo tienes: su API (plan Advanced, ~54 €/mes) está
+pensada para leer analíticas, **no para publicar programáticamente**, así
+que como motor de este sistema no sirve y las APIs oficiales gratuitas que
+ya usamos son objetivamente mejores. Donde sí brilla: Metricool es partner
+auditado de TikTok, así que publicar TikToks **públicos** a través de su
+web funciona desde el día uno. Úsalo como puente manual para TikTok
+mientras tu app pasa el audit (arrastras los PNG de `posts/` al calendario
+de Metricool), y déjalo luego para lo que es bueno: mirar analíticas de
+ambas cuentas en un solo sitio.
+
+## Los pasos que te tocan a ti, en orden
+
+Cada paso deja algo funcionando por sí mismo; puedes parar donde quieras.
+
+1. **Instagram profesional**: cuenta `chinesereads` → Ajustes → cambiar a
+   cuenta Creator (2 min, gratis).
+2. **App de Meta**: developers.facebook.com → crear app → producto
+   Instagram → conectar tu cuenta → generar token (sección Instagram de
+   arriba). Me pasas user_id y token y monto la config contigo.
+3. **VPS parte 1 (publicación)**: clonar repo, symlink de `cola/`,
+   `publicacion_config.json`, probar `estado` y `--dry-run`, cron de las
+   8:00. → Desde aquí, Instagram ya se publica solo desde la cola.
+4. **TikTok**: app en developers.tiktok.com + verificar dominio
+   chinesereads.com + OAuth → primero en `SELF_ONLY`, y pedir el audit.
+   Mientras llega: TikTok a mano vía Metricool si quieres.
+5. **VPS parte 2 (generación autónoma)**: Node + Claude Code +
+   `setup-token` + venv + OAuth de Canva por túnel ssh + cron de las 7:00.
+   → Desde aquí, el sistema entero funciona sin tu ordenador.
+
+Para los pasos 2 y 4 (los paneles de Meta y TikTok), hazlos conmigo en una
+sesión: me vas diciendo qué ves y te digo qué tocar, y verifico cada token
+en el momento.
 
 Primera prueba de fuego recomendada: un post de la cola con la cuenta de
 Instagram **en privado** y TikTok en `SELF_ONLY` — se ve el resultado real

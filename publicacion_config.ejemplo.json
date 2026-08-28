@@ -1,6 +1,7 @@
 {
   "_comentario": "Copia este fichero a publicacion_config.json y rellénalo (guía paso a paso en PUBLICACION.md). El fichero real está en .gitignore porque contiene tokens: JAMÁS subirlo a git. Deja vacía la sección de una red que aún no quieras usar.",
-  "base_url_publica": "https://tu-dominio.com/cola-chinesereads",
+  "base_url_publica": "https://chinesereads.com/cola-chinesereads",
+  "dias_retencion": 7,
   "vps": {
     "_comentario": "Solo se usa desde el Mac, para encolar posts con rsync al generar cada uno. En el VPS puede quedarse vacío.",
     "ssh": "usuario@tu-vps",
