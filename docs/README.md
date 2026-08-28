@@ -1,5 +1,19 @@
 # Documentación
 
+## Un mismo proyecto, dos máquinas
+
+El repositorio es idéntico en tu Mac y en el servidor, y el flujo de
+`generar-post` funciona igual en los dos. Lo único que cambia es el campo
+`vps.ssh` de `publicacion_config.json`:
+
+- **Relleno (tu Mac)**: al terminar el post, lo sube por `rsync` a la cola
+  del servidor.
+- **Vacío (el servidor)**: el post se copia a `cola/` sin más, porque ya
+  está en la máquina que publica.
+
+Así que puedes pedir posts desde tu ordenador, o dejar que el servidor los
+genere solo; el resultado es el mismo y ambos usan las mismas reglas.
+
 ## Empezar
 
 | Documento | Para qué |

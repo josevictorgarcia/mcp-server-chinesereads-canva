@@ -84,6 +84,11 @@ sesión: **si se añaden o cambian herramientas, hay que reconectar con
 `/mcp`**, o Claude seguirá viendo la versión antigua. Es la causa más común
 de "esa herramienta no existe".
 
+`/mcp` se escribe en tu sesión interactiva de Claude Code —la de tu Mac— y
+reconecta los dos servidores del proyecto a la vez. **En el servidor no hace
+falta**: allí cada generación arranca un proceso nuevo, que siempre lee el
+código actual.
+
 ## Comprobar que el servidor local funciona
 
 ```bash
