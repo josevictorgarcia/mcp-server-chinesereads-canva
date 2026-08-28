@@ -108,8 +108,26 @@ Ese código es de **un solo uso y caduca en minutos**.
 
 Para leerlo cómodamente se publicó una página estática temporal
 (`despliegue/tiktok-callback.html`) que muestra el código en pantalla. **Ya
-está borrada del servidor**: solo hacía falta para este paso. Si algún día
-hay que repetir el OAuth, se vuelve a subir a `cola/` y se borra después.
+está borrada del servidor**: solo hacía falta para este paso, así que la
+superficie expuesta ya no existe.
+
+Es HTML estático sin backend: no guarda nada, no envía nada a ningún sitio
+y usa `textContent` (nunca `innerHTML`), de modo que nada de lo que venga
+en la URL puede interpretarse como código. Aun así, se borra en cuanto
+sobra.
+
+Si hay que repetir el OAuth (cambio a producción, o dentro de un año):
+
+```bash
+# 1. Publicar la página otra vez
+scp despliegue/tiktok-callback.html root@SERVIDOR:/home/chinesereads/publicador/cola/
+ssh root@SERVIDOR 'chown chinesereads: /home/chinesereads/publicador/cola/tiktok-callback.html'
+
+# 2. Autorizar en el navegador con la URL de arriba y canjear el código
+
+# 3. Borrarla en cuanto termines
+ssh root@SERVIDOR 'rm /home/chinesereads/publicador/cola/tiktok-callback.html'
+```
 
 **3. Canje del código por tokens.** Contra el endpoint de OAuth, con el
 `client_secret` (que nunca sale del servidor):

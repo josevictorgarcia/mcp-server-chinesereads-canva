@@ -27,7 +27,12 @@
 
 1. `curl -fsSL .../despliegue/deploy.sh | sudo bash` → [despliegue.md](despliegue.md)
 2. Rellenar credenciales → [configuracion.md](configuracion.md)
-3. Comprobar: `publicador.py estado` debe listar las dos redes
+3. Comprobar: `sudo bash despliegue/verificar.sh` — compara el servidor
+   con el repositorio y revisa permisos y secretos
+
+Para **actualizar** un servidor ya montado, el mismo `deploy.sh`: hace
+`git pull`, resincroniza lo que vive fuera del repo y no toca lo que ya
+está bien.
 
 ## Dónde está lo que no es documentación
 

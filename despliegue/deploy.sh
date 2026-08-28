@@ -5,6 +5,11 @@
 #
 # o, si ya has clonado el repo:  sudo bash despliegue/deploy.sh
 #
+# Sirve igual para INSTALAR en un servidor nuevo y para ACTUALIZAR uno que
+# ya funciona: hace git pull, resincroniza las unidades de systemd y el
+# override de Docker, y no toca nada que ya esté correcto (no recrea Caddy
+# si el montaje no ha cambiado, y nunca sobrescribe configuraciones).
+#
 # Qué hace (todo idempotente: se puede repetir sin romper nada):
 #   1. Crea el usuario sin privilegios que ejecutará todo.
 #   2. Clona el repo en su home y prepara el entorno de Python.
@@ -74,9 +79,11 @@ log "3/5 Publicar la cola por HTTPS"
 if [ -n "$WEB_DOCKER" ] && [ -f "${WEB_DOCKER}/docker-compose.yml" ]; then
     # Fichero NUEVO y sin versionar: no toca ningún fichero del repo de la web
     # (en particular, jamás el Caddyfile, que se actualiza con git pull).
-    sed "s#/home/chinesereads/publicador/cola#${DESTINO}/cola#" \
-        "${DESTINO}/despliegue/docker-compose.override.yml" \
-        > "${WEB_DOCKER}/docker-compose.override.yml"
+    NUEVO="$(sed "s#/home/chinesereads/publicador/cola#${DESTINO}/cola#" \
+        "${DESTINO}/despliegue/docker-compose.override.yml")"
+    ACTUAL=""
+    [ -f "${WEB_DOCKER}/docker-compose.override.yml" ] && \
+        ACTUAL="$(cat "${WEB_DOCKER}/docker-compose.override.yml")"
 
     # Que el git de la web lo ignore, sin tocar su .gitignore versionado.
     EXCLUDE="$(dirname "$WEB_DOCKER")/.git/info/exclude"
@@ -84,10 +91,15 @@ if [ -n "$WEB_DOCKER" ] && [ -f "${WEB_DOCKER}/docker-compose.yml" ]; then
         echo "docker/docker-compose.override.yml" >> "$EXCLUDE"
     fi
 
-    ENV_ARG=""
-    [ -f "${WEB_DOCKER}/.env" ] && ENV_ARG="--env-file .env"
-    ( cd "$WEB_DOCKER" && docker compose $ENV_ARG up -d --force-recreate --no-deps caddy >/dev/null 2>&1 )
-    echo "   montada en el Caddy de la web (recreado en ~2 s)"
+    if [ "$NUEVO" = "$ACTUAL" ]; then
+        echo "   ya montada y sin cambios (no se toca Caddy)"
+    else
+        printf '%s\n' "$NUEVO" > "${WEB_DOCKER}/docker-compose.override.yml"
+        ENV_ARG=""
+        [ -f "${WEB_DOCKER}/.env" ] && ENV_ARG="--env-file .env"
+        ( cd "$WEB_DOCKER" && docker compose $ENV_ARG up -d --force-recreate --no-deps caddy >/dev/null 2>&1 )
+        echo "   montada en el Caddy de la web (recreado en ~2 s)"
+    fi
 else
     echo "   AVISO: no se encontró el docker-compose de la web en ${WEB_DOCKER}."
     echo "   La cola NO está publicada. Sin una URL pública, Instagram y TikTok"

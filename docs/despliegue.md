@@ -81,6 +81,34 @@ hasta que exista el token de Claude, para no llenar el journal de errores.
 
 **5. Deja las plantillas de configuración** y explica qué falta.
 
+## Actualizar un servidor que ya funciona
+
+El mismo script sirve: **vuelve a ejecutarlo**. Hace `git pull`,
+resincroniza las unidades de systemd y el override de Docker, reinstala las
+dependencias y no toca nada que ya esté bien — en particular, **no recrea
+Caddy si el montaje no ha cambiado**, así que tu web ni se entera.
+
+```bash
+sudo bash /home/chinesereads/publicador/despliegue/deploy.sh
+```
+
+Si el cambio es solo de código o documentación, basta con un `git pull` como
+el usuario del servicio. El script es la opción segura cuando no estás
+seguro de qué cambió.
+
+Para comprobar en cualquier momento que el servidor coincide exactamente con
+el repositorio:
+
+```bash
+sudo bash /home/chinesereads/publicador/despliegue/verificar.sh
+```
+
+Compara el commit y el estado del repo, las cuatro unidades de systemd y el
+override de Docker contra sus copias versionadas, revisa que los secretos
+estén presentes con permisos 600 y fuera de git, comprueba que no se haya
+colado nada sensible en la carpeta pública, y termina con el estado de los
+temporizadores. No modifica nada: solo informa.
+
 ## Lo que el script NO puede hacer
 
 Las credenciales. Todas están en [configuracion.md](configuracion.md):
@@ -187,7 +215,8 @@ fuera de este repo en el servidor:
 
 | Fichero | Dónde va |
 |---|---|
-| `deploy.sh` | se ejecuta, no se copia |
+| `deploy.sh` | se ejecuta, no se copia (instala **y** actualiza) |
+| `verificar.sh` | se ejecuta: comprueba que el servidor coincide con el repo |
 | `docker-compose.override.yml` | `/root/2025-ChineseTexts/docker/` |
 | `chinesereads-publicador.{service,timer}` | `/etc/systemd/system/` |
 | `chinesereads-generador.{service,timer}` | `/etc/systemd/system/` |
