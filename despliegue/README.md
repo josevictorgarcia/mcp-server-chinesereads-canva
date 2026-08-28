@@ -342,23 +342,35 @@ cd /root/chinesereads-publicador && claude
 # → /mcp → conectar canva → se abre el enlace en el navegador del Mac
 ```
 
-### 4.3 Su temporizador
+### 4.3 El historial compartido
 
-Igual que el de publicación pero una hora antes, y con el fichero de entorno:
+`historial.json` (la memoria anti-repetición: palabras, temas, portadas y
+slides finales ya usadas) vive en las **dos** máquinas y no está en git.
+Para que ninguna de las dos repita lo que hizo la otra, el flujo de
+`generar-post` lo sincroniza con `rsync -a --update` (solo sobrescribe si el
+otro lado es más nuevo): lo baja del VPS antes de generar y lo sube después
+de registrar. La copia inicial se hizo con:
 
-```ini
-# /etc/systemd/system/chinesereads-generador.service
-[Service]
-Type=oneshot
-WorkingDirectory=/root/chinesereads-publicador
-EnvironmentFile=/etc/chinesereads-generador.env
-ExecStart=/root/chinesereads-publicador/generacion_autonoma.sh
-
-# /etc/systemd/system/chinesereads-generador.timer
-[Timer]
-OnCalendar=*-*-* 07:00:00 Europe/Madrid
-Persistent=true
+```bash
+scp historial.json root@65.21.59.130:/root/chinesereads-publicador/
+ssh root@65.21.59.130 'chmod 600 /root/chinesereads-publicador/historial.json'
 ```
+
+### 4.4 Su temporizador
+
+Igual que el de publicación pero una hora antes, y con el fichero de
+entorno. Los ficheros están en esta carpeta
+(`chinesereads-generador.service` y `.timer`) → van a
+`/etc/systemd/system/`:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now chinesereads-generador.timer   # solo cuando exista el token
+```
+
+Se instalaron ya el 2026-08-28, pero están **desactivados a propósito**
+hasta que exista `/etc/chinesereads-generador.env` con las credenciales de
+Claude y el MCP de Canva esté autorizado en el servidor.
 
 `generacion_autonoma.sh` comprueba primero si hay algo en la cola: si tú ya
 generaste posts, **no hace nada** (ni gasta cuota ni pollen). Solo actúa
@@ -434,6 +446,8 @@ inofensiva, pero puedes quitarla también.)
 | `docker-compose.override.yml` | `/root/2025-ChineseTexts/docker/` |
 | `chinesereads-publicador.service` | `/etc/systemd/system/` |
 | `chinesereads-publicador.timer` | `/etc/systemd/system/` |
+| `chinesereads-generador.service` | `/etc/systemd/system/` (generación autónoma) |
+| `chinesereads-generador.timer` | `/etc/systemd/system/` (generación autónoma) |
 
 El "porqué" de cada decisión y la parte de estrategia (alcance, hashtags,
 shadowban, Metricool) están en [PUBLICACION.md](../PUBLICACION.md).

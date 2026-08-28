@@ -19,7 +19,19 @@ lo rechazará si te pasas, pero avisa antes si ya sabes que N es demasiado alto)
 
 ## 2. Pedir el contrato
 
-Llama a `preparar_encargo(plantilla_id, tema, numero_slides)`. Te devuelve los
+**Antes de nada, si trabajas en el Mac y `publicacion_config.json` tiene
+`vps.ssh`**, baja el historial del servidor por si el generador autónomo
+publicó algo mientras tanto (si no, repetirías palabras o portadas):
+
+```bash
+rsync -a --update <vps.ssh>:/root/chinesereads-publicador/historial.json ./historial.json
+```
+
+`--update` solo sobrescribe si el del servidor es más nuevo, así que nunca
+pierdes lo tuyo. Si el VPS no responde, sigue sin bloquearte y dilo en el
+resumen final.
+
+Luego llama a `preparar_encargo(plantilla_id, tema, numero_slides)`. Te devuelve los
 huecos por slide, las reglas de estilo, los temas ya publicados y los
 `elementos_recientes` (palabras usadas en los últimos posts de esta plantilla,
 que hay que evitar por ahora — no para siempre).
@@ -261,9 +273,21 @@ el resumen final.
      `_cola/` a `cola/<nombre del post>/` en la raíz del repo y comprueba
      con `python3 publicador.py cola` que aparece.
 
+5. **Sube el historial actualizado** al servidor, para que el generador
+   autónomo conozca lo que acabas de publicar:
+   `rsync -a --update ./historial.json <vps.ssh>:/root/chinesereads-publicador/historial.json`
+   (omítelo si estás EN el VPS: ahí ya es el mismo fichero).
+
+6. **Enséñaselo al usuario**: manda las imágenes del post
+   (`SendUserFile` con los `.jpg` de `_cola/`, portada primero) junto con la
+   caption y los hashtags exactos que se publicarán. Es su única
+   oportunidad de revisarlo antes de que salga solo: la API de Instagram no
+   crea borradores, así que lo que hay en la cola se publica tal cual.
+
 El post se publicará automáticamente a las 8:00 (hora española) del primer
 día en que sea el más antiguo de la cola. Si el usuario quiere retenerlo
-hasta una fecha, pon `no_publicar_antes_de` en el meta.json.
+hasta una fecha, o revisarlo con calma antes, pon `no_publicar_antes_de` en
+el meta.json (así se queda en la cola sin publicarse hasta esa fecha).
 
 ## 11. Al terminar
 
