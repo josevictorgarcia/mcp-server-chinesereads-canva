@@ -2,6 +2,8 @@
   "carpeta_posts_canva_id": "FAHTgEsqGrg",
   "_comentario_carpeta": "Carpeta madre 'chinesereads-posts' en Canva: dentro se crea una subcarpeta por post (<tema>-<fecha>) y ahí se mueven sus diseños (slides + portada). Si se borra en Canva, crear otra con create-folder y actualizar este id.",
   "carpeta_descartes_canva_id": "FAHTmoVZVK4",
+  "carpeta_finales_canva_id": "FAHTmq2trvk",
+  "_comentario_finales": "Carpeta 'chinesereads-plantillas-final' en Canva: el usuario mantiene ahí a mano las plantillas de slide de cierre (plantilla-final-N, 1 página cada una). Se consulta EN VIVO en cada post con list-folder-items (puede crecer, menguar o quedarse vacía); elegir_final decide cuál toca por rotación. La slide elegida se exporta tal cual (sin editar ni copiar) como 99-final.png.",
   "_comentario_descartes": "Carpeta 'descartes' dentro de chinesereads-posts: las imágenes de IA candidatas que no acaban en portada se suben ahí como assets (upload-asset-from-url con la URL de caché sin clave), además de guardarse en posts/descartes/ en local. Canva es la copia que sobrevive a un desastre.",
   "_comentario": "canva_design_id debe apuntar a un diseño MULTI-PÁGINA en Canva: varias páginas duplicadas con el mismo layout (hasta max_paginas). Cada hueco.texto_actual debe ser EXACTAMENTE el texto que aparece ahora en la plantilla (en cada página), para que se pueda localizar y sustituir. Los huecos con tipo 'imagen' no llevan max_caracteres; se rellenan buscando una imagen de licencia libre (CC0/dominio público) o, si no se encuentra, a mano.",
   "plantillas": [

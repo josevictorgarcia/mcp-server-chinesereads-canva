@@ -80,7 +80,8 @@ En Claude Code, dentro de la carpeta del proyecto:
 La skill `generar-post` se dispara sola. El flujo es: elegir plantilla y número
 de slides → pedir el contrato de huecos → generar contenido por slide →
 validar → duplicar N páginas y editarlas en Canva → exportar y descargar todas
-las páginas → registrar el post completo en el historial.
+las páginas → portada → slide final de cierre → registrar el post completo en
+el historial → encolarlo para la publicación automática.
 
 Si el contenido no pasa la validación, se corrige y se revalida antes de tocar
 nada en Canva. Esa es la parte que evita que acabes con diseños rotos.
@@ -157,6 +158,16 @@ título (hace legible cualquier foto). Regístralo con `anadir_plantilla` como
 fondo. Si quieres usar tu galería, sube también tus fotos como assets de Canva
 (arrastrar y soltar, una vez).
 
+## Slide final
+
+Cada post cierra con una slide fija (llamada a la acción, marca...) elegida
+de la carpeta de Canva `chinesereads-plantillas-final`, que mantienes tú a
+mano: sube o borra diseños `plantilla-final-N` de 1 página cuando quieras.
+La carpeta se consulta en vivo en cada post y la herramienta `elegir_final`
+rota en código (la que lleva más posts sin usarse); la slide elegida se
+exporta tal cual —sin editarse— como `99-final.png`, la última del carrusel.
+Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
+
 ## Cómo evita repetirse
 
 - **Temas** (`temas_publicados`): avisa si ya publicaste un post con ese tema
@@ -169,6 +180,8 @@ fondo. Si quieres usar tu galería, sube también tus fotos como assets de Canva
 - **Portadas** (`portadas_recientes`): misma ventana de cooldown para la foto
   de portada (asset de galería o prompt+semilla de IA) y para no calcar la
   redacción de títulos recientes.
+- **Slides finales** (`elegir_final`): rotación uniforme — siempre toca la
+  plantilla de cierre que lleve más posts sin usarse.
 
 ## Publicación automática (Instagram y TikTok)
 

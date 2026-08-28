@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
@@ -336,6 +337,51 @@ def portadas_recientes(cooldown: int = COOLDOWN_POSTS) -> list[dict]:
 
 
 @mcp.tool()
+def elegir_final(candidatos: list[str]) -> dict:
+    """Elige qué slide final de cierre usar en este post, de entre las
+    plantillas disponibles AHORA MISMO en la carpeta de Canva
+    chinesereads-plantillas-final (pásale los títulos que devuelva
+    list-folder-items sobre esa carpeta; su id está en plantillas.json →
+    carpeta_finales_canva_id).
+
+    La rotación es regla de código, no criterio del modelo: gana la candidata
+    que lleve más posts sin usarse; si hay varias que no se han usado nunca,
+    una de ellas al azar. Así el reparto sigue siendo uniforme aunque el
+    usuario añada, borre o renombre plantillas en la carpeta.
+    """
+    if not candidatos:
+        raise ValueError(
+            "candidatos está vacío. Si la carpeta de Canva no tiene ninguna "
+            "plantilla-final, el post sale sin slide de cierre (no es un "
+            "error): sáltate el paso y dilo en el resumen."
+        )
+    ultimo_uso: dict[str, int] = {}
+    for indice, entrada in enumerate(_historial()):
+        nombre = (entrada.get("final") or {}).get("nombre")
+        if nombre:
+            ultimo_uso[nombre] = indice
+    nunca_usadas = [c for c in candidatos if c not in ultimo_uso]
+    if nunca_usadas:
+        elegido = random.choice(nunca_usadas)
+        motivo = "no se ha usado nunca"
+    else:
+        elegido = min(candidatos, key=lambda c: ultimo_uso[c])
+        motivo = "es la que lleva más posts sin usarse"
+    return {
+        "elegido": elegido,
+        "motivo": motivo,
+        "uso_previo": {
+            c: ("nunca" if c not in ultimo_uso else f"post nº {ultimo_uso[c] + 1}")
+            for c in candidatos
+        },
+        "siguiente_paso": ("export-design del diseño elegido (1 página, sin "
+                           "editarlo ni copiarlo) → 99-final.png en la carpeta "
+                           "del post; regístralo con final={'nombre', "
+                           "'design_id'} en registrar_publicacion."),
+    }
+
+
+@mcp.tool()
 def analizar_brillo(ruta_imagen: str) -> dict:
     """Mide la luminosidad de una imagen local (0 = negro, 255 = blanco) y
     recomienda el color del título de portada para que se lea bien.
@@ -603,6 +649,7 @@ def registrar_publicacion(
     url_diseno: str = "",
     notas: str = "",
     portada: dict | None = None,
+    final: dict | None = None,
 ) -> dict:
     """Guarda en el historial un post completo ya creado en Canva (todas sus
     slides de una vez, en una sola llamada por post).
@@ -613,8 +660,10 @@ def registrar_publicacion(
     huecos de texto usado). Si el post lleva portada, pásala también:
     {"titulo": "...", "imagen": "<nombre del asset o prompt+seed de IA>",
     "origen": "ia" | "galeria" | "manual"} — es lo que alimenta el cooldown de
-    portadas_recientes. El historial es lo que evita que repitas temas, palabras
-    y fotos de portada.
+    portadas_recientes. Si lleva slide final de cierre, pasa también
+    final={"nombre": "<título de la plantilla-final>", "design_id": "..."} —
+    es lo que alimenta la rotación de elegir_final. El historial es lo que
+    evita que repitas temas, palabras, fotos de portada y slide final.
     """
     _buscar(plantilla_id)  # valida que la plantilla existe
 
@@ -631,6 +680,11 @@ def registrar_publicacion(
         if portada["origen"] not in ("ia", "galeria", "manual"):
             raise ValueError("portada['origen'] debe ser 'ia', 'galeria' o 'manual'.")
 
+    if final is not None:
+        if not final.get("nombre"):
+            raise ValueError("final necesita 'nombre' (el título de la "
+                             "plantilla-final usada).")
+
     entrada = {
         "fecha": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "plantilla_id": plantilla_id,
@@ -641,6 +695,8 @@ def registrar_publicacion(
     }
     if portada is not None:
         entrada["portada"] = portada
+    if final is not None:
+        entrada["final"] = final
 
     historial = _historial()
     historial.append(entrada)

@@ -268,7 +268,7 @@ sin publicar nada al mundo. Luego, cuenta pública y a correr.
 
 ## Cómo se encola un post desde el Mac
 
-Lo hace Claude al final del flujo de `generar-post` (paso 9 de SKILL.md):
+Lo hace Claude al final del flujo de `generar-post` (paso 10 de SKILL.md):
 escribe el `meta.json` (caption en inglés, hashtags — los tuyos si los das,
 los de `hashtags_por_defecto` si no — y el orden de las imágenes) y sube la
 carpeta con `rsync` al VPS usando `vps.ssh` y `vps.ruta_cola` de tu

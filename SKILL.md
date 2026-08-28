@@ -5,7 +5,7 @@ description: Crear un post (carrusel) de Instagram o TikTok de N slides a partir
 
 # Generar un post de N slides desde plantilla
 
-Flujo de diez pasos. No te saltes la validación ni el registro.
+Flujo de once pasos. No te saltes la validación ni el registro.
 
 ## 1. Elegir plantilla y determinar N
 
@@ -174,18 +174,41 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
    vive en la plantilla maestra: no la toques.
 5. **Exportar y descargar** como `00-portada.png` en la carpeta del post.
 
-## 8. Registrar
+## 8. Slide final
 
-Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_diseno, portada=...)`
+Todo post cierra con una slide final (después de las de vocabulario), salvo
+que no haya ninguna disponible. Las plantillas de cierre las mantiene el
+usuario A MANO en la carpeta de Canva `chinesereads-plantillas-final` (id en
+`plantillas.json` → `carpeta_finales_canva_id`): puede añadir, borrar o
+renombrar `plantilla-final-N` cuando quiera, así que consúltala **en vivo**
+en cada post:
+
+1. `list-folder-items` sobre esa carpeta (tipo `design`). Si está vacía, el
+   post va sin cierre — no es un error: salta el paso y dilo en el resumen.
+2. Pasa los títulos a `elegir_final(candidatos)`. La rotación (la que lleva
+   más posts sin usarse; entre nunca-usadas, al azar) la decide código — no
+   elijas tú.
+3. La slide elegida **no se edita ni se copia**: `export-design` directamente
+   sobre ese diseño (1 página, solo lectura) y descarga el PNG como
+   `99-final.png` en la carpeta del post — el 99 la deja siempre la última
+   al ordenar, detrás de portada y slides.
+4. Guarda título e id para el registro del paso siguiente.
+
+## 9. Registrar
+
+Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_diseno, portada=..., final=...)`
 con `slides` siendo la lista de las N slides (`identificador` + `contenido` de
 cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
 exportación). Si hubo portada, pasa
 `portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual"}` —
 sin esto el cooldown de portadas no funciona. Para una portada de IA, `imagen`
-es el prompt+seed (y el modelo). Solo después de que el diseño
-exista. Esto es lo que evita repetir palabras, temas y fotos de portada.
+es el prompt+seed (y el modelo). Si hubo slide final, pasa también
+`final={"nombre": <título de la plantilla-final>, "design_id": ...}` — sin
+esto la rotación de `elegir_final` no aprende. Solo después de que el diseño
+exista. Esto es lo que evita repetir palabras, temas, fotos de portada y
+slide de cierre.
 
-## 9. Encolar para publicación automática
+## 10. Encolar para publicación automática
 
 Si existe `publicacion_config.json` en la raíz del repo con la sección
 `vps` rellena, el post se encola para que el VPS lo publique solo (ver
@@ -206,8 +229,9 @@ el resumen final.
      (cópialos de la config y añade los tuyos) — nunca más de ~12 en total.
 2. **`meta.json`** en la carpeta local del post, con el formato documentado
    en PUBLICACION.md: `tema`, `titulo` (el de la portada), `caption` (sin
-   hashtags), `hashtags` (opcional, ver arriba), `imagenes` (en orden,
-   portada primero), `creado` (fecha de hoy).
+   hashtags), `hashtags` (opcional, ver arriba), `imagenes` (en orden:
+   portada primero, luego las slides y `99-final.png` la última si la hay),
+   `creado` (fecha de hoy).
 3. **Subir a la cola**:
    - Si `vps.ssh` tiene valor (estás en el Mac): `rsync -av <carpeta local>/
      <vps.ssh>:<vps.ruta_cola>/<nombre carpeta>/`. Si el rsync falla (VPS
@@ -221,7 +245,7 @@ El post se publicará automáticamente a las 8:00 (hora española) del primer
 día en que sea el más antiguo de la cola. Si el usuario quiere retenerlo
 hasta una fecha, pon `no_publicar_antes_de` en el meta.json.
 
-## 10. Al terminar
+## 11. Al terminar
 
 Resume en pocas líneas: qué plantilla usaste, el tema, cuántas slides y en qué
 carpeta local quedaron descargadas las imágenes. Recuerda al usuario que
@@ -233,7 +257,7 @@ revisarlo a ojo. Lo mismo con una portada generada por IA: ya la filtraste
 visualmente, pero la última palabra sobre si representa bien a la cuenta es
 del usuario.
 
-Si el post quedó encolado (paso 9), di cuándo saldrá (posición en la cola ×
+Si el post quedó encolado (paso 10), di cuándo saldrá (posición en la cola ×
 1 post/día a las 8:00) y recuerda que sigue a tiempo de retocarlo en Canva y
 reexportar antes de esa hora. Si no hay publicación automática configurada,
 la subida a Instagram y TikTok es manual.

@@ -6,9 +6,9 @@ la cola de publicación. Nada más.
 
 ## El encargo
 
-Lee `SKILL.md` y sigue el flujo completo de `generar-post` (los diez pasos:
-contrato, contenido, validación, Canva, exportación, portada, registro,
-encolado y resumen). Las reglas de ahí mandan; esto de aquí solo decide QUÉ
+Lee `SKILL.md` y sigue el flujo completo de `generar-post` (los once pasos:
+contrato, contenido, validación, Canva, exportación, portada, slide final,
+registro, encolado y resumen). Las reglas de ahí mandan; esto de aquí solo decide QUÉ
 post toca hoy.
 
 1. **Plantilla**: alterna entre `texto-6` y `texto-3` respecto al último
@@ -43,6 +43,6 @@ post toca hoy.
 - **Sin preguntas**: no hay nadie al otro lado. Ante una duda menor, decide
   con criterio y déjalo anotado en el resumen final; ante una duda mayor,
   aborta con explicación.
-- El paso 9 de SKILL.md (encolar) en el VPS es una copia local a `cola/`
+- El paso 10 de SKILL.md (encolar) en el VPS es una copia local a `cola/`
   (estás en la misma máquina). Comprueba con `python3 publicador.py cola`
   que el post quedó encolado antes de terminar.
