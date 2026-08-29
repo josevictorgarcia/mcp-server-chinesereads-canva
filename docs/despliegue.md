@@ -183,6 +183,11 @@ Además: el `.venv` (ya lo crea el script), la clave de Pollinations, el
 OAuth de Canva y `historial.json`. Todo detallado en
 [configuracion.md](configuracion.md).
 
+El OAuth de Canva **debe hacerse con el usuario del servicio**: copiar las
+credenciales de otro usuario caduca a las pocas horas y deja la generación
+autónoma muerta sin avisar. Si el generador termina sin encolar nada,
+lo primero que hay que mirar es `claude mcp list` con ese usuario.
+
 El historial vive en las **dos** máquinas, así que el flujo de
 `generar-post` lo sincroniza con `rsync -a --update` (solo gana el más
 nuevo): lo baja del servidor antes de generar y lo sube después de

@@ -115,6 +115,14 @@ No es un fichero de texto: es una autorización que se hace **una vez, con
 navegador**, y queda guardada en `~/.claude` del usuario del servicio. Solo
 hace falta para la generación autónoma.
 
+**Hazla como el usuario del servicio, no copies credenciales de otro
+usuario.** Copiar `~/.claude` y `~/.claude.json` de `root` parece funcionar
+—el token de acceso vivo sigue valiendo un rato— pero caduca y no se puede
+renovar, y la generación autónoma se cae con `canva: Needs authentication`
+(comprobado el 2026-08-29). Si ves eso en `claude mcp list`, o
+`~/.claude/mcp-needs-auth-cache.json` con una entrada de `canva`, hay que
+repetir esta autorización.
+
 ```bash
 # Desde tu ordenador, con un túnel para que el enlace vuelva al servidor
 ssh -L 8090:localhost:8090 root@TU_SERVIDOR
