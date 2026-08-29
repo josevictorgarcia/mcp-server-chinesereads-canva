@@ -276,9 +276,12 @@ el resumen final.
      con `python3 publicador.py cola` que aparece.
 
 5. **Sube el historial actualizado** al servidor, para que el generador
-   autónomo conozca lo que acabas de publicar:
-   `rsync -a --update ./historial.json <vps.ssh>:/home/chinesereads/publicador/historial.json`
-   (omítelo si estás EN el VPS: ahí ya es el mismo fichero).
+   autónomo conozca lo que acabas de publicar (omítelo si estás EN el VPS:
+   ahí ya es el mismo fichero). El `--chmod` no es opcional: sin él, rsync
+   copia los permisos del Mac y deja el fichero legible por cualquiera:
+   ```bash
+   rsync -a --update --chmod=F600 ./historial.json <vps.ssh>:/home/chinesereads/publicador/historial.json
+   ```
 
 6. **Enséñaselo al usuario**: manda las imágenes del post
    (`SendUserFile` con los `.jpg` de `_cola/`, portada primero) junto con la
