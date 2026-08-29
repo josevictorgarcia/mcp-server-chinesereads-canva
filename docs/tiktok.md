@@ -5,6 +5,11 @@ Publica de verdad en `@chinesereadsapp`, pero los posts salen en **privado**
 (`SELF_ONLY`) hasta que TikTok apruebe la auditoría. Ver
 [Lo que queda pendiente](#lo-que-queda-pendiente).
 
+**Auditoría enviada el 2026-08-29** (respuesta típica en 2-6 semanas, por
+email). Mientras llega, TikTok está **pausado** en `publicacion_config.json`
+(`"pausada": true`): el publicador ni lo intenta, así que no falla ni
+ensucia el log, e Instagram sigue publicando con normalidad.
+
 ---
 
 ## Por qué TikTok cuesta más que Instagram
