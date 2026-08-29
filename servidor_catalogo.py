@@ -97,6 +97,11 @@ def _escribir_json(ruta: Path, datos: Any) -> None:
     tmp.write_text(
         json.dumps(datos, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    if ruta == HISTORIAL:
+        # El historial guarda enlaces de edición de Canva: solo su dueño debe
+        # poder leerlo. El reemplazo atómico se lleva los permisos del
+        # temporal, así que hay que fijarlos aquí o vuelven a quedar en 644.
+        tmp.chmod(0o600)
     tmp.replace(ruta)
 
 
