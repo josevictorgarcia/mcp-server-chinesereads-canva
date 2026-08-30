@@ -13,8 +13,17 @@ en Docker.
 ## El camino corto
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/josevictorgarcia/mcp-server-chinesereads-canva/main/despliegue/deploy.sh | sudo bash
+curl -fsSL -o deploy.sh https://raw.githubusercontent.com/josevictorgarcia/mcp-server-chinesereads-canva/main/despliegue/deploy.sh
+sudo bash deploy.sh
 ```
+
+**Descárgalo antes de ejecutarlo, no lo canalices con `| sudo bash`.** Con la
+tubería, el script llega a `bash` por la entrada estándar, y los comandos que
+lleva dentro (`apt-get`, `git`) se comen parte de esa entrada: la instalación
+se corta a la mitad y encima devuelve código 0, así que parece que ha ido
+bien. Comprobado en un contenedor limpio el 2026-08-31: con tubería murió tras
+el paso 2 sin clonar el repo; descargándolo primero, los cinco pasos en
+verde.
 
 Eso deja el sistema montado y te dice por pantalla qué credenciales faltan.
 Luego sigues [configuracion.md](configuracion.md) y ya está.
