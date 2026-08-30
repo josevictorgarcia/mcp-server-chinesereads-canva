@@ -34,7 +34,11 @@ post toca hoy.
 
 - **Frugalidad**: el pollen y los recursos son del usuario. Piensa el
   prompt de la portada antes de generar (composición con zona tranquila
-  para el título); 3 intentos es un tope excepcional, no una rutina.
+  para el título); 3 intentos es un tope excepcional, no una rutina. Antes
+  de gastar un intento por legibilidad, prueba otro color de título:
+  recolorear es gratis. Y alterna fotos oscuras y luminosas entre posts,
+  mirando los `color` de `portadas_recientes`, para que el perfil no salga
+  siempre con la misma letra blanca.
 - **Todo o nada**: si algo se cae a mitad (Canva, Pollinations, la
   validación no sale...), NO dejes un post a medias en la cola. Deja el
   error claramente explicado en tu salida y termina. Mañana será otro día;

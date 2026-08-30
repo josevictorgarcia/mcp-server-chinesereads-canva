@@ -164,13 +164,25 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      más de un par de minutos — pasa a la galería del usuario o a una foto
      CC0 de paisaje de Openverse y díselo en el resumen.
 
+     **Claro y oscuro, a propósito**: lo que hace legible un título no es que
+     la foto sea oscura, sino que la franja donde cae el texto sea
+     **uniforme**. Así que pide en el prompt una zona tranquila para el
+     título, pero **alterna deliberadamente el registro** entre posts: unas
+     veces escena oscura (noche, interior, tormenta, azul de atardecer) y
+     otras escena luminosa (niebla de mañana, nieve, cielo pálido, paredes
+     encaladas, papel de arroz, mercado con luz difusa). Mira los `color` de
+     `portadas_recientes` antes de escribir el prompt: si los últimos títulos
+     salieron todos claros, toca una foto luminosa, que es la que deja
+     entrar el tinta y el rojo de marca. Una cuenta cuyas portadas son todas
+     oscuras con letra blanca se ve monótona en la cuadrícula del perfil.
+
      **Frugalidad con el pollen**: cada generación nueva gasta saldo, así que
-     piensa el prompt con calma ANTES de generar — incluida la composición
-     (pide una zona tranquila, oscura o despejada, donde irá el título:
-     regenerar por legibilidad es el error caro típico). El objetivo es
-     acertar a la primera; el tope de 3 intentos es un máximo, no una
-     rutina. Volver a descargar un prompt+seed ya generado es gratis
-     (caché); cambiar de semilla o de prompt, no.
+     piensa el prompt con calma ANTES de generar — incluida la composición.
+     El objetivo es acertar a la primera; el tope de 3 intentos es un máximo,
+     no una rutina. Y antes de gastar un intento por legibilidad, **prueba
+     otro color** (paso 3): recolorear es gratis. Volver a descargar un
+     prompt+seed ya generado también es gratis (caché); cambiar de semilla o
+     de prompt, no.
 
      **Descartes**: las candidatas que no acaben en la portada no se borran —
      muévelas a `posts/descartes/` con nombre descriptivo
