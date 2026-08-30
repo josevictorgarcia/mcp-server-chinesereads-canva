@@ -157,6 +157,14 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      el Año Nuevo chino... Los callejones con farolillos y la comida funcionan
      muy bien: úsalos sin miedo, solo no seguidos.
 
+     **Esa lista son ejemplos, no un menú cerrado.** Es preferencia expresa
+     del usuario (2026-08-31) que aparezcan temáticas y lugares que no están
+     ahí: una barbería, una farmacia tradicional, una obra, un andén de
+     metro, una peluquería, una lavandería, un gimnasio, una librería, una
+     boda, una fábrica, un puerto, una piscina, un karaoke, una biblioteca...
+     Cualquier tema o lugar corriente vale mientras se reconozca como China.
+     Busca a propósito escenas que no hayas usado nunca.
+
      Pero cuidado con esa lista, porque tiene trampa: un museo, un salón o
      una tienda **genéricos** fallan la prueba igual que un cielo. Cada
      escena tiene que llevar dentro al menos una **marca inconfundible de
