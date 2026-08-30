@@ -59,6 +59,12 @@ Nuestro gasto típico por post: 1 portada con 1-3 intentos de `klein` ≈
 **0.005–0.015 pollen** (medio céntimo como mucho). El reclamo inicial da
 para cientos de posts.
 
+Dos costumbres que bajan ese número, las dos en el flujo de `SKILL.md`:
+recolorear el título es gratis, así que una imagen que "no se lee" se
+arregla con `elegir_color_titulo` antes de gastar otro intento; y los
+descartes de posts anteriores (`posts/descartes/` y la carpeta `descartes`
+de Canva) ya están pagados, así que se miran antes de generar nada.
+
 ## Por qué a veces sale una imagen "gratis"
 
 Dos casos reales, por si vuelven a aparecer:
