@@ -1,6 +1,6 @@
 [Unit]
 Description=Genera el post del dia con Claude Code si la cola esta vacia
-Documentation=file:/home/chinesereads/publicador/PUBLICACION.md
+Documentation=file:/home/chinesereads/publicador/docs/publicacion.md
 After=network-online.target
 Wants=network-online.target
 

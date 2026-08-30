@@ -1,6 +1,6 @@
 [Unit]
 Description=Publica el post mas antiguo de la cola de chinesereads en Instagram y TikTok
-Documentation=file:/home/chinesereads/publicador/PUBLICACION.md
+Documentation=file:/home/chinesereads/publicador/docs/publicacion.md
 After=network-online.target
 Wants=network-online.target
 
