@@ -52,6 +52,9 @@ BANDA_TITULO = (0.27, 0.60)
 # zonas extremas de la franja, que es donde un color plano se rompe.
 CONTRASTE_MINIMO = 3.0
 CONTRASTE_EXTREMO_MINIMO = 2.0
+# Por debajo de esta saturación media (0-1) la foto se ve en blanco y negro en
+# el feed, aunque el título contraste de sobra.
+SATURACION_MINIMA = 0.15
 # Paleta de reserva por si plantillas.json aún no declara `colores_titulo`.
 PALETA_TITULO_POR_DEFECTO = [
     {"id": "blanco", "hex": "#FFFFFF", "familia": "claro"},
@@ -590,6 +593,11 @@ def elegir_color_titulo(ruta_imagen: str, banda: list[float] | None = None) -> d
 
         medio = tuple(int(round(v)) for v in ImageStat.Stat(franja_color).mean[:3])
         claro, oscuro = _extremos(franja_color)
+        # Saturación media de la foto entera: una portada legible pero gris
+        # (niebla, nieve, cielo blanco) se ve en blanco y negro en el feed.
+        saturacion = round(
+            ImageStat.Stat(color.convert("HSV").getchannel("S")).mean[0] / 255, 3
+        )
 
     paleta = _paleta_titulo()
     usos: dict[str, int] = {}
@@ -640,13 +648,21 @@ def elegir_color_titulo(ruta_imagen: str, banda: list[float] | None = None) -> d
             "zona_mas_oscura": _rgb_a_hex(oscuro),
         },
         "banda_analizada": [desde, hasta],
+        "saturacion": saturacion,
+        "casi_monocroma": saturacion < SATURACION_MINIMA,
         "elegido": elegido,
         "motivo": motivo,
         "candidatos": candidatos,
         "ninguno_viable": elegido is None,
         "siguiente_paso": (
-            "Aplica el hex de 'elegido' al título con format_text en la misma "
-            "transacción de edición, y pásalo como portada['color'] en "
+            ("AVISO: la foto es casi monocroma (saturación "
+             f"{saturacion}): legible, pero en el feed se verá en blanco y "
+             "negro. Luminoso no es lo mismo que gris — repite el prompt con "
+             "una escena clara pero CON color (madera, verde, textiles, "
+             "tejados, luz cálida) salvo que el blanco y negro sea "
+             "deliberado. " if saturacion < SATURACION_MINIMA else "")
+            + "Aplica el hex de 'elegido' al título con format_text en la "
+            "misma transacción de edición, y pásalo como portada['color'] en "
             "registrar_publicacion (sin eso la rotación de colores no avanza)."
             if elegido else
             "Ningún color de la paleta llega a 3:1 sobre esa franja: la foto "

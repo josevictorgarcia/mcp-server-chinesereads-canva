@@ -98,11 +98,13 @@ print(s.listar_plantillas())
 print(s.preparar_encargo('texto-3', 'animales', 4))
 print(s.elementos_usados('texto-3'))
 print(s.portadas_recientes())
+print(s.elegir_color_titulo('posts/<un-post>/portada-candidata.png'))
 "
 ```
 
 Debe listar tus plantillas y devolver el contrato de una petición de 4
-slides para `texto-3`.
+slides para `texto-3`. La última línea (con la ruta de una portada real)
+comprueba además el cálculo de contraste que decide el color del título.
 
 ## Qué se queda en el Mac y qué no
 

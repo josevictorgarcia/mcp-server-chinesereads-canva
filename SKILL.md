@@ -169,8 +169,14 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      **uniforme**. Así que pide en el prompt una zona tranquila para el
      título, pero **alterna deliberadamente el registro** entre posts: unas
      veces escena oscura (noche, interior, tormenta, azul de atardecer) y
-     otras escena luminosa (niebla de mañana, nieve, cielo pálido, paredes
-     encaladas, papel de arroz, mercado con luz difusa). Mira los `color` de
+     otras escena luminosa. Pero **luminoso no es lo mismo que gris**: una
+     foto de niebla o nieve sale legible y a la vez descolorida, y en la
+     cuadrícula del perfil se ve como un post en blanco y negro. Pide luz
+     clara **con color**: tejados rojos bajo cielo azul, campo de té a
+     mediodía, puestos de fruta con luz de día, fachadas amarillas, madera y
+     textiles, farolillos sobre pared blanca. `elegir_color_titulo` lo mide y
+     avisa (`casi_monocroma`); si salta y el blanco y negro no era
+     deliberado, repite el prompt con más color. Mira los `color` de
      `portadas_recientes` antes de escribir el prompt: si los últimos títulos
      salieron todos claros, toca una foto luminosa, que es la que deja
      entrar el tinta y el rojo de marca. Una cuenta cuyas portadas son todas
