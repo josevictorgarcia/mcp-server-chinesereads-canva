@@ -155,7 +155,18 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      tienda, un museo, un mercado, un callejón con farolillos, un templo, un
      tren de alta velocidad, una mesa con pincel, tinta y un carácter escrito,
      el Año Nuevo chino... Los callejones con farolillos y la comida funcionan
-     muy bien: úsalos sin miedo, solo no seguidos. **Varía la imaginería
+     muy bien: úsalos sin miedo, solo no seguidos.
+
+     Pero cuidado con esa lista, porque tiene trampa: un museo, un salón o
+     una tienda **genéricos** fallan la prueba igual que un cielo. Cada
+     escena tiene que llevar dentro al menos una **marca inconfundible de
+     China**, y hay que escribirla en el prompt: carteles y rótulos con
+     caracteres chinos, tejados curvos de teja gris, columnas y farolillos
+     rojos, puertas de luna, celosías de madera, cerámica azul y blanca,
+     palillos y cuencos, caligrafía, tetera de barro de Yixing, hanfu, el
+     perfil de Pudong... "Museo" no; "vitrinas con cerámica azul y blanca y
+     cartelas en caracteres chinos" sí. "Salón" no; "salón con celosía de
+     madera, tetera de barro y caligrafía enmarcada" sí. **Varía la imaginería
      respecto a `portadas_recientes`** y no repitas familia de escena dos
      posts seguidos. Paisajes, arquitectura y primeros planos sin
      gente funcionan mejor que escenas con personas. Y manda la legibilidad:
