@@ -145,11 +145,19 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      `generar_imagen_ia(prompt, ruta_destino=<carpeta del post>/portada-candidata.png)`
      con un prompt **escrito con guiones en vez de espacios** (una URL sin
      percent-encoding es la única que el fetcher de Canva descarga bien) y
-     fotográfico de estética China **ligado al tema del post**:
-     comida → mercado o plato; transporte → tren, estación, bicis; naturaleza
-     → paisaje... No siempre el mismo tipo de escena (los callejones con
-     farolillos quedan muy bien, pero varía la imaginería respecto a
-     `portadas_recientes`). Paisajes, arquitectura y primeros planos sin
+     fotográfico **que se reconozca como China en un segundo** y a ser posible
+     ligado al tema del post. Esa es la prueba que tiene que pasar la foto: si
+     alguien pasando el dedo por el feed no ve "China" al instante, no vale —
+     un cielo, un campo o una montaña genéricos podrían ser de cualquier
+     sitio. Y el repertorio es mucho más amplio que el paisaje: ciudades y
+     rascacielos, tecnología y robótica, un salón de una casa china, un bar,
+     un restaurante, un plato de comida, un barrio con carteles en chino, una
+     tienda, un museo, un mercado, un callejón con farolillos, un templo, un
+     tren de alta velocidad, una mesa con pincel, tinta y un carácter escrito,
+     el Año Nuevo chino... Los callejones con farolillos y la comida funcionan
+     muy bien: úsalos sin miedo, solo no seguidos. **Varía la imaginería
+     respecto a `portadas_recientes`** y no repitas familia de escena dos
+     posts seguidos. Paisajes, arquitectura y primeros planos sin
      gente funcionan mejor que escenas con personas. Y manda la legibilidad:
      mejor una imagen algo menos espectacular con una zona tranquila donde
      el título respire que una espectacular que se coma las letras. La herramienta elige sola el mejor modelo oficial
