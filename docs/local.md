@@ -14,15 +14,17 @@ python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 ```
 
-**Conecta el MCP de Canva** (OAuth en el navegador, sin crear ninguna app):
+**Conecta el MCP de Canva** (OAuth en el navegador, sin crear ninguna app).
+No hay que dar de alta nada: **los dos servidores ya vienen declarados en
+`.mcp.json`** —`catalogo-plantillas`, que Claude Code levanta solo, y `canva`—
+así que al abrir el proyecto solo hay que aprobarlos y luego autenticar Canva:
 
-```bash
-claude mcp add --transport http canva https://mcp.canva.com/mcp
+```
+/mcp        → canva → Authenticate → autorizas en el navegador
 ```
 
-El servidor local `catalogo-plantillas` ya está declarado en `.mcp.json`, así
-que Claude Code lo levanta solo al abrir el proyecto. Comprueba con `/mcp`
-que aparecen los dos.
+Comprueba con `/mcp` que los dos aparecen conectados. Si Canva dice *Needs
+authentication*, repite ese mismo paso: el token caduca cada cierto tiempo.
 
 ## Configuración local
 
@@ -98,13 +100,21 @@ print(s.listar_plantillas())
 print(s.preparar_encargo('texto-3', 'animales', 4))
 print(s.elementos_usados('texto-3'))
 print(s.portadas_recientes())
-print(s.elegir_color_titulo('posts/<un-post>/portada-candidata.png'))
 "
 ```
 
 Debe listar tus plantillas y devolver el contrato de una petición de 4
-slides para `texto-3`. La última línea (con la ruta de una portada real)
-comprueba además el cálculo de contraste que decide el color del título.
+slides para `texto-3`.
+
+Para comprobar además el cálculo de contraste que decide el color del título,
+pásale la ruta de una portada que tengas ya descargada:
+
+```bash
+./.venv/bin/python -c "
+import servidor_catalogo as s
+print(s.elegir_color_titulo('posts/naturaleza-2026-08-30/portada-candidata.png'))
+"
+```
 
 ## Qué se queda en el Mac y qué no
 

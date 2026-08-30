@@ -39,7 +39,7 @@ genere solo; el resultado es el mismo y ambos usan las mismas reglas.
 
 ## Montar todo en un servidor nuevo
 
-1. `curl -fsSL .../despliegue/deploy.sh | sudo bash` → [despliegue.md](despliegue.md)
+1. Descargar `despliegue/deploy.sh` y `sudo bash deploy.sh` → [despliegue.md](despliegue.md)
 2. Rellenar credenciales → [configuracion.md](configuracion.md)
 3. Comprobar: `sudo bash despliegue/verificar.sh` — compara el servidor
    con el repositorio y revisa permisos y secretos

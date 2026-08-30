@@ -42,7 +42,9 @@ modelo.** Contar caracteres es justo el tipo de cosa que un LLM hace regular.
 ```bash
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
-claude mcp add --transport http canva https://mcp.canva.com/mcp
+# Los dos servidores MCP ya vienen declarados en .mcp.json: al abrir el
+# proyecto, Claude Code pide aprobarlos. Luego `/mcp` para autenticar Canva.
+claude
 ```
 
 Se abre el OAuth de Canva en el navegador; no hay que crear ninguna app. El
@@ -213,7 +215,8 @@ cuando no enciendes el ordenador.
 Montar todo esto en un servidor nuevo es un solo comando:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/josevictorgarcia/mcp-server-chinesereads-canva/main/despliegue/deploy.sh | sudo bash
+curl -fsSL -o deploy.sh https://raw.githubusercontent.com/josevictorgarcia/mcp-server-chinesereads-canva/main/despliegue/deploy.sh
+sudo bash deploy.sh   # descárgalo antes: con `| sudo bash` la instalación se corta a la mitad
 ```
 
 Documentación completa en [`docs/`](docs/) — ver el índice abajo.
