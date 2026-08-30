@@ -131,7 +131,16 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
    to China" o "4 food words in Chinese". Consulta `portadas_recientes` y varía
    la redacción respecto a los títulos recientes. Valídalo con
    `validar_contenido('portada', {"TITULO": ...})`.
-2. **Imagen de fondo** — dos orígenes, por preferencia del usuario:
+2. **Imagen de fondo** — tres orígenes, en este orden de preferencia:
+   - **Descartes ya pagados**: antes de generar nada, mira qué hay en
+     `posts/descartes/` (y en la carpeta `descartes` de Canva). Son imágenes
+     que el usuario ya ha pagado. Si alguna encaja con el tema y no aparece en
+     `portadas_recientes`, úsala: cuesta cero pollen. Y ojo a esto, porque es
+     el ahorro de verdad — el color del título se cambia gratis
+     (`elegir_color_titulo` + `format_text`), así que un descarte que "no
+     cuadraba" en blanco puede cuadrar perfectamente en tinta o dorado. Un
+     descarte reutilizado se registra igual que cualquier portada, para que el
+     cooldown no lo repita al día siguiente.
    - **IA gratuita (Pollinations)**: llama a
      `generar_imagen_ia(prompt, ruta_destino=<carpeta del post>/portada-candidata.png)`
      con un prompt **escrito con guiones en vez de espacios** (una URL sin
@@ -175,16 +184,23 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      `get-assets` y elige una cuyo nombre/id **no** esté en
      `portadas_recientes` — la rotación es lo que evita que la portada se
      repita. Descarga su miniatura para el paso de brillo.
-3. **Brillo**: pasa el fichero descargado a `analizar_brillo`. Si recomienda
-   título "claro" u "oscuro" distinto del color por defecto de la plantilla,
-   ajústalo con `format_text` al editar. Si `contraste_justo` es `true`,
-   comprueba que el degradado/sombra de la plantilla sigue detrás del título.
+3. **Color del título**: pasa el fichero descargado a `elegir_color_titulo`.
+   Mide el contraste real de la franja donde cae el título (no la media de la
+   foto entera: una foto oscura con nubes claras justo detrás del texto
+   engañaba a la media) y devuelve el hex que toca, ya cruzado con la rotación
+   de colores. Aplícalo tal cual: **el color no se elige a ojo, ni se da el
+   blanco por hecho**. Dos consecuencias prácticas:
+   - Recolorear es gratis e instantáneo; regenerar la imagen cuesta pollen. Si
+     el título no se lee, **prueba primero otro color**.
+   - Si devuelve `ninguno_viable`, esa foto no tiene salida por color: cambia
+     de imagen (antes un descarte que una generación nueva).
 4. **Montaje**: `copy-design` de la plantilla `portada` (1 página) → muévelo
    con `move-item-to-folder` a la misma carpeta del post en Canva que el
    diseño de slides → sube la imagen (`upload-asset-from-url` con la
    `url_para_canva` que devolvió `generar_imagen_ia`, o el asset ya
    existente de galería) → `update_fill` en el hueco de imagen +
-   `replace_text` del título → `commit`. La marca de agua de chinesereads ya
+   `replace_text` del título + `format_text` con el hex del paso 3 →
+   `commit`. La marca de agua de chinesereads ya
    vive en la plantilla maestra: no la toques.
 5. **Exportar y descargar** como `00-portada.png` en la carpeta del post.
 
@@ -214,8 +230,9 @@ Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_dise
 con `slides` siendo la lista de las N slides (`identificador` + `contenido` de
 cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
 exportación). Si hubo portada, pasa
-`portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual"}` —
-sin esto el cooldown de portadas no funciona. Para una portada de IA, `imagen`
+`portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual", "color": <el hex aplicado>}` —
+sin esto el cooldown de portadas no funciona, y sin `color` la rotación de
+colores del título se queda parada en el mismo de siempre. Para una portada de IA, `imagen`
 es el prompt+seed (y el modelo). Si hubo slide final, pasa también
 `final={"nombre": <título de la plantilla-final>, "design_id": ...}` — sin
 esto la rotación de `elegir_final` no aprende. Solo después de que el diseño

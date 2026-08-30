@@ -44,6 +44,19 @@ HISTORIAL = BASE / "historial.json"
 # de posts, la palabra vuelve a estar disponible.
 COOLDOWN_POSTS = 15
 
+# Color del título de portada. La franja que se mide es la vertical donde cae
+# el título en la plantilla (fracciones de la altura): medir la foto entera
+# engaña — una foto oscura puede tener nubes claras justo detrás del texto.
+BANDA_TITULO = (0.27, 0.60)
+# Contraste WCAG mínimo para texto grande (3:1) y mínimo tolerable contra las
+# zonas extremas de la franja, que es donde un color plano se rompe.
+CONTRASTE_MINIMO = 3.0
+CONTRASTE_EXTREMO_MINIMO = 2.0
+# Paleta de reserva por si plantillas.json aún no declara `colores_titulo`.
+PALETA_TITULO_POR_DEFECTO = [
+    {"id": "blanco", "hex": "#FFFFFF", "familia": "claro"},
+]
+
 # Generación de imágenes con IA (Pollinations.ai). Dos endpoints:
 #  - gen.pollinations.ai: la plataforma actual. Requiere la clave sk_ (fichero
 #    local en .gitignore) y cobra en "pollen" (flux ~0.002/imagen; el grant
@@ -133,6 +146,58 @@ def _buscar(plantilla_id: str) -> dict:
             f"No existe la plantilla '{plantilla_id}'. Disponibles: {disponibles}"
         )
     return catalogo[plantilla_id]
+
+
+def _paleta_titulo() -> list[dict]:
+    """Colores admitidos para el título de portada, desde plantillas.json."""
+    portada = _catalogo().get("portada", {})
+    paleta = portada.get("colores_titulo") or PALETA_TITULO_POR_DEFECTO
+    return [c for c in paleta if c.get("hex")]
+
+
+def _hex_a_rgb(valor: str) -> tuple[int, int, int]:
+    v = valor.strip().lstrip("#")
+    if len(v) != 6:
+        raise ValueError(f"Color no válido: {valor!r} (formato esperado #RRGGBB).")
+    return tuple(int(v[i:i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
+
+
+def _rgb_a_hex(rgb: tuple[int, int, int]) -> str:
+    return "#{:02X}{:02X}{:02X}".format(*rgb)
+
+
+def _luminancia_relativa(rgb: tuple[int, int, int]) -> float:
+    """Luminancia relativa de la WCAG 2.1 (0 = negro, 1 = blanco)."""
+    canales = []
+    for valor in rgb[:3]:
+        c = valor / 255
+        canales.append(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4)
+    r, g, b = canales
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _contraste(rgb1: tuple[int, int, int], rgb2: tuple[int, int, int]) -> float:
+    """Ratio de contraste WCAG entre dos colores (1 = idénticos, 21 = máximo)."""
+    l1, l2 = _luminancia_relativa(rgb1), _luminancia_relativa(rgb2)
+    claro, oscuro = max(l1, l2), min(l1, l2)
+    return (claro + 0.05) / (oscuro + 0.05)
+
+
+def _extremos(franja_color, columnas: int = 12, filas: int = 4):
+    """Color medio del bloque más claro y del más oscuro de la franja.
+
+    La franja se reduce a una rejilla gruesa (12x4) y se comparan bloques, no
+    píxeles sueltos: es lo que ve el ojo detrás de un texto grande, y detecta
+    los fondos partidos —cielo claro a un lado, montaña oscura al otro— donde
+    un color plano contrasta con la media y se pierde igual en media frase.
+    """
+    from PIL import Image
+
+    rejilla = franja_color.resize((columnas, filas), Image.Resampling.BOX)
+    bloques = list(rejilla.getdata())
+    claro = max(bloques, key=_luminancia_relativa)
+    oscuro = min(bloques, key=_luminancia_relativa)
+    return tuple(claro[:3]), tuple(oscuro[:3])
 
 
 # --------------------------------------------------------------------------
@@ -348,6 +413,7 @@ def portadas_recientes(cooldown: int = COOLDOWN_POSTS) -> list[dict]:
     aparezca aquí (misma foto de galería o mismo prompt/semilla de IA) y varía
     la redacción del título respecto a los recientes. Fuera de esta ventana,
     una foto vuelve a estar disponible — igual que el cooldown de palabras.
+    `color` es el hex del título; de rotarlo ya se encarga elegir_color_titulo.
     """
     entradas = [h for h in _historial() if h.get("portada")]
     recientes = entradas[-cooldown:] if cooldown > 0 else []
@@ -356,6 +422,7 @@ def portadas_recientes(cooldown: int = COOLDOWN_POSTS) -> list[dict]:
             "titulo": e["portada"].get("titulo", ""),
             "imagen": e["portada"].get("imagen", ""),
             "origen": e["portada"].get("origen", ""),
+            "color": e["portada"].get("color", ""),
         }
         for e in reversed(recientes)
     ]
@@ -465,15 +532,31 @@ def preparar_para_cola(carpeta_post: str, max_lado: int = 1080,
 
 
 @mcp.tool()
-def analizar_brillo(ruta_imagen: str) -> dict:
-    """Mide la luminosidad de una imagen local (0 = negro, 255 = blanco) y
-    recomienda el color del título de portada para que se lea bien.
+def elegir_color_titulo(ruta_imagen: str, banda: list[float] | None = None) -> dict:
+    """Mide la foto de portada y decide **de qué color va el título**, entre
+    los colores de marca declarados en plantillas.json (`portada` →
+    `colores_titulo`).
 
-    Devuelve la luminancia global y por tercios horizontales (usa el tercio
-    donde va el título en tu plantilla). Regla dura en código, no a ojo del
-    modelo: luminancia < 128 → título claro (blanco); >= 128 → título oscuro.
-    En la franja intermedia (100-155) el contraste va justo: mantén el degradado
-    oscuro de la plantilla o añade sombra al texto.
+    Sustituye a mirar la imagen a ojo. Dos reglas duras, las dos en código:
+
+    1. **Legibilidad primero.** El contraste se calcula con la fórmula de la
+       WCAG entre cada color de la paleta y el fondo real de la *franja donde
+       cae el título* (no la media de toda la foto: una foto oscura con nubes
+       claras justo detrás del texto engañaba a la media). Solo se consideran
+       viables los colores que llegan a 3:1, el mínimo para texto grande.
+    2. **Variedad después.** Entre los viables gana el que lleve más posts sin
+       usarse (o uno al azar entre los que no se han usado nunca), leyendo
+       `portada.color` del historial. Así el feed no sale siempre igual sin
+       que ningún post pierda legibilidad.
+
+    Recolorear es **gratis e instantáneo** (`format_text` en la transacción de
+    edición de Canva) y generar una imagen nueva cuesta pollen: si el título
+    no se lee, esto es lo primero que hay que probar. Solo si
+    `ninguno_viable` es true la foto no tiene salida y toca cambiarla.
+
+    `banda` permite acotar la franja vertical analizada como fracciones de la
+    altura ([0.27, 0.60] por defecto, que es donde cae el título en la
+    plantilla de portada).
     """
     from PIL import Image, ImageStat
 
@@ -481,32 +564,98 @@ def analizar_brillo(ruta_imagen: str) -> dict:
     if not ruta.exists():
         raise ValueError(f"No existe el fichero de imagen: {ruta}")
 
+    desde, hasta = BANDA_TITULO if banda is None else (banda[0], banda[1])
+    if not 0 <= desde < hasta <= 1:
+        raise ValueError("banda debe ser [desde, hasta] con 0 <= desde < hasta <= 1.")
+
     with Image.open(ruta) as img:
-        gris = img.convert("L")
+        color = img.convert("RGB")
+        gris = color.convert("L")
         ancho, alto = gris.size
         tercio = alto // 3
+        caja = (0, int(alto * desde), ancho, int(alto * hasta))
+        franja_color = color.crop(caja)
+        franja_gris = gris.crop(caja)
 
-        def _media(caja: tuple[int, int, int, int]) -> float:
-            return round(ImageStat.Stat(gris.crop(caja)).mean[0], 1)
+        def _media_gris(recorte) -> float:
+            return round(ImageStat.Stat(recorte).mean[0], 1)
 
         luminancia = {
-            "global": round(ImageStat.Stat(gris).mean[0], 1),
-            "tercio_superior": _media((0, 0, ancho, tercio)),
-            "tercio_central": _media((0, tercio, ancho, 2 * tercio)),
-            "tercio_inferior": _media((0, 2 * tercio, ancho, alto)),
+            "global": _media_gris(gris),
+            "tercio_superior": _media_gris(gris.crop((0, 0, ancho, tercio))),
+            "tercio_central": _media_gris(gris.crop((0, tercio, ancho, 2 * tercio))),
+            "tercio_inferior": _media_gris(gris.crop((0, 2 * tercio, ancho, alto))),
+            "banda_titulo": _media_gris(franja_gris),
         }
 
-    media_global = luminancia["global"]
+        medio = tuple(int(round(v)) for v in ImageStat.Stat(franja_color).mean[:3])
+        claro, oscuro = _extremos(franja_color)
+
+    paleta = _paleta_titulo()
+    usos: dict[str, int] = {}
+    for indice, entrada in enumerate(_historial()):
+        usado = (entrada.get("portada") or {}).get("color")
+        if usado:
+            usos[usado.upper()] = indice
+
+    candidatos = []
+    for entrada_color in paleta:
+        rgb = _hex_a_rgb(entrada_color["hex"])
+        contraste = _contraste(rgb, medio)
+        peor = min(_contraste(rgb, claro), _contraste(rgb, oscuro))
+        candidatos.append({
+            "id": entrada_color.get("id", entrada_color["hex"]),
+            "hex": entrada_color["hex"].upper(),
+            "familia": entrada_color.get("familia", ""),
+            "nota": entrada_color.get("nota", ""),
+            "contraste": round(contraste, 2),
+            "contraste_peor_zona": round(peor, 2),
+            "viable": contraste >= CONTRASTE_MINIMO,
+            "arriesgado": peor < CONTRASTE_EXTREMO_MINIMO,
+            "ultimo_uso": ("nunca" if entrada_color["hex"].upper() not in usos
+                           else f"post nº {usos[entrada_color['hex'].upper()] + 1}"),
+        })
+
+    viables = [c for c in candidatos if c["viable"] and not c["arriesgado"]]
+    if not viables:
+        viables = [c for c in candidatos if c["viable"]]
+
+    elegido, motivo = None, ""
+    if viables:
+        nunca = [c for c in viables if c["ultimo_uso"] == "nunca"]
+        if nunca:
+            elegido = random.choice(nunca)
+            motivo = "contrasta de sobra y no se ha usado nunca"
+        else:
+            elegido = min(viables, key=lambda c: usos[c["hex"]])
+            motivo = "contrasta de sobra y es el que lleva más posts sin usarse"
+
+    candidatos.sort(key=lambda c: c["contraste"], reverse=True)
     return {
         "luminancia": luminancia,
-        "titulo_recomendado": "claro" if media_global < 128 else "oscuro",
-        "contraste_justo": 100 <= media_global <= 155,
-        "nota": (
-            "Aplica la recomendación sobre el tercio donde va el título en tu "
-            "plantilla, no solo sobre la media global. Si contraste_justo es "
-            "true, asegúrate de que el degradado/sombra de la plantilla está ahí."
+        "fondo_banda": {
+            "rgb": list(medio),
+            "hex": _rgb_a_hex(medio),
+            "zona_mas_clara": _rgb_a_hex(claro),
+            "zona_mas_oscura": _rgb_a_hex(oscuro),
+        },
+        "banda_analizada": [desde, hasta],
+        "elegido": elegido,
+        "motivo": motivo,
+        "candidatos": candidatos,
+        "ninguno_viable": elegido is None,
+        "siguiente_paso": (
+            "Aplica el hex de 'elegido' al título con format_text en la misma "
+            "transacción de edición, y pásalo como portada['color'] en "
+            "registrar_publicacion (sin eso la rotación de colores no avanza)."
+            if elegido else
+            "Ningún color de la paleta llega a 3:1 sobre esa franja: la foto "
+            "tiene el fondo demasiado revuelto justo donde va el título. Aquí "
+            "sí toca cambiar de imagen (otro descarte ya pagado antes que una "
+            "generación nueva)."
         ),
     }
+
 
 
 def _token_pollinations() -> str:
@@ -742,8 +891,9 @@ def registrar_publicacion(
     (lo que identifica esa slide, p. ej. la palabra) y "contenido" (el dict de
     huecos de texto usado). Si el post lleva portada, pásala también:
     {"titulo": "...", "imagen": "<nombre del asset o prompt+seed de IA>",
-    "origen": "ia" | "galeria" | "manual"} — es lo que alimenta el cooldown de
-    portadas_recientes. Si lleva slide final de cierre, pasa también
+    "origen": "ia" | "galeria" | "manual", "color": "#RRGGBB"} — es lo que
+    alimenta el cooldown de portadas_recientes y la rotación de colores de
+    elegir_color_titulo (sin `color`, el título tenderá a salir siempre igual). Si lleva slide final de cierre, pasa también
     final={"nombre": "<título de la plantilla-final>", "design_id": "..."} —
     es lo que alimenta la rotación de elegir_final. El historial es lo que
     evita que repitas temas, palabras, fotos de portada y slide final.
@@ -762,6 +912,9 @@ def registrar_publicacion(
                 raise ValueError(f"portada necesita '{clave}' (no vacío).")
         if portada["origen"] not in ("ia", "galeria", "manual"):
             raise ValueError("portada['origen'] debe ser 'ia', 'galeria' o 'manual'.")
+        if portada.get("color"):
+            _hex_a_rgb(portada["color"])  # valida el formato #RRGGBB
+            portada["color"] = portada["color"].strip().upper()
 
     if final is not None:
         if not final.get("nombre"):

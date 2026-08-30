@@ -147,6 +147,39 @@
       "canva_design_id": "DAHTagkooZQ",
       "formato": "2048x2048",
       "max_paginas": 1,
+      "colores_titulo": [
+        {
+          "id": "blanco",
+          "hex": "#FFFFFF",
+          "familia": "claro",
+          "nota": "El de siempre. Fotos oscuras o de color saturado."
+        },
+        {
+          "id": "crema",
+          "hex": "#F7E7C8",
+          "familia": "claro",
+          "nota": "Blanco cálido, más editorial. Va bien en fotos de noche, madera, interiores y comida."
+        },
+        {
+          "id": "dorado",
+          "hex": "#F5C042",
+          "familia": "claro",
+          "nota": "Muy chino y muy legible sobre azules y verdes oscuros. Evitarlo sobre atardeceres o farolillos amarillos: se funde."
+        },
+        {
+          "id": "tinta",
+          "hex": "#16181A",
+          "familia": "oscuro",
+          "nota": "Para fotos claras: niebla, nieve, cielo blanco, papel, paredes claras."
+        },
+        {
+          "id": "rojo-marca",
+          "hex": "#D72E29",
+          "familia": "oscuro",
+          "nota": "El rojo exacto del logo de chinesereads. Solo sobre fotos claras y lisas; se pierde si la foto ya tiene rojos (farolillos, banderas)."
+        }
+      ],
+      "_comentario_colores": "Paleta del título de portada. elegir_color_titulo descarta los que no llegan a 3:1 de contraste sobre la franja del título y, entre los que quedan, rota por el que lleva más posts sin usarse (lee portada.color del historial). Añadir o quitar colores aquí es seguro: la legibilidad la garantiza el código, no la lista.",
       "huecos": [
         {
           "id": "TITULO",
@@ -164,7 +197,7 @@
       "reglas_estilo": [
         "Título en inglés, gancho directo y concreto, sin clickbait vacío. Varía la fórmula respecto a portadas_recientes.",
         "Foto de estética China ligada al tema del post (comida, transporte, mercados, naturaleza, templos, calles...). Varía la imaginería entre posts — no siempre la misma escena — y recuerda: paisajes y primeros planos funcionan mejor que escenas con personas, y la legibilidad del título manda sobre la espectacularidad de la foto.",
-        "Tras elegir la foto, pasa analizar_brillo y ajusta el color del título con format_text si hace falta: claro (#FFFFFF) sobre foto oscura, oscuro o el coral de marca sobre foto clara. El título tiene que leerse a un vistazo en miniatura de feed.",
+        "Tras elegir la foto, pasa elegir_color_titulo y aplica con format_text el hex que devuelva: él mide el contraste real de la franja del título y rota entre los colores de 'colores_titulo'. No elijas el color a ojo ni des el blanco por hecho. El título tiene que leerse a un vistazo en miniatura de feed.",
         "La marca de agua de chinesereads ya está en la plantilla: no se cambia ni se mueve."
       ]
     }

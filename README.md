@@ -141,9 +141,14 @@ La foto de fondo sale de uno de estos dos sitios:
   El asistente elige una distinta cada vez, con el mismo cooldown que las
   palabras (`portadas_recientes`), para que no se repitan seguidas.
 
-Reglas duras en código, como siempre: `analizar_brillo` mide la luminosidad de
-la foto y decide si el título va claro u oscuro (nada de confiar en el ojo del
-modelo), y `portadas_recientes` es la memoria anti-repetición.
+Reglas duras en código, como siempre: `elegir_color_titulo` mide el contraste
+real de la franja donde cae el título, descarta los colores de marca que no
+llegan a 3:1 y, entre los que quedan, rota por el que lleva más posts sin
+usarse — variedad en el feed sin que ningún título deje de leerse (nada de
+confiar en el ojo del modelo). `portadas_recientes` es la memoria
+anti-repetición, tanto de fotos como de colores. La paleta se edita a mano en
+`plantillas.json` → plantilla `portada` → `colores_titulo`: añadir o quitar
+colores ahí es seguro, la legibilidad la sigue garantizando el código.
 
 **Mejores modelos de IA (opcional, gratis, una vez):** regístrate en
 [enter.pollinations.ai](https://enter.pollinations.ai) con tu cuenta de GitHub
