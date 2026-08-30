@@ -55,6 +55,10 @@ CONTRASTE_EXTREMO_MINIMO = 2.0
 # Por debajo de esta saturación media (0-1) la foto se ve en blanco y negro en
 # el feed, aunque el título contraste de sobra.
 SATURACION_MINIMA = 0.15
+# Una escena de portada (museo, callejón, skyline...) no debe repetirse hasta
+# que hayan pasado estos posts. Ventana más larga que la de las palabras: la
+# foto es lo primero que se ve en el perfil y es lo que más canta si se repite.
+COOLDOWN_ESCENAS = 30
 # Paleta de reserva por si plantillas.json aún no declara `colores_titulo`.
 PALETA_TITULO_POR_DEFECTO = [
     {"id": "blanco", "hex": "#FFFFFF", "familia": "claro"},
@@ -426,9 +430,28 @@ def portadas_recientes(cooldown: int = COOLDOWN_POSTS) -> list[dict]:
             "imagen": e["portada"].get("imagen", ""),
             "origen": e["portada"].get("origen", ""),
             "color": e["portada"].get("color", ""),
+            "escena": e["portada"].get("escena", ""),
         }
         for e in reversed(recientes)
     ]
+
+
+@mcp.tool()
+def escenas_recientes(cooldown: int = COOLDOWN_ESCENAS) -> list[str]:
+    """Escenas de portada usadas en los últimos `cooldown` posts, de más
+    reciente a más antigua.
+
+    La escena es el tipo de foto en dos o tres palabras: `museo-porcelana`,
+    `callejon-farolillos`, `skyline-nocturno`, `puesto-de-fruta`... Consúltalo
+    ANTES de escribir el prompt de la portada y elige una que no aparezca:
+    repetir escena es lo que más canta en la cuadrícula del perfil, mucho más
+    que repetir una palabra. Fuera de esta ventana la escena vuelve a estar
+    disponible — el usuario quiere que se repitan, pero pasado un tiempo
+    prudencial (2026-08-31), y 30 posts es un mes largo de publicación diaria.
+    """
+    entradas = [h for h in _historial() if (h.get("portada") or {}).get("escena")]
+    recientes = entradas[-cooldown:] if cooldown > 0 else []
+    return [e["portada"]["escena"] for e in reversed(recientes)]
 
 
 @mcp.tool()
@@ -907,9 +930,11 @@ def registrar_publicacion(
     (lo que identifica esa slide, p. ej. la palabra) y "contenido" (el dict de
     huecos de texto usado). Si el post lleva portada, pásala también:
     {"titulo": "...", "imagen": "<nombre del asset o prompt+seed de IA>",
-    "origen": "ia" | "galeria" | "manual", "color": "#RRGGBB"} — es lo que
-    alimenta el cooldown de portadas_recientes y la rotación de colores de
-    elegir_color_titulo (sin `color`, el título tenderá a salir siempre igual). Si lleva slide final de cierre, pasa también
+    "origen": "ia" | "galeria" | "manual", "color": "#RRGGBB",
+    "escena": "museo-porcelana"} — es lo que alimenta el cooldown de
+    portadas_recientes, la rotación de colores de elegir_color_titulo (sin
+    `color`, el título tenderá a salir siempre igual) y el cooldown de escenas
+    de escenas_recientes (sin `escena`, las portadas se repetirán de tipo). Si lleva slide final de cierre, pasa también
     final={"nombre": "<título de la plantilla-final>", "design_id": "..."} —
     es lo que alimenta la rotación de elegir_final. El historial es lo que
     evita que repitas temas, palabras, fotos de portada y slide final.
@@ -931,6 +956,8 @@ def registrar_publicacion(
         if portada.get("color"):
             _hex_a_rgb(portada["color"])  # valida el formato #RRGGBB
             portada["color"] = portada["color"].strip().upper()
+        if portada.get("escena"):
+            portada["escena"] = _normalizar(portada["escena"]).replace(" ", "-")
 
     if final is not None:
         if not final.get("nombre"):

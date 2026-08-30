@@ -165,6 +165,16 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      Cualquier tema o lugar corriente vale mientras se reconozca como China.
      Busca a propósito escenas que no hayas usado nunca.
 
+     **Cooldown de escenas.** Antes de escribir el prompt, llama a
+     `escenas_recientes` y elige una que NO aparezca. Repetir escena se nota
+     mucho más que repetir una palabra, porque la portada es lo que se ve en
+     la cuadrícula del perfil. Pueden repetirse —el usuario quiere que se
+     repitan— pero pasado un tiempo prudencial: la ventana es de 30 posts, un
+     mes largo de publicación diaria. Al registrar, pasa la escena en dos o
+     tres palabras (`portada["escena"]`: `museo-porcelana`,
+     `callejon-farolillos`, `skyline-nocturno`, `puesto-de-fruta`...); sin
+     eso el cooldown no aprende.
+
      Pero cuidado con esa lista, porque tiene trampa: un museo, un salón o
      una tienda **genéricos** fallan la prueba igual que un cielo. Cada
      escena tiene que llevar dentro al menos una **marca inconfundible de
@@ -275,9 +285,10 @@ Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_dise
 con `slides` siendo la lista de las N slides (`identificador` + `contenido` de
 cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
 exportación). Si hubo portada, pasa
-`portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual", "color": <el hex aplicado>}` —
-sin esto el cooldown de portadas no funciona, y sin `color` la rotación de
-colores del título se queda parada en el mismo de siempre. Para una portada de IA, `imagen`
+`portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual", "color": <el hex aplicado>, "escena": <la escena en dos o tres palabras>}` —
+sin esto el cooldown de portadas no funciona, sin `color` la rotación de
+colores del título se queda parada en el mismo de siempre, y sin `escena` las
+portadas se repiten de tipo. Para una portada de IA, `imagen`
 es el prompt+seed (y el modelo). Si hubo slide final, pasa también
 `final={"nombre": <título de la plantilla-final>, "design_id": ...}` — sin
 esto la rotación de `elegir_final` no aprende. Solo después de que el diseño
