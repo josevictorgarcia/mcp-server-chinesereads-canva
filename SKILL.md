@@ -20,13 +20,15 @@ llama a `planificar_post`.** Devuelve dos cosas, las dos por rotación (gana la
 opción que lleva más posts sin usarse):
 
 - **`numero_slides`**: cuántas palabras lleva el post, entre `minimo` y
-  `maximo` (4 a 12 en `texto-6`). Es una propuesta con fundamento, no una
+  `maximo` (4 a 8 en `texto-6`). Es una propuesta con fundamento, no una
   orden: si el tema da 5 palabras buenas y la sexta sería relleno, baja a 5.
   Lo que **no** puedes es repetir el número que ya llevan los últimos posts
   seguidos — `preparar_encargo` lo rechaza, y con razón: así es como acabaron
-  siendo todos de 6. Ojo, un post de 10-12 slides es el doble de trabajo en
-  Canva que uno de 6; si vas justo de tiempo o el servicio va lento, quédate
-  en la parte baja del rango y dilo en el resumen.
+  siendo todos de 6. El tope de 8 no es capricho: Instagram admite 10
+  imágenes por carrusel y dos se van en la portada y la slide de cierre. Con
+  más, el publicador recorta en silencio. Y un post de 8 es bastante más
+  trabajo en Canva que uno de 5: si el servicio va lento, quédate abajo y
+  dilo en el resumen.
 - **`angulo`**: desde dónde se agrupan las palabras. No todos los posts son
   "N palabras sobre un tema" — ese es solo uno de los ángulos
   (`campo-semantico`). También valen una categoría gramatical entera

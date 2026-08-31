@@ -15,12 +15,12 @@ post toca hoy.
    marcada como `por_defecto` en el catálogo; no la cambies por tu cuenta.
 2. **Forma del post**: llama a `planificar_post`. Te da el número de
    slides y el ángulo, los dos por rotación. **No des 6 por hecho**: el
-   rango es 4-12 y que la longitud cambie de un post a otro es
+   rango es 4-8 y que la longitud cambie de un post a otro es
    intencionado. Puedes bajar o subir un poco si el tema lo pide (5
    palabras buenas mejor que 6 con una de relleno), pero no repetir el
    número que llevan los últimos posts seguidos: `preparar_encargo` lo
-   rechaza. Con posts largos (10-12) cuenta con que Canva lleva el doble
-   de trabajo; si el servicio va lento, quédate abajo y dilo en el resumen.
+   rechaza. Con posts de 7-8 cuenta con que Canva lleva bastante más
+   trabajo; si el servicio va lento, quédate abajo y dilo en el resumen.
 3. **Tema**: concreto, útil para quien aprende chino y VARIADO respecto a
    `temas_publicados`, dentro del ángulo que te haya tocado. Nunca dos
    posts seguidos del mismo mundo. Los ángulos (con ejemplos) están en

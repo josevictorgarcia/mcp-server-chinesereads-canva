@@ -82,7 +82,8 @@
       "descripcion": "Slide de vocabulario con carácter, pinyin, traducción y una frase de ejemplo completa (chino, pinyin y traducción). Fondo fijo, solo cambia el texto.",
       "canva_design_id": "DAHGvSQ2oJQ",
       "formato": "1080x1080",
-      "max_paginas": 12,
+      "max_paginas": 8,
+      "_comentario_max_paginas": "El maestro de Canva tiene 12 páginas, pero el tope real lo pone Instagram: 10 imágenes por carrusel (IG_MAX_IMAGENES en publicador.py). Como todo post lleva portada y slide de cierre, quedan 8 para vocabulario. Con más, el publicador recorta en silencio las últimas slides Y la de cierre. Si algún día se publica solo en TikTok (admite 35) o se quitan portada y cierre, se puede subir hasta 12.",
       "min_paginas": 4,
       "huecos": [
         {
@@ -144,7 +145,8 @@
       "descripcion": "Slide mínima de vocabulario: carácter, pinyin y traducción. Sin frase de ejemplo.",
       "canva_design_id": "DAHIgvEIxeU",
       "formato": "1080x1080",
-      "max_paginas": 12,
+      "max_paginas": 8,
+      "_comentario_max_paginas": "El maestro de Canva tiene 12 páginas, pero el tope real lo pone Instagram: 10 imágenes por carrusel (IG_MAX_IMAGENES en publicador.py). Como todo post lleva portada y slide de cierre, quedan 8 para vocabulario. Con más, el publicador recorta en silencio las últimas slides Y la de cierre. Si algún día se publica solo en TikTok (admite 35) o se quitan portada y cierre, se puede subir hasta 12.",
       "min_paginas": 4,
       "huecos": [
         {
@@ -184,7 +186,8 @@
       "descripcion": "Slide de vocabulario donde la traducción se transmite con una imagen en vez de texto: carácter, pinyin e imagen ilustrativa.",
       "canva_design_id": "DAHHlcpC6To",
       "formato": "1080x1080",
-      "max_paginas": 12,
+      "max_paginas": 8,
+      "_comentario_max_paginas": "El maestro de Canva tiene 12 páginas, pero el tope real lo pone Instagram: 10 imágenes por carrusel (IG_MAX_IMAGENES en publicador.py). Como todo post lleva portada y slide de cierre, quedan 8 para vocabulario. Con más, el publicador recorta en silencio las últimas slides Y la de cierre. Si algún día se publica solo en TikTok (admite 35) o se quitan portada y cierre, se puede subir hasta 12.",
       "min_paginas": 4,
       "huecos": [
         {

@@ -227,7 +227,7 @@ Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
   variantes que aguantan la foto y los colores que contrastan, gana el que
   lleva más posts sin usarse.
 - **Longitud y ángulo del post** (`planificar_post`): el número de slides rota
-  entre 4 y 12, y si los últimos posts seguidos llevan todos el mismo,
+  entre 4 y 8, y si los últimos posts seguidos llevan todos el mismo,
   `preparar_encargo` lo rechaza. El ángulo (campo semántico, categoría
   gramatical, situación, tendencia, expresiones, confusiones) rota igual, así
   que no salen dos posts del mismo corte pegados.
