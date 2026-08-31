@@ -52,6 +52,13 @@ BANDA_TITULO = (0.27, 0.60)
 # zonas extremas de la franja, que es donde un color plano se rompe.
 CONTRASTE_MINIMO = 3.0
 CONTRASTE_EXTREMO_MINIMO = 2.0
+# La marca de agua de chinesereads no se puede recolorear (va fija en la
+# plantilla), así que lo único que se puede hacer para que se lea es elegir la
+# variante de portada que la pone sobre una zona donde contraste. Es texto
+# pequeño y secundario: le basta con un mínimo más flojo que el del título.
+CONTRASTE_MARCA_MINIMO = 2.0
+# Rojo real de la marca de agua, medido sobre la plantilla maestra.
+MARCA_AGUA_HEX = "#D52E27"
 # Por debajo de esta saturación media (0-1) la foto se ve en blanco y negro en
 # el feed, aunque el título contraste de sobra.
 SATURACION_MINIMA = 0.15
@@ -59,6 +66,24 @@ SATURACION_MINIMA = 0.15
 # que hayan pasado estos posts. Ventana más larga que la de las palabras: la
 # foto es lo primero que se ve en el perfil y es lo que más canta si se repite.
 COOLDOWN_ESCENAS = 30
+
+# Número de slides de vocabulario por post. El mínimo evita posts tan cortos
+# que no den nada que aprender; el máximo real lo pone `max_paginas` de cada
+# plantilla (las páginas que de verdad existen en el diseño maestro de Canva).
+MIN_SLIDES = 4
+# Un post no puede llevar el mismo número de slides que los últimos posts
+# seguidos. Sin esto todos salían de 6 palabras: el modelo, sin dato en
+# contra, copia lo último que ve.
+COOLDOWN_NUMEROS = 3
+# Un ángulo de post (campo semántico, categoría gramatical, situación...) no
+# se repite hasta pasados estos posts. Es lo que obliga a alternar entre
+# "6 palabras de comida" y "6 preposiciones" o "palabras de los dramas".
+COOLDOWN_ANGULOS = 3
+# Familias de reserva por si plantillas.json aún no declara `angulos_de_post`.
+ANGULOS_POR_DEFECTO = [
+    {"id": "campo-semantico", "descripcion": "Vocabulario de un tema concreto."},
+]
+
 # Paleta de reserva por si plantillas.json aún no declara `colores_titulo`.
 PALETA_TITULO_POR_DEFECTO = [
     {"id": "blanco", "hex": "#FFFFFF", "familia": "claro"},
@@ -162,6 +187,23 @@ def _paleta_titulo() -> list[dict]:
     return [c for c in paleta if c.get("hex")]
 
 
+def _angulos() -> list[dict]:
+    """Familias de ángulo de post declaradas en plantillas.json.
+
+    Es una lista de datos, no de código: el usuario puede añadir o quitar
+    familias sin tocar el servidor. La rotación funciona igual.
+    """
+    crudo = _leer_json(PLANTILLAS, {})
+    angulos = crudo.get("angulos_de_post") or ANGULOS_POR_DEFECTO
+    return [a for a in angulos if a.get("id")]
+
+
+def _numeros_recientes(plantilla_id: str, cuantos: int) -> list[int]:
+    """Número de slides de los últimos posts de esa plantilla, el más nuevo primero."""
+    propias = [e for e in _historial() if e.get("plantilla_id") == plantilla_id]
+    return [len(e.get("slides", [])) for e in reversed(propias[-cuantos:])]
+
+
 def _hex_a_rgb(valor: str) -> tuple[int, int, int]:
     v = valor.strip().lstrip("#")
     if len(v) != 6:
@@ -210,6 +252,105 @@ def _extremos(franja_color, columnas: int = 12, filas: int = 4):
 # --------------------------------------------------------------------------
 # Herramientas
 # --------------------------------------------------------------------------
+
+
+def _variantes_portada() -> list[dict]:
+    """Variantes de la plantilla de portada declaradas en plantillas.json.
+
+    Cada una es el mismo diseño con el título y la marca de agua en sitios
+    distintos, así que cada una tiene su propia `banda_titulo` y su
+    `banda_marca`. Si no hay lista, se usa la plantilla única de siempre.
+    """
+    portada = _catalogo().get("portada", {})
+    variantes = portada.get("variantes") or []
+    validas = [v for v in variantes if v.get("id") and v.get("canva_design_id")]
+    if validas:
+        return validas
+    return [{
+        "id": "portada-1",
+        "canva_design_id": portada.get("canva_design_id", ""),
+        "banda_titulo": list(BANDA_TITULO),
+        "banda_marca": None,
+    }]
+
+
+def _recorte(color, banda):
+    """Recorta la zona que ocupa un elemento, en fracciones del lado.
+
+    Admite dos formas: [arriba, abajo] (franja de ancho completo, que es como
+    se medía antes) o [izquierda, derecha, arriba, abajo] (la caja real del
+    elemento, que es lo que distingue una marca de agua centrada de una en la
+    esquina cuando caen a la misma altura).
+    """
+    if len(banda) == 2:
+        x0, x1, y0, y1 = 0.0, 1.0, banda[0], banda[1]
+    elif len(banda) == 4:
+        x0, x1, y0, y1 = banda
+    else:
+        raise ValueError(
+            "Una banda es [arriba, abajo] o [izquierda, derecha, arriba, abajo]."
+        )
+    if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
+        raise ValueError("Las fracciones de una banda deben ir en orden dentro de [0, 1].")
+    ancho, alto = color.size
+    return color.crop(
+        (int(ancho * x0), int(alto * y0), int(ancho * x1), int(alto * y1))
+    )
+
+
+def _fondo(franja_color) -> tuple:
+    """Color medio de la franja y sus dos bloques extremos (claro y oscuro)."""
+    from PIL import ImageStat
+
+    medio = tuple(int(round(v)) for v in ImageStat.Stat(franja_color).mean[:3])
+    claro, oscuro = _extremos(franja_color)
+    return medio, claro, oscuro
+
+
+def _usos_color() -> dict[str, int]:
+    usos: dict[str, int] = {}
+    for indice, entrada in enumerate(_historial()):
+        usado = (entrada.get("portada") or {}).get("color")
+        if usado:
+            usos[usado.upper()] = indice
+    return usos
+
+
+def _candidatos_color(franja_color, usos: dict[str, int]) -> tuple[list[dict], list[dict], tuple]:
+    """Evalúa la paleta contra una franja: (todos, viables, fondo medido)."""
+    medio, claro, oscuro = _fondo(franja_color)
+    candidatos = []
+    for entrada_color in _paleta_titulo():
+        rgb = _hex_a_rgb(entrada_color["hex"])
+        contraste = _contraste(rgb, medio)
+        peor = min(_contraste(rgb, claro), _contraste(rgb, oscuro))
+        hex_norm = entrada_color["hex"].upper()
+        candidatos.append({
+            "id": entrada_color.get("id", hex_norm),
+            "hex": hex_norm,
+            "familia": entrada_color.get("familia", ""),
+            "nota": entrada_color.get("nota", ""),
+            "contraste": round(contraste, 2),
+            "contraste_peor_zona": round(peor, 2),
+            "viable": contraste >= CONTRASTE_MINIMO,
+            "arriesgado": peor < CONTRASTE_EXTREMO_MINIMO,
+            "ultimo_uso": ("nunca" if hex_norm not in usos
+                           else f"post nº {usos[hex_norm] + 1}"),
+        })
+    viables = [c for c in candidatos if c["viable"] and not c["arriesgado"]]
+    if not viables:
+        viables = [c for c in candidatos if c["viable"]]
+    return candidatos, viables, (medio, claro, oscuro)
+
+
+def _rotar_color(viables: list[dict], usos: dict[str, int]) -> tuple[dict | None, str]:
+    if not viables:
+        return None, ""
+    nunca = [c for c in viables if c["ultimo_uso"] == "nunca"]
+    if nunca:
+        return random.choice(nunca), "contrasta de sobra y no se ha usado nunca"
+    return (min(viables, key=lambda c: usos[c["hex"]]),
+            "contrasta de sobra y es el que lleva más posts sin usarse")
 
 
 @mcp.tool()
@@ -280,14 +421,35 @@ def preparar_encargo(plantilla_id: str, tema: str, numero_slides: int) -> dict:
             f"Usa '{_plantilla_por_defecto()}' en su lugar."
         )
 
-    if numero_slides < 1:
-        raise ValueError("numero_slides debe ser al menos 1.")
     max_paginas = p.get("max_paginas")
+    minimo = p.get("min_paginas") or min(MIN_SLIDES, max_paginas or MIN_SLIDES)
+    if numero_slides < minimo:
+        raise ValueError(
+            f"'{plantilla_id}' pide al menos {minimo} slides por post (has pedido "
+            f"{numero_slides}). Un post más corto se lee en dos segundos y no "
+            "compensa el scroll."
+        )
     if max_paginas and numero_slides > max_paginas:
         raise ValueError(
             f"'{plantilla_id}' admite un máximo de {max_paginas} slides por post "
             f"(has pedido {numero_slides}). Reduce el número o amplía las páginas "
             "de la plantilla maestra en Canva."
+        )
+
+    # Antimonotonía: si los últimos posts seguidos llevan todos el mismo número
+    # de slides, ese número queda vetado. Es la regla que rompe la inercia del
+    # "siempre 6 palabras" — la decide el código, no el criterio del modelo.
+    ultimos = _numeros_recientes(plantilla_id, COOLDOWN_NUMEROS)
+    if (
+        len(ultimos) == COOLDOWN_NUMEROS
+        and len(set(ultimos)) == 1
+        and ultimos[0] == numero_slides
+    ):
+        raise ValueError(
+            f"Los últimos {COOLDOWN_NUMEROS} posts de '{plantilla_id}' llevan ya "
+            f"{numero_slides} slides. Elige otro número entre {minimo} y "
+            f"{max_paginas or minimo} (planificar_post te dice cuál toca) para que "
+            "la cuenta no salga siempre igual de larga."
         )
 
     usados = temas_publicados(plantilla_id)
@@ -304,6 +466,8 @@ def preparar_encargo(plantilla_id: str, tema: str, numero_slides: int) -> dict:
         "tema_ya_usado": repetido,
         "temas_previos": usados,
         "elementos_recientes": recientes,
+        "numeros_recientes": ultimos,
+        "angulos_recientes": angulos_recientes(),
         "huecos": huecos,
         "reglas_estilo": p.get("reglas_estilo", []),
         "formato_esperado": {
@@ -431,6 +595,7 @@ def portadas_recientes(cooldown: int = COOLDOWN_POSTS) -> list[dict]:
             "origen": e["portada"].get("origen", ""),
             "color": e["portada"].get("color", ""),
             "escena": e["portada"].get("escena", ""),
+            "variante": e["portada"].get("variante", ""),
         }
         for e in reversed(recientes)
     ]
@@ -452,6 +617,115 @@ def escenas_recientes(cooldown: int = COOLDOWN_ESCENAS) -> list[str]:
     entradas = [h for h in _historial() if (h.get("portada") or {}).get("escena")]
     recientes = entradas[-cooldown:] if cooldown > 0 else []
     return [e["portada"]["escena"] for e in reversed(recientes)]
+
+
+@mcp.tool()
+def angulos_recientes(cooldown: int = COOLDOWN_ANGULOS) -> list[str]:
+    """Ángulos (tipo de post, no tema) de los últimos posts, el más nuevo primero.
+
+    Un ángulo es la forma de agrupar las palabras: un campo semántico, una
+    categoría gramatical, una situación, una tendencia... No repitas ninguno
+    de los que salgan aquí: es lo que evita que la cuenta sea siempre
+    "N palabras sobre <cosa>".
+    """
+    salida: list[str] = []
+    for entrada in reversed(_historial()):
+        angulo = entrada.get("angulo")
+        if angulo and angulo not in salida:
+            salida.append(angulo)
+        if len(salida) >= cooldown:
+            break
+    return salida
+
+
+@mcp.tool()
+def planificar_post(plantilla_id: str | None = None) -> dict:
+    """Decide QUÉ FORMA tiene el post de hoy antes de inventar el contenido:
+    cuántas slides lleva y desde qué ángulo se agrupan las palabras.
+
+    Las dos decisiones son rotación, no criterio: gana la opción que lleve más
+    posts sin usarse (entre las nunca usadas, una al azar). Es lo que impide
+    que todos los posts acaben siendo "6 palabras de un tema", que es a lo que
+    tiende el modelo si nadie se lo dice.
+
+    Lo que devuelve es una propuesta con fundamento, no una orden: si el tema
+    que se te ocurre pide claramente otro número (hay 5 palabras buenas y la
+    sexta es de relleno), ajústalo dentro del rango. Lo que no puedes es
+    repetir el número que ya llevan los últimos posts seguidos —
+    preparar_encargo lo rechaza.
+    """
+    plantilla_id = plantilla_id or _plantilla_por_defecto()
+    p = _buscar(plantilla_id)
+
+    max_paginas = p.get("max_paginas") or MIN_SLIDES
+    minimo = p.get("min_paginas") or min(MIN_SLIDES, max_paginas)
+    candidatos = list(range(minimo, max_paginas + 1))
+
+    ultimos = _numeros_recientes(plantilla_id, COOLDOWN_NUMEROS)
+    vetado = (
+        ultimos[0]
+        if len(ultimos) == COOLDOWN_NUMEROS and len(set(ultimos)) == 1
+        else None
+    )
+    if vetado is not None and len(candidatos) > 1:
+        candidatos = [n for n in candidatos if n != vetado]
+
+    ultimo_uso: dict[int, int] = {}
+    for indice, entrada in enumerate(_historial()):
+        if entrada.get("plantilla_id") == plantilla_id:
+            ultimo_uso[len(entrada.get("slides", []))] = indice
+    nunca = [n for n in candidatos if n not in ultimo_uso]
+    if nunca:
+        sugerido = random.choice(nunca)
+        motivo_n = "no se ha usado nunca ese número de slides"
+    else:
+        sugerido = min(candidatos, key=lambda n: ultimo_uso[n])
+        motivo_n = "es el número que lleva más posts sin usarse"
+
+    familias = _angulos()
+    recientes = angulos_recientes()
+    libres = [a for a in familias if a["id"] not in recientes] or familias
+    ultimo_uso_a: dict[str, int] = {}
+    for indice, entrada in enumerate(_historial()):
+        if entrada.get("angulo"):
+            ultimo_uso_a[entrada["angulo"]] = indice
+    nunca_a = [a for a in libres if a["id"] not in ultimo_uso_a]
+    if nunca_a:
+        angulo = random.choice(nunca_a)
+        motivo_a = "no se ha usado nunca"
+    else:
+        angulo = min(libres, key=lambda a: ultimo_uso_a[a["id"]])
+        motivo_a = "es el que lleva más posts sin usarse"
+
+    return {
+        "plantilla_id": plantilla_id,
+        "numero_slides": {
+            "sugerido": sugerido,
+            "minimo": minimo,
+            "maximo": max_paginas,
+            "motivo": motivo_n,
+            "recientes": ultimos,
+            "vetado": vetado,
+        },
+        "angulo": {
+            "elegido": angulo["id"],
+            "descripcion": angulo.get("descripcion", ""),
+            "ejemplos": angulo.get("ejemplos", []),
+            "motivo": motivo_a,
+            "recientes": recientes,
+        },
+        "otros_angulos": [
+            {"id": a["id"], "descripcion": a.get("descripcion", "")}
+            for a in familias
+            if a["id"] != angulo["id"]
+        ],
+        "siguiente_paso": (
+            "Inventa un tema concreto que encaje en ese ángulo (y que no esté en "
+            "temas_publicados), y llama a preparar_encargo(plantilla_id, tema, "
+            "numero_slides). Al registrar, pasa angulo=<el id> o la rotación no "
+            "aprende."
+        ),
+    }
 
 
 @mcp.tool()
@@ -558,6 +832,152 @@ def preparar_para_cola(carpeta_post: str, max_lado: int = 1080,
 
 
 @mcp.tool()
+def elegir_portada(ruta_imagen: str) -> dict:
+    """Con la foto de fondo ya elegida, decide **qué variante de la plantilla de
+    portada** usar y **de qué color va el título**, en una sola llamada.
+
+    Las variantes (carpeta de Canva `chinesereads-plantilla-portada`, declaradas
+    en plantillas.json → `portada.variantes`) son el mismo diseño con el título
+    y la marca de agua en sitios distintos. Cuál queda mejor no depende del
+    gusto sino de la foto: en una con el cielo despejado arriba y montaña
+    abajo, la variante que pone el título arriba se lee y la que lo pone en
+    medio no. Así que se mide, no se elige a ojo.
+
+    Para cada variante se calcula:
+
+    - el contraste de cada color de la paleta contra su franja de título (y de
+      sus zonas extremas, que es donde un color plano se rompe);
+    - el contraste de la marca de agua —que va fija en rojo de marca y **no se
+      puede recolorear**— contra la franja donde caiga en esa variante. Esta es
+      la única palanca que existe para que el logo no se pierda.
+
+    Gana una variante que tenga al menos un color de título viable (3:1) y la
+    marca legible; entre las que cumplen, la que lleve más posts sin usarse,
+    para que las cinco roten. Después se elige el color con el mismo criterio.
+
+    Registra las dos cosas en `registrar_publicacion`: `portada['variante']` y
+    `portada['color']`. Sin eso las dos rotaciones se quedan paradas.
+    """
+    from PIL import Image, ImageStat
+
+    ruta = Path(ruta_imagen).expanduser()
+    if not ruta.exists():
+        raise ValueError(f"No existe el fichero de imagen: {ruta}")
+
+    variantes = _variantes_portada()
+    usos_color = _usos_color()
+    usos_variante: dict[str, int] = {}
+    for indice, entrada in enumerate(_historial()):
+        usada = (entrada.get("portada") or {}).get("variante")
+        if usada:
+            usos_variante[usada] = indice
+
+    rgb_marca = _hex_a_rgb(MARCA_AGUA_HEX)
+    informes = []
+    with Image.open(ruta) as img:
+        color = img.convert("RGB")
+        saturacion = round(
+            ImageStat.Stat(color.convert("HSV").getchannel("S")).mean[0] / 255, 3
+        )
+        for v in variantes:
+            banda_titulo = v.get("banda_titulo") or list(BANDA_TITULO)
+            candidatos, viables, _ = _candidatos_color(
+                _recorte(color, banda_titulo), usos_color
+            )
+            banda_marca = v.get("banda_marca")
+            if banda_marca:
+                medio_m, claro_m, oscuro_m = _fondo(_recorte(color, banda_marca))
+                contraste_marca = round(_contraste(rgb_marca, medio_m), 2)
+                peor_marca = round(
+                    min(_contraste(rgb_marca, claro_m), _contraste(rgb_marca, oscuro_m)),
+                    2,
+                )
+            else:
+                contraste_marca = peor_marca = None
+            informes.append({
+                "id": v["id"],
+                "canva_design_id": v["canva_design_id"],
+                "nombre": v.get("nombre", v["id"]),
+                "banda_titulo": banda_titulo,
+                "banda_marca": banda_marca,
+                "contraste_marca": contraste_marca,
+                "contraste_marca_peor_zona": peor_marca,
+                "marca_legible": (contraste_marca is None
+                                  or contraste_marca >= CONTRASTE_MARCA_MINIMO),
+                "mejor_contraste_titulo": (
+                    max((c["contraste"] for c in candidatos), default=0.0)
+                ),
+                "colores_viables": [c["hex"] for c in viables],
+                "ultimo_uso": ("nunca" if v["id"] not in usos_variante
+                               else f"post nº {usos_variante[v['id']] + 1}"),
+                "_candidatos": candidatos,
+                "_viables": viables,
+            })
+
+    aptas = [i for i in informes if i["_viables"] and i["marca_legible"]]
+    aviso = ""
+    if not aptas:
+        aptas = [i for i in informes if i["_viables"]]
+        if aptas:
+            aviso = ("En ninguna variante contrasta la marca de agua; se elige "
+                     "por legibilidad del título. Si el logo se pierde del todo, "
+                     "mejor cambiar de foto.")
+
+    elegida = None
+    motivo = ""
+    if aptas:
+        nunca = [i for i in aptas if i["ultimo_uso"] == "nunca"]
+        if nunca:
+            elegida = max(nunca, key=lambda i: i["contraste_marca"] or 0)
+            motivo = ("no se ha usado nunca y es donde mejor caen título y "
+                      "marca de agua sobre esta foto")
+        else:
+            elegida = min(aptas, key=lambda i: usos_variante[i["id"]])
+            motivo = "es la que lleva más posts sin usarse de las que aguantan esta foto"
+
+    elegido_color, motivo_color = (
+        _rotar_color(elegida["_viables"], usos_color) if elegida else (None, "")
+    )
+
+    for i in informes:
+        i["_candidatos"].sort(key=lambda c: c["contraste"], reverse=True)
+        i["candidatos_titulo"] = i.pop("_candidatos")
+        i.pop("_viables")
+
+    return {
+        "elegida": (
+            {k: elegida[k] for k in ("id", "canva_design_id", "nombre",
+                                     "banda_titulo", "banda_marca",
+                                     "contraste_marca")}
+            if elegida else None
+        ),
+        "motivo": motivo,
+        "color": elegido_color,
+        "motivo_color": motivo_color,
+        "saturacion": saturacion,
+        "casi_monocroma": saturacion < SATURACION_MINIMA,
+        "variantes": informes,
+        "ninguna_viable": elegida is None,
+        "aviso": aviso,
+        "siguiente_paso": (
+            (("AVISO: la foto es casi monocroma (saturación "
+              f"{saturacion}): legible, pero en el feed se verá en blanco y "
+              "negro. Repite el prompt con una escena clara pero CON color "
+              "salvo que el blanco y negro sea deliberado. ")
+             if saturacion < SATURACION_MINIMA else "")
+            + "copy-design del 'canva_design_id' de la variante elegida, "
+              "update_fill con la foto, replace_text del título y format_text "
+              "con el hex de 'color'. Al registrar, pasa portada['variante'] y "
+              "portada['color'] o las dos rotaciones se quedan paradas."
+            if elegida else
+            "Ninguna variante consigue un título legible sobre esta foto: el "
+            "fondo está demasiado revuelto en todas las franjas. Cambia de "
+            "imagen (antes un descarte ya pagado que una generación nueva)."
+        ),
+    }
+
+
+@mcp.tool()
 def elegir_color_titulo(ruta_imagen: str, banda: list[float] | None = None) -> dict:
     """Mide la foto de portada y decide **de qué color va el título**, entre
     los colores de marca declarados en plantillas.json (`portada` →
@@ -614,52 +1034,18 @@ def elegir_color_titulo(ruta_imagen: str, banda: list[float] | None = None) -> d
             "banda_titulo": _media_gris(franja_gris),
         }
 
-        medio = tuple(int(round(v)) for v in ImageStat.Stat(franja_color).mean[:3])
-        claro, oscuro = _extremos(franja_color)
         # Saturación media de la foto entera: una portada legible pero gris
         # (niebla, nieve, cielo blanco) se ve en blanco y negro en el feed.
         saturacion = round(
             ImageStat.Stat(color.convert("HSV").getchannel("S")).mean[0] / 255, 3
         )
 
-    paleta = _paleta_titulo()
-    usos: dict[str, int] = {}
-    for indice, entrada in enumerate(_historial()):
-        usado = (entrada.get("portada") or {}).get("color")
-        if usado:
-            usos[usado.upper()] = indice
+        usos = _usos_color()
+        candidatos, viables, (medio, claro, oscuro) = _candidatos_color(
+            franja_color, usos
+        )
 
-    candidatos = []
-    for entrada_color in paleta:
-        rgb = _hex_a_rgb(entrada_color["hex"])
-        contraste = _contraste(rgb, medio)
-        peor = min(_contraste(rgb, claro), _contraste(rgb, oscuro))
-        candidatos.append({
-            "id": entrada_color.get("id", entrada_color["hex"]),
-            "hex": entrada_color["hex"].upper(),
-            "familia": entrada_color.get("familia", ""),
-            "nota": entrada_color.get("nota", ""),
-            "contraste": round(contraste, 2),
-            "contraste_peor_zona": round(peor, 2),
-            "viable": contraste >= CONTRASTE_MINIMO,
-            "arriesgado": peor < CONTRASTE_EXTREMO_MINIMO,
-            "ultimo_uso": ("nunca" if entrada_color["hex"].upper() not in usos
-                           else f"post nº {usos[entrada_color['hex'].upper()] + 1}"),
-        })
-
-    viables = [c for c in candidatos if c["viable"] and not c["arriesgado"]]
-    if not viables:
-        viables = [c for c in candidatos if c["viable"]]
-
-    elegido, motivo = None, ""
-    if viables:
-        nunca = [c for c in viables if c["ultimo_uso"] == "nunca"]
-        if nunca:
-            elegido = random.choice(nunca)
-            motivo = "contrasta de sobra y no se ha usado nunca"
-        else:
-            elegido = min(viables, key=lambda c: usos[c["hex"]])
-            motivo = "contrasta de sobra y es el que lleva más posts sin usarse"
+    elegido, motivo = _rotar_color(viables, usos)
 
     candidatos.sort(key=lambda c: c["contraste"], reverse=True)
     return {
@@ -921,6 +1307,7 @@ def registrar_publicacion(
     notas: str = "",
     portada: dict | None = None,
     final: dict | None = None,
+    angulo: str = "",
 ) -> dict:
     """Guarda en el historial un post completo ya creado en Canva (todas sus
     slides de una vez, en una sola llamada por post).
@@ -931,13 +1318,19 @@ def registrar_publicacion(
     huecos de texto usado). Si el post lleva portada, pásala también:
     {"titulo": "...", "imagen": "<nombre del asset o prompt+seed de IA>",
     "origen": "ia" | "galeria" | "manual", "color": "#RRGGBB",
-    "escena": "museo-porcelana"} — es lo que alimenta el cooldown de
+    "escena": "museo-porcelana", "variante": "portada-3"} — es lo que alimenta el cooldown de
     portadas_recientes, la rotación de colores de elegir_color_titulo (sin
     `color`, el título tenderá a salir siempre igual) y el cooldown de escenas
-    de escenas_recientes (sin `escena`, las portadas se repetirán de tipo). Si lleva slide final de cierre, pasa también
+    de escenas_recientes (sin `escena`, las portadas se repetirán de tipo) y la
+    rotación de variantes de elegir_portada (sin `variante`, siempre saldrá la
+    misma plantilla de portada). Si lleva slide final de cierre, pasa también
     final={"nombre": "<título de la plantilla-final>", "design_id": "..."} —
-    es lo que alimenta la rotación de elegir_final. El historial es lo que
-    evita que repitas temas, palabras, fotos de portada y slide final.
+    es lo que alimenta la rotación de elegir_final. Pasa también `angulo` con
+    el id de familia que devolvió planificar_post (`campo-semantico`,
+    `categoria-gramatical`, `situacion`...): sin él la rotación de ángulos se
+    queda parada y los posts vuelven a ser todos del mismo corte. El historial
+    es lo que evita que repitas temas, palabras, fotos de portada, número de
+    slides, ángulo y slide final.
     """
     _buscar(plantilla_id)  # valida que la plantilla existe
 
@@ -958,16 +1351,45 @@ def registrar_publicacion(
             portada["color"] = portada["color"].strip().upper()
         if portada.get("escena"):
             portada["escena"] = _normalizar(portada["escena"]).replace(" ", "-")
+        if portada.get("variante"):
+            portada["variante"] = portada["variante"].strip()
+            conocidas = {v["id"] for v in _variantes_portada()}
+            if portada["variante"] not in conocidas:
+                raise ValueError(
+                    f"portada['variante'] = '{portada['variante']}' no es ninguna "
+                    f"de las declaradas en plantillas.json: {sorted(conocidas)}. "
+                    "Pasa el 'id' que devolvió elegir_portada."
+                )
 
     if final is not None:
         if not final.get("nombre"):
             raise ValueError("final necesita 'nombre' (el título de la "
                              "plantilla-final usada).")
 
+    avisos: list[str] = []
+    if portada is not None and not portada.get("variante"):
+        avisos.append(
+            "Sin portada['variante']: la rotación de plantillas de portada no "
+            "aprende de este post."
+        )
+    angulo = _normalizar(angulo).replace(" ", "-") if angulo else ""
+    if not angulo:
+        avisos.append(
+            "Sin 'angulo': la rotación de planificar_post no aprende de este post "
+            "y los siguientes tenderán a repetir el mismo corte."
+        )
+    elif angulo not in {a["id"] for a in _angulos()}:
+        avisos.append(
+            f"El ángulo '{angulo}' no está declarado en plantillas.json "
+            f"(angulos_de_post). Se guarda igual, pero no entrará en la rotación: "
+            "revisa si es una errata o si toca darlo de alta."
+        )
+
     entrada = {
         "fecha": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "plantilla_id": plantilla_id,
         "tema": tema,
+        "angulo": angulo,
         "slides": slides,
         "url_diseno": url_diseno,
         "notas": notas,
@@ -981,7 +1403,12 @@ def registrar_publicacion(
     historial.append(entrada)
     _escribir_json(HISTORIAL, historial)
 
-    return {"guardado": True, "total_posts": len(historial), "entrada": entrada}
+    return {
+        "guardado": True,
+        "total_posts": len(historial),
+        "entrada": entrada,
+        "avisos": avisos,
+    }
 
 
 @mcp.tool()

@@ -70,6 +70,10 @@ plantilla necesitas:
   `canva.com/design/DAFxxxxxxxx/edit` → el `DAFxxxxxxxx`.
 - **`max_paginas`** — cuántas páginas tiene el maestro (= el máximo de slides
   que podrá tener un post con esta plantilla).
+- **`min_paginas`** — el mínimo (4 por defecto): por debajo, el post se lee en
+  dos segundos y no compensa el scroll. Entre esos dos números rota
+  `planificar_post`, así que si prefieres que los posts no se te vayan a 12
+  slides, baja `max_paginas` y listo.
 - **`huecos`** — un objeto por cada bloque que quieras cambiar en cada página.
   El campo `texto_actual` debe ser **literalmente** lo que pone hoy ese bloque
   en la plantilla: así es como se localiza al editar. Los de texto llevan
@@ -143,14 +147,29 @@ La foto de fondo sale de uno de estos dos sitios:
   El asistente elige una distinta cada vez, con el mismo cooldown que las
   palabras (`portadas_recientes`), para que no se repitan seguidas.
 
-Reglas duras en código, como siempre: `elegir_color_titulo` mide el contraste
-real de la franja donde cae el título, descarta los colores de marca que no
-llegan a 3:1 y, entre los que quedan, rota por el que lleva más posts sin
-usarse — variedad en el feed sin que ningún título deje de leerse (nada de
-confiar en el ojo del modelo). `portadas_recientes` es la memoria
-anti-repetición, tanto de fotos como de colores. La paleta se edita a mano en
-`plantillas.json` → plantilla `portada` → `colores_titulo`: añadir o quitar
-colores ahí es seguro, la legibilidad la sigue garantizando el código.
+Reglas duras en código, como siempre: hay **cinco plantillas de portada** (el
+mismo diseño con el título y la marca de agua en sitios distintos, en la
+carpeta de Canva `chinesereads-plantilla-portada`) y `elegir_portada` decide
+cuál toca midiendo la foto, no a ojo. Calcula el contraste de cada color de
+marca en la caja del título de cada variante, descarta los que no llegan a
+3:1, y mide además la **marca de agua** —que va fija en rojo y no se puede
+recolorear— en la caja donde caiga en cada una: elegir la variante es la
+única forma de que el logo no se pierda. Entre las que aguantan la foto, gana
+la que lleva más posts sin usarse; y luego el color, con el mismo criterio.
+Así hay variedad en el feed sin que ningún título deje de leerse.
+`portadas_recientes` es la memoria anti-repetición (fotos, colores, escenas y
+variantes). La paleta se edita a mano en `plantillas.json` → plantilla
+`portada` → `colores_titulo`, y las variantes en `portada.variantes`: tocar
+esas listas es seguro, la legibilidad la sigue garantizando el código.
+
+Lo mismo con el contenido: `planificar_post` decide **cuántas palabras** lleva
+el post (4-12, rotando: si los últimos van todos con el mismo número,
+`preparar_encargo` lo rechaza) y desde **qué ángulo** se agrupan — un campo
+semántico, una categoría gramatical entera (preposiciones, adverbios de
+tiempo, medidores), una situación, un ángulo de tendencia, expresiones hechas
+o pares que se confunden. Los ángulos se editan en `plantillas.json` →
+`angulos_de_post`. Es lo que evita que la cuenta acabe siendo siempre
+"6 sustantivos sobre un tema".
 
 **Mejores modelos de IA (opcional, gratis, una vez):** regístrate en
 [enter.pollinations.ai](https://enter.pollinations.ai) con tu cuenta de GitHub
@@ -200,6 +219,18 @@ Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
 - **Portadas** (`portadas_recientes`): misma ventana de cooldown para la foto
   de portada (asset de galería o prompt+semilla de IA) y para no calcar la
   redacción de títulos recientes.
+- **Escenas de portada** (`escenas_recientes`): un tipo de foto (callejón con
+  farolillos, skyline, museo de porcelana...) no vuelve hasta pasados 30
+  posts. Ventana más larga que la de las palabras, porque la portada es lo que
+  se ve en la cuadrícula del perfil y es lo que más canta si se repite.
+- **Variantes de portada y color del título** (`elegir_portada`): entre las
+  variantes que aguantan la foto y los colores que contrastan, gana el que
+  lleva más posts sin usarse.
+- **Longitud y ángulo del post** (`planificar_post`): el número de slides rota
+  entre 4 y 12, y si los últimos posts seguidos llevan todos el mismo,
+  `preparar_encargo` lo rechaza. El ángulo (campo semántico, categoría
+  gramatical, situación, tendencia, expresiones, confusiones) rota igual, así
+  que no salen dos posts del mismo corte pegados.
 - **Slides finales** (`elegir_final`): rotación uniforme — siempre toca la
   plantilla de cierre que lleve más posts sin usarse.
 

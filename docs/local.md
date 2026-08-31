@@ -106,13 +106,24 @@ print(s.portadas_recientes())
 Debe listar tus plantillas y devolver el contrato de una petición de 4
 slides para `texto-3`.
 
-Para comprobar además el cálculo de contraste que decide el color del título,
-pásale la ruta de una portada que tengas ya descargada:
+Para comprobar además el cálculo que decide la variante de portada y el color
+del título, pásale la ruta de una portada que tengas ya descargada:
 
 ```bash
 ./.venv/bin/python -c "
 import servidor_catalogo as s
-print(s.elegir_color_titulo('posts/naturaleza-2026-08-30/portada-candidata.png'))
+r = s.elegir_portada('posts/familia-2026-08-30/portada-candidata.png')
+print(r['elegida'], r['color'])
+"
+```
+
+Y para ver qué forma tendría el próximo post (cuántas slides y desde qué
+ángulo, los dos por rotación):
+
+```bash
+./.venv/bin/python -c "
+import servidor_catalogo as s
+print(s.planificar_post())
 "
 ```
 

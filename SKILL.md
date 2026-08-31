@@ -7,7 +7,7 @@ description: Crear un post (carrusel) de Instagram o TikTok de N slides a partir
 
 Flujo de once pasos. No te saltes la validación ni el registro.
 
-## 1. Elegir plantilla y determinar N
+## 1. Elegir plantilla, número de slides y ángulo
 
 **Por defecto, `texto-6`**: es la preferencia del usuario para todos los
 posts. `listar_plantillas` la marca con `por_defecto: true`. Usa otra solo
@@ -15,9 +15,30 @@ si el usuario la pide por su nombre. Las que salgan con
 `desactivada: true` no se pueden usar — `preparar_encargo` las rechaza.
 
 El número de slides (N) lo dice el usuario en la propia petición ("5 palabras",
-"6 redes sociales..."). Si no da un número explícito, pregúntaselo — no lo
-inventes. N no puede superar el `max_paginas` de la plantilla (`preparar_encargo`
-lo rechazará si te pasas, pero avisa antes si ya sabes que N es demasiado alto).
+"6 redes sociales..."). **Si no lo dice, no lo inventes ni des 6 por hecho:
+llama a `planificar_post`.** Devuelve dos cosas, las dos por rotación (gana la
+opción que lleva más posts sin usarse):
+
+- **`numero_slides`**: cuántas palabras lleva el post, entre `minimo` y
+  `maximo` (4 a 12 en `texto-6`). Es una propuesta con fundamento, no una
+  orden: si el tema da 5 palabras buenas y la sexta sería relleno, baja a 5.
+  Lo que **no** puedes es repetir el número que ya llevan los últimos posts
+  seguidos — `preparar_encargo` lo rechaza, y con razón: así es como acabaron
+  siendo todos de 6. Ojo, un post de 10-12 slides es el doble de trabajo en
+  Canva que uno de 6; si vas justo de tiempo o el servicio va lento, quédate
+  en la parte baja del rango y dilo en el resumen.
+- **`angulo`**: desde dónde se agrupan las palabras. No todos los posts son
+  "N palabras sobre un tema" — ese es solo uno de los ángulos
+  (`campo-semantico`). También valen una categoría gramatical entera
+  (preposiciones, adverbios de tiempo, medidores, conectores, partículas),
+  una situación concreta, un ángulo de cultura o tendencia, expresiones
+  hechas, o pares que se confunden. La lista con ejemplos está en
+  `plantillas.json` → `angulos_de_post`, y el ángulo elegido se registra en
+  el paso 9 o la rotación no aprende.
+
+Con el ángulo en la mano, inventa el **tema** concreto (que no esté en
+`temas_publicados`). N no puede superar el `max_paginas` de la plantilla ni
+bajar de `min_paginas`.
 
 ## 2. Pedir el contrato
 
@@ -34,9 +55,10 @@ pierdes lo tuyo. Si el VPS no responde, sigue sin bloquearte y dilo en el
 resumen final.
 
 Luego llama a `preparar_encargo(plantilla_id, tema, numero_slides)`. Te devuelve los
-huecos por slide, las reglas de estilo, los temas ya publicados y los
+huecos por slide, las reglas de estilo, los temas ya publicados, los
 `elementos_recientes` (palabras usadas en los últimos posts de esta plantilla,
-que hay que evitar por ahora — no para siempre).
+que hay que evitar por ahora — no para siempre) y, para que veas de qué vienes,
+`numeros_recientes` y `angulos_recientes`.
 
 Si `tema_ya_usado` es `true`, avisa al usuario antes de seguir. Puede que quiera
 otro tema o una segunda parte con palabras distintas.
@@ -48,8 +70,20 @@ estilo al pie de la letra. Cuenta los caracteres: los huecos tienen límites
 porque el texto no cabe de otro modo y la plantilla se rompe visualmente.
 
 - Evita repetir palabras que aparezcan en `elementos_recientes`.
-- No repitas nada entre las propias slides del post (todas del mismo campo
-  semántico, pero cada una distinta).
+- No repitas nada entre las propias slides del post: todas comparten el ángulo
+  del paso 1, pero cada una es distinta.
+- **Las palabras no tienen por qué ser cosas tangibles.** Un post entero de
+  preposiciones y localizadores (在, 上, 里, 旁边), de adverbios de tiempo
+  (已经, 马上, 刚才), de medidores (个, 只, 张, 杯), de conectores, de
+  partículas modales o de verbos vale tanto como uno de comida o de familia —
+  y hace falta, o la cuenta se convierte en un diccionario de sustantivos. En
+  esas palabras la frase de ejemplo es lo que de verdad enseña: cuídala más
+  que en las demás, y si la traducción no sale limpia, escribe la función en
+  dos palabras ("at / in", "already", "measure word").
+- El listón no es HSK 1-3 a rajatabla: es que el que aprende vaya a oír esa
+  palabra de verdad. Si el ángulo es un drama, un meme o una muletilla, entra
+  aunque no salga en ninguna lista HSK. Lo que no entra es lo rebuscado ni lo
+  literario.
 - Cada slide necesita un `identificador` propio (normalmente la palabra/carácter
   principal de esa slide) — es lo que se registrará luego para el control de
   repetidos.
@@ -165,6 +199,15 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      Cualquier tema o lugar corriente vale mientras se reconozca como China.
      Busca a propósito escenas que no hayas usado nunca.
 
+     **Si el tema no tiene foto posible**, no lo fuerces. Un post de
+     preposiciones, de adverbios de tiempo o de medidores no se ilustra: no
+     hay foto de "已经". Tampoco es excusa para volver al paisaje de siempre.
+     Coge cualquier escena que recuerde a China y que no esté en
+     `escenas_recientes` —un museo, una habitación, el reloj de una estación,
+     un puesto de mercado, una librería, una barbería— con su marca
+     inconfundible dentro. La portada está para que se pare el dedo y para
+     que se lea el título; no tiene que explicar la gramática.
+
      **Cooldown de escenas.** Antes de escribir el prompt, llama a
      `escenas_recientes` y elige una que NO aparezca. Repetir escena se nota
      mucho más que repetir una palabra, porque la portada es lo que se ve en
@@ -239,24 +282,36 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
      `get-assets` y elige una cuyo nombre/id **no** esté en
      `portadas_recientes` — la rotación es lo que evita que la portada se
      repita. Descarga su miniatura para el paso de brillo.
-3. **Color del título**: pasa el fichero descargado a `elegir_color_titulo`.
-   Mide el contraste real de la franja donde cae el título (no la media de la
-   foto entera: una foto oscura con nubes claras justo detrás del texto
-   engañaba a la media) y devuelve el hex que toca, ya cruzado con la rotación
-   de colores. Aplícalo tal cual: **el color no se elige a ojo, ni se da el
-   blanco por hecho**. Dos consecuencias prácticas:
-   - Recolorear es gratis e instantáneo; regenerar la imagen cuesta pollen. Si
-     el título no se lee, **prueba primero otro color**.
-   - Si devuelve `ninguno_viable`, esa foto no tiene salida por color: cambia
-     de imagen (antes un descarte que una generación nueva).
-4. **Montaje**: `copy-design` de la plantilla `portada` (1 página) → muévelo
+3. **Variante de portada y color del título**: pasa el fichero descargado a
+   `elegir_portada`. Hay **cinco** plantillas de portada (carpeta de Canva
+   `chinesereads-plantilla-portada`, declaradas en `plantillas.json` →
+   `portada.variantes`): el mismo diseño con el título y la marca de agua en
+   sitios distintos. Cuál queda mejor no es cuestión de gusto sino de la foto,
+   así que se mide:
+   - mide el contraste de cada color de la paleta en la caja del título de
+     cada variante (no la media de la foto entera: una foto oscura con nubes
+     claras justo detrás del texto engañaba a la media);
+   - y el contraste de la **marca de agua** en la caja donde caiga en esa
+     variante. El logo va fijo en rojo de marca y **no se puede recolorear**:
+     elegir la variante es la única palanca que hay para que no se pierda.
+
+   Devuelve la variante (con su `canva_design_id`) y el hex del título, los dos
+   ya cruzados con su rotación. Aplícalos tal cual: **ni la variante ni el
+   color se eligen a ojo, ni se da el blanco por hecho**. Dos consecuencias
+   prácticas:
+   - Cambiar de variante y recolorear son gratis e instantáneos; regenerar la
+     imagen cuesta pollen. Si el título no se lee, **prueba eso primero**.
+   - Si devuelve `ninguna_viable`, esa foto no tiene salida en ninguna de las
+     cinco: cambia de imagen (antes un descarte que una generación nueva).
+4. **Montaje**: `copy-design` de la **variante elegida** (1 página) → muévelo
    con `move-item-to-folder` a la misma carpeta del post en Canva que el
    diseño de slides → sube la imagen (`upload-asset-from-url` con la
    `url_para_canva` que devolvió `generar_imagen_ia`, o el asset ya
    existente de galería) → `update_fill` en el hueco de imagen +
    `replace_text` del título + `format_text` con el hex del paso 3 →
-   `commit`. La marca de agua de chinesereads ya
-   vive en la plantilla maestra: no la toques.
+   `commit`. La marca de agua de chinesereads ya vive en cada variante: no la
+   toques, no la muevas y no la recolorees. Lo único que se decide sobre ella
+   es en qué variante cae mejor.
 5. **Exportar y descargar** como `00-portada.png` en la carpeta del post.
 
 ## 8. Slide final
@@ -281,14 +336,16 @@ en cada post:
 
 ## 9. Registrar
 
-Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_diseno, portada=..., final=...)`
+Llama una sola vez a `registrar_publicacion(plantilla_id, tema, slides, url_diseno, portada=..., final=..., angulo=...)`
 con `slides` siendo la lista de las N slides (`identificador` + `contenido` de
 cada una) y `url_diseno` el link de edición del diseño en Canva (no el de
 exportación). Si hubo portada, pasa
-`portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual", "color": <el hex aplicado>, "escena": <la escena en dos o tres palabras>}` —
+`portada={"titulo": ..., "imagen": <nombre del asset o prompt+seed>, "origen": "ia"|"galeria"|"manual", "color": <el hex aplicado>, "escena": <la escena en dos o tres palabras>, "variante": <el id que devolvió elegir_portada>}` —
 sin esto el cooldown de portadas no funciona, sin `color` la rotación de
-colores del título se queda parada en el mismo de siempre, y sin `escena` las
-portadas se repiten de tipo. Para una portada de IA, `imagen`
+colores del título se queda parada en el mismo de siempre, sin `escena` las
+portadas se repiten de tipo y sin `variante` siempre sale la misma de las
+cinco plantillas. Pasa también `angulo=<el id que devolvió planificar_post>`:
+es lo que impide que el siguiente post vuelva a ser del mismo corte. Para una portada de IA, `imagen`
 es el prompt+seed (y el modelo). Si hubo slide final, pasa también
 `final={"nombre": <título de la plantilla-final>, "design_id": ...}` — sin
 esto la rotación de `elegir_final` no aprende. Solo después de que el diseño

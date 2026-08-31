@@ -3,7 +3,76 @@
   "_comentario_carpeta": "Carpeta madre 'chinesereads-posts' en Canva: dentro se crea una subcarpeta por post (<tema>-<fecha>) y ahí se mueven sus diseños (slides + portada). Si se borra en Canva, crear otra con create-folder y actualizar este id.",
   "carpeta_descartes_canva_id": "FAHTmoVZVK4",
   "carpeta_finales_canva_id": "FAHTmq2trvk",
+  "carpeta_portadas_canva_id": "FAHT4v88oJk",
+  "_comentario_portadas": "Carpeta 'chinesereads-plantilla-portada' en Canva: las 5 variantes de la portada (mismo diseño, título y marca de agua en sitios distintos). Las mantiene el usuario a mano. Están declaradas una a una en portada.variantes con la caja que ocupa cada elemento, porque es lo que necesita elegir_portada para medir; si el usuario añade, mueve o borra alguna, hay que actualizar esa lista (no basta con la carpeta).",
   "_comentario_finales": "Carpeta 'chinesereads-plantillas-final' en Canva: el usuario mantiene ahí a mano las plantillas de slide de cierre (plantilla-final-N, 1 página cada una). Se consulta EN VIVO en cada post con list-folder-items (puede crecer, menguar o quedarse vacía); elegir_final decide cuál toca por rotación. La slide elegida se exporta tal cual (sin editar ni copiar) como 99-final.png.",
+  "angulos_de_post": [
+    {
+      "id": "campo-semantico",
+      "descripcion": "Vocabulario de un tema concreto del mundo real.",
+      "ejemplos": [
+        "la cocina",
+        "el dinero",
+        "el cuerpo",
+        "el trabajo",
+        "los viajes"
+      ]
+    },
+    {
+      "id": "categoria-gramatical",
+      "descripcion": "Una clase de palabra entera, aunque no sea 'tangible'. Es el ángulo que más se olvida y el que más falta hace.",
+      "ejemplos": [
+        "preposiciones y localizadores (在, 上, 里, 旁边)",
+        "adverbios de tiempo (已经, 马上, 刚才, 一直)",
+        "medidores / 量词 (个, 只, 张, 杯)",
+        "conectores (但是, 因为, 所以, 而且)",
+        "partículas modales (吧, 呢, 啊, 嘛)"
+      ]
+    },
+    {
+      "id": "situacion",
+      "descripcion": "Lo que de verdad se dice en un momento concreto, no el vocabulario del tema en abstracto.",
+      "ejemplos": [
+        "pedir en un restaurante",
+        "facturar en el aeropuerto",
+        "regatear en un mercado",
+        "ir al médico",
+        "una primera cita"
+      ]
+    },
+    {
+      "id": "cultura-y-tendencia",
+      "descripcion": "Ángulo de actualidad o cultura pop, el que engancha a quien pasa el dedo. Brand-safe siempre: nada de política, polémicas, marcas registradas ni personas reales.",
+      "ejemplos": [
+        "palabras que sueltan en todos los dramas",
+        "slang de internet chino",
+        "un meme del momento traducido",
+        "vocabulario del Año Nuevo chino",
+        "cómo se escribe en chino lo que se lleva ahora"
+      ]
+    },
+    {
+      "id": "expresiones",
+      "descripcion": "Frases hechas y muletillas: lo que se dice, no lo que se estudia.",
+      "ejemplos": [
+        "formas de decir 'vale'",
+        "chengyu fáciles que se usan de verdad",
+        "muletillas de conversación",
+        "cómo quejarse educadamente"
+      ]
+    },
+    {
+      "id": "confusiones",
+      "descripcion": "Pares que se confunden y errores típicos del que empieza. Formato muy compartible.",
+      "ejemplos": [
+        "会 vs 能",
+        "二 vs 两",
+        "了 en sus dos usos",
+        "tonos que suenan casi igual"
+      ]
+    }
+  ],
+  "_comentario_angulos": "Formas de agrupar las palabras de un post. planificar_post rota entre ellas (gana la que lleva más posts sin usarse) y registrar_publicacion guarda el id elegido en historial.angulo. Es una lista de datos: añadir o quitar familias aquí es seguro y no toca el servidor. Sin esto todos los posts acababan siendo 'N palabras sobre <un tema>'.",
   "_comentario_descartes": "Carpeta 'descartes' dentro de chinesereads-posts: las imágenes de IA candidatas que no acaban en portada se suben ahí como assets (upload-asset-from-url con la URL de caché sin clave), además de guardarse en posts/descartes/ en local. Canva es la copia que sobrevive a un desastre.",
   "_comentario": "canva_design_id debe apuntar a un diseño MULTI-PÁGINA en Canva: varias páginas duplicadas con el mismo layout (hasta max_paginas). Cada hueco.texto_actual debe ser EXACTAMENTE el texto que aparece ahora en la plantilla (en cada página), para que se pueda localizar y sustituir. Los huecos con tipo 'imagen' no llevan max_caracteres; se rellenan buscando una imagen de licencia libre (CC0/dominio público) o, si no se encuentra, a mano.",
   "plantillas": [
@@ -14,6 +83,7 @@
       "canva_design_id": "DAHGvSQ2oJQ",
       "formato": "1080x1080",
       "max_paginas": 12,
+      "min_paginas": 4,
       "huecos": [
         {
           "id": "CARACTER",
@@ -59,11 +129,13 @@
         }
       ],
       "reglas_estilo": [
-        "Palabras de uso cotidiano, nivel HSK 1-3. Nada rebuscado.",
+        "Palabras que un aprendiz vaya a oír de verdad. HSK 1-4 como referencia, no como jaula: si el ángulo del post pide una palabra de drama, de internet o una muletilla que no sale en ninguna lista HSK, entra igual. Lo que no entra es lo rebuscado ni lo literario.",
+        "No tienen que ser cosas tangibles. Un post entero de preposiciones y localizadores, de adverbios de tiempo, de medidores (量词), de conectores, de partículas o de verbos vale tanto como uno de comida — y hace falta, para que la cuenta no sea un diccionario de sustantivos.",
         "Pinyin siempre con marcas de tono (tāng, no tang).",
-        "Traducción en minúscula, una sola acepción, la más común.",
-        "La frase de ejemplo debe ser natural, corta y usar el carácter de forma clara.",
-        "Todas las palabras de un mismo post deben ser del mismo campo semántico y no repetirse entre sí."
+        "Traducción en minúscula, una sola acepción, la más común. Si la palabra es gramatical y no tiene traducción limpia, escribe su función en dos palabras ('at / in', 'already', 'measure word').",
+        "La frase de ejemplo debe ser natural, corta y usar el carácter de forma clara. En las palabras gramaticales la frase es lo que enseña de verdad: cuídala más que en las demás.",
+        "Las palabras de un post tienen que compartir un hilo evidente al leerlo —el ángulo que da planificar_post: un campo semántico, una categoría gramatical, una situación, un registro, una confusión— y no repetirse entre sí. 'Del mismo campo semántico' NO es la única forma válida de agrupar.",
+        "El número de palabras lo propone planificar_post dentro de min_paginas..max_paginas: no des 6 por hecho. Que la longitud cambie de un post a otro es intencionado, no un descuido."
       ]
     },
     {
@@ -73,6 +145,7 @@
       "canva_design_id": "DAHIgvEIxeU",
       "formato": "1080x1080",
       "max_paginas": 12,
+      "min_paginas": 4,
       "huecos": [
         {
           "id": "CARACTER",
@@ -97,10 +170,12 @@
         }
       ],
       "reglas_estilo": [
-        "Palabras de uso cotidiano, nivel HSK 1-3. Nada rebuscado.",
+        "Palabras que un aprendiz vaya a oír de verdad. HSK 1-4 como referencia, no como jaula. Nada rebuscado ni literario.",
+        "No tienen que ser cosas tangibles: preposiciones, adverbios de tiempo, medidores, conectores o partículas dan posts igual de buenos.",
         "Pinyin siempre con marcas de tono (qīng, no qing).",
         "Traducción en minúscula. Solo separa varias acepciones si de verdad hace falta para entender la palabra.",
-        "Todas las palabras de un mismo post deben ser del mismo campo semántico y no repetirse entre sí."
+        "Las palabras de un post comparten el ángulo que da planificar_post (campo semántico, categoría gramatical, situación, registro...) y no se repiten entre sí.",
+        "El número de palabras lo propone planificar_post dentro de min_paginas..max_paginas: no des 6 por hecho."
       ]
     },
     {
@@ -110,6 +185,7 @@
       "canva_design_id": "DAHHlcpC6To",
       "formato": "1080x1080",
       "max_paginas": 12,
+      "min_paginas": 4,
       "huecos": [
         {
           "id": "CARACTER",
@@ -147,6 +223,99 @@
       "canva_design_id": "DAHTagkooZQ",
       "formato": "2048x2048",
       "max_paginas": 1,
+      "variantes": [
+        {
+          "id": "portada-1",
+          "nombre": "Título arriba, marca de agua en el centro",
+          "canva_design_id": "DAHTagkooZQ",
+          "banda_titulo": [
+            0.2,
+            0.8,
+            0.29,
+            0.51
+          ],
+          "banda_marca": [
+            0.34,
+            0.66,
+            0.61,
+            0.76
+          ],
+          "nota": "La de siempre. El título va alto, así que pide fotos con la mitad superior tranquila (cielo, niebla, pared)."
+        },
+        {
+          "id": "portada-2",
+          "nombre": "Título en el centro, marca de agua abajo a la derecha",
+          "canva_design_id": "DAHT4jGJ3DI",
+          "banda_titulo": [
+            0.2,
+            0.8,
+            0.39,
+            0.61
+          ],
+          "banda_marca": [
+            0.66,
+            0.97,
+            0.81,
+            0.95
+          ],
+          "nota": "Deja limpia la esquina inferior izquierda. Va bien cuando el motivo de la foto está a la izquierda."
+        },
+        {
+          "id": "portada-3",
+          "nombre": "Marca de agua arriba a la derecha, título en el centro",
+          "canva_design_id": "DAHT4pTi9DE",
+          "banda_titulo": [
+            0.2,
+            0.8,
+            0.39,
+            0.61
+          ],
+          "banda_marca": [
+            0.66,
+            0.97,
+            0.01,
+            0.16
+          ],
+          "nota": "Para fotos con el cielo o un fondo liso arriba y el motivo abajo."
+        },
+        {
+          "id": "portada-4",
+          "nombre": "Título en el centro, marca de agua abajo centrada",
+          "canva_design_id": "DAHT4opl6fs",
+          "banda_titulo": [
+            0.2,
+            0.8,
+            0.39,
+            0.61
+          ],
+          "banda_marca": [
+            0.34,
+            0.66,
+            0.81,
+            0.95
+          ],
+          "nota": "La más simétrica. Pide que el borde inferior de la foto no esté recargado."
+        },
+        {
+          "id": "portada-5",
+          "nombre": "Marca de agua arriba centrada, título en el centro",
+          "canva_design_id": "DAHT4nKvwUY",
+          "banda_titulo": [
+            0.2,
+            0.8,
+            0.39,
+            0.61
+          ],
+          "banda_marca": [
+            0.34,
+            0.66,
+            0.01,
+            0.16
+          ],
+          "nota": "Cabecera clásica. Buena con cielos y techos lisos; mala si arriba hay farolillos o rótulos."
+        }
+      ],
+      "_comentario_variantes": "Las cinco portadas de la carpeta chinesereads-plantilla-portada. Son el mismo diseño con el título y la marca de agua en sitios distintos; `banda_titulo` y `banda_marca` son la caja que ocupa cada elemento en fracciones del lado ([izquierda, derecha, arriba, abajo]), medidas sobre la plantilla. elegir_portada mide la foto en esas cajas y elige la variante donde el título y el logo se leen, rotando entre las que valen. `canva_design_id` de arriba es la 1, que se usa solo como reserva si esta lista desaparece.",
       "colores_titulo": [
         {
           "id": "blanco",
@@ -197,8 +366,9 @@
       "reglas_estilo": [
         "Título en inglés, gancho directo y concreto, sin clickbait vacío. Varía la fórmula respecto a portadas_recientes.",
         "Foto que se reconozca como China en un segundo y, a ser posible, ligada al tema del post: ciudades, tecnología, interiores, bares, restaurantes, comida, tiendas, barrios, museos, mercados, callejones con farolillos, templos, trenes, caligrafía con pincel y tinta, Año Nuevo chino, paisajes... (ejemplos, NO un menú cerrado: el usuario quiere ver también temas y lugares corrientes que no estén en la lista —una barbería, un andén de metro, una farmacia tradicional, una obra, una boda...— siempre que se reconozcan como China) Un cielo, un campo, un museo o un salón GENÉRICOS no valen: podrían ser de cualquier sitio. Cada escena debe llevar al menos una marca inconfundible de China escrita en el prompt (caracteres en rótulos, tejados curvos de teja, farolillos y columnas rojas, puertas de luna, celosías de madera, cerámica azul y blanca, palillos y cuencos, caligrafía, el perfil de Pudong...). Varía la imaginería entre posts, consulta escenas_recientes y no repitas una escena que aparezca ahí (pueden repetirse, pero pasados unos 30 posts), evita las escenas con personas y recuerda que la legibilidad del título manda sobre la espectacularidad de la foto.",
-        "Tras elegir la foto, pasa elegir_color_titulo y aplica con format_text el hex que devuelva: él mide el contraste real de la franja del título y rota entre los colores de 'colores_titulo'. No elijas el color a ojo ni des el blanco por hecho. El título tiene que leerse a un vistazo en miniatura de feed.",
-        "La marca de agua de chinesereads ya está en la plantilla: no se cambia ni se mueve."
+        "Tras elegir la foto, pasa elegir_portada: mide la foto en la caja del título y en la del logo de cada una de las cinco variantes y devuelve la variante que toca (su canva_design_id) y el hex del título. Aplica el hex con format_text. Ni la variante ni el color se eligen a ojo: la marca de agua no se puede recolorear, así que la única forma de que el logo no se pierda es ponerla donde la foto lo permita. El título tiene que leerse a un vistazo en miniatura de feed.",
+        "La marca de agua de chinesereads ya está en cada variante: no se cambia, no se mueve y no se recolorea. Lo único que se decide es en qué variante cae mejor.",
+        "Si el tema del post es abstracto y no tiene foto posible (preposiciones, adverbios de tiempo, medidores, conectores, partículas...), no fuerces una ilustración literal ni te refugies en el paisaje de siempre: coge cualquier escena que recuerde a China y que no esté en escenas_recientes (un museo, una habitación, un reloj de estación, un puesto de mercado, una librería...). La portada está para que se pare el dedo y para que se lea el título; no tiene que ilustrar la gramática."
       ]
     }
   ],
