@@ -203,6 +203,10 @@ revés. No hay aviso: el servidor simplemente se queda con
 encolar nada. Pasó exactamente así: se autorizó Canva en el Mac a las 19:15
 UTC y la generación de las 19:56 UTC murió en el paso 5.
 
+Comprobado en las dos direcciones el mismo día: al reautorizar el VPS, la
+sesión del Mac pasó a `token expired` en el acto. No es "a veces": es una
+sola sesión, y la última que autoriza gana.
+
 **La sesión que manda es la del VPS.** Si necesitas Canva en el Mac para algo
 puntual, cuenta con que después hay que reautorizar el servidor — y hazlo
 antes de las 19:00, que es cuando genera.
@@ -266,6 +270,8 @@ journalctl -u chinesereads-publicador.service -n 50   # qué pasó
 systemctl start chinesereads-publicador.service       # publicar ahora
 sudo -u chinesereads python3 /home/chinesereads/publicador/publicador.py estado
 docker exec docker-caddy-1 ls /srv/cola-chinesereads  # ¿montaje vivo?
+sudo -H -u chinesereads claude mcp list               # ¿Canva sigue autorizado?
+bash /home/chinesereads/publicador/despliegue/verificar.sh   # todo de golpe
 ```
 
 | Síntoma | Causa y solución |
@@ -275,6 +281,8 @@ docker exec docker-caddy-1 ls /srv/cola-chinesereads  # ¿montaje vivo?
 | `Invalid OAuth access token` | Token de Instagram caducado: genera otro en el panel de Meta |
 | La cola no se ve por HTTPS | Caddy perdió el montaje: `docker compose --env-file .env up -d --force-recreate --no-deps caddy` |
 | El generador no arranca | Falta `/etc/chinesereads-generador.env` o el timer está desactivado |
+| **El generador termina bien (código 0) pero la cola sigue vacía** | Casi siempre el MCP de Canva sin autorizar: `claude mcp list` con el usuario del servicio. Sin Canva no hay ni una imagen, así que aborta por la regla de "todo o nada". Reautorizar con túnel SSH: ver [El OAuth de Canva](#el-oauth-de-canva-una-sola-sesión-y-es-la-del-servidor). Segunda causa posible: Pollinations caído — eso lo dice el propio log |
+| Un post sale con menos slides de las que tenía | Instagram admite 10 imágenes por carrusel y portada + cierre se llevan dos: `max_paginas` no puede pasar de 8 |
 
 ## Desmontarlo todo
 
