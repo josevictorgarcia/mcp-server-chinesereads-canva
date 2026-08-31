@@ -84,10 +84,13 @@ done
 
 echo
 echo "=== 4. Nada sensible dentro de la carpeta pública ==="
-SOSPECHOSOS="$(find "${PROYECTO}/cola" -maxdepth 1 \
-    \( -name "*.json" ! -name "meta.json" -o -name "*token*" -o -name "*config*" \) 2>/dev/null)"
-[ -z "$SOSPECHOSOS" ] && ok "cola/ solo contiene posts" \
-                      || mal "hay ficheros sospechosos en cola/:
+# cola/ se sirve en internet y solo debe contener CARPETAS de post. Cualquier
+# fichero suelto ahí es un resto de algo (la página de callback de TikTok, un
+# volcado, un config) y sobra: se comprueba el tipo, no una lista de nombres,
+# porque la lista siempre se queda corta.
+SOSPECHOSOS="$(find "${PROYECTO}/cola" -maxdepth 1 -type f 2>/dev/null)"
+[ -z "$SOSPECHOSOS" ] && ok "cola/ solo contiene carpetas de post" \
+                      || mal "hay ficheros sueltos en cola/ (solo debe haber carpetas de post):
 $SOSPECHOSOS"
 
 echo
@@ -99,6 +102,19 @@ if command -v systemctl >/dev/null 2>&1; then
         [ "$EST" = "enabled" ] && ok "${t}.timer activo → próximo: ${PROX:-?}" \
                               || nota "${t}.timer: $EST"
     done
+    # Timers fantasma: los transitorios (systemd-run) viven en /run, no en
+    # /etc, así que la comprobación 2 no los ve. Un --on-calendar con comodines
+    # ('*-*-* 13:00:00') NO es de un solo uso: se repite todos los días y se
+    # queda ahí para siempre. Para publicar una vez, la fecha va completa
+    # ('2026-09-01 13:00:00'), que sí se autodestruye.
+    EXTRA="$(systemctl list-timers --all --no-pager 2>/dev/null \
+             | grep -o 'chinesereads-[a-z-]*\.timer' \
+             | grep -v -e 'chinesereads-publicador.timer' \
+                       -e 'chinesereads-generador.timer' | sort -u)"
+    [ -z "$EXTRA" ] && ok "no hay timers de chinesereads fuera de los dos del repo" \
+                    || mal "timer(s) inesperados (¿un systemd-run que se quedó?):
+$EXTRA
+  se quitan con: systemctl stop <unidad> && systemctl reset-failed <unidad-sin-.timer>"
 fi
 sudo -u "$USUARIO" python3 publicador.py estado 2>&1 | sed 's/^/  /'
 

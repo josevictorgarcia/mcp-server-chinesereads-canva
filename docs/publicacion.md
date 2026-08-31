@@ -40,6 +40,38 @@ entiende `OnCalendar=*-*-* 20:00:00 Europe/Madrid`. Ventaja extra: no toca
 el `crontab` existente, donde vive el backup diario de la base de datos de
 la web.
 
+## Publicar una vez a otra hora (sin tocar el timer diario)
+
+A veces hace falta sacar un post fuera del horario normal (para vaciar la
+cola, para probar). Se hace con un timer transitorio, que vive en memoria y
+no deja fichero — así `verificar.sh` sigue diciendo que el servidor coincide
+con el repo:
+
+```bash
+systemd-run --unit=chinesereads-publicar-extra \
+  --on-calendar='2026-09-01 13:00:00 Europe/Madrid' \
+  --timer-property=RemainAfterElapse=no \
+  /usr/bin/systemctl start chinesereads-publicador.service
+```
+
+**La fecha va completa, y esto importa.** Con comodines
+(`--on-calendar='*-*-* 13:00:00'`) el timer **no es de un solo uso**: se
+repite todos los días y se queda ahí para siempre, porque `RemainAfterElapse`
+solo lo borra cuando ya no le queda ningún disparo por delante. Pasó de
+verdad el 2026-08-31: un timer "para publicar hoy a la una" quedó armado como
+publicación diaria. Con fecha completa se dispara una vez y se autodestruye.
+
+Comprobar y quitar a mano si hace falta:
+
+```bash
+systemctl list-timers --all | grep chinesereads
+systemctl stop chinesereads-publicar-extra.timer
+systemctl reset-failed chinesereads-publicar-extra 2>/dev/null
+```
+
+La comprobación 5 de `despliegue/verificar.sh` avisa de cualquier timer de
+chinesereads que no sea uno de los dos del repo.
+
 ## El disco no se llena
 
 Tras publicarse, cada post pasa a `publicados/` y el propio publicador lo
