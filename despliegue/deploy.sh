@@ -164,7 +164,8 @@ cat <<FIN
       rsync tu historial.json a ${DESTINO}/historial.json
    4. Solo si quieres generación autónoma:
       - token de Claude en /etc/chinesereads-generador.env
-      - OAuth del MCP de Canva (ver docs/despliegue.md, parte 4)
+      - OAuth del MCP de Canva: necesita tunel SSH, no vale hacerlo
+        desde otra maquina (docs/despliegue.md, "El OAuth de Canva")
       - systemctl enable --now chinesereads-generador.timer
 
  Comprobar cómo va todo:
