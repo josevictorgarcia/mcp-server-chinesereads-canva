@@ -43,6 +43,10 @@ post toca hoy.
 
 ## Reglas de oro del modo autónomo
 
+- **La portada habla del post**: la foto tiene que ligarse al tema, no
+  solo "ser de China". Un descarte ya pagado solo vale si encaja de
+  verdad; si no, genera una nueva. Ahorrar medio céntimo no compensa una
+  portada que no pega con lo que hay dentro.
 - **Frugalidad**: el pollen y los recursos son del usuario. Piensa el
   prompt de la portada antes de generar (composición con zona tranquila
   para el título); 3 intentos es un tope excepcional, no una rutina. Antes

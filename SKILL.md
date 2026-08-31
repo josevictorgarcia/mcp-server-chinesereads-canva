@@ -170,8 +170,12 @@ plantilla `portada`, salta este paso y avísalo en el resumen final.
 2. **Imagen de fondo** — tres orígenes, en este orden de preferencia:
    - **Descartes ya pagados**: antes de generar nada, mira qué hay en
      `posts/descartes/` (y en la carpeta `descartes` de Canva). Son imágenes
-     que el usuario ya ha pagado. Si alguna encaja con el tema y no aparece en
-     `portadas_recientes`, úsala: cuesta cero pollen. Y ojo a esto, porque es
+     que el usuario ya ha pagado. Úsala **solo si encaja de verdad con el
+     tema** y no aparece en `portadas_recientes`. "Encaja" no es "es de
+     China": para un post de ir al médico, un skyline no encaja y una
+     farmacia sí. Si ninguna encaja, genera una nueva — la portada tiene que
+     hablar del post, y eso vale más que el medio céntimo que cuesta la
+     imagen. Y ojo a esto, porque es
      el ahorro de verdad — el color del título se cambia gratis
      (`elegir_color_titulo` + `format_text`), así que un descarte que "no
      cuadraba" en blanco puede cuadrar perfectamente en tinta o dorado. Un
