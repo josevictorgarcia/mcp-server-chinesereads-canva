@@ -116,6 +116,20 @@ if command -v systemctl >/dev/null 2>&1; then
 $EXTRA
   se quitan con: systemctl stop <unidad> && systemctl reset-failed <unidad-sin-.timer>"
 fi
+# El MCP de Canva es el punto ciego historico: se cae solo (Canva admite una
+# sola sesion por cliente OAuth, asi que autorizarlo en el Mac echa al
+# servidor) y no se nota hasta que la generacion autonoma aborta de
+# madrugada sin encolar nada. Ver docs/despliegue.md.
+if command -v claude >/dev/null 2>&1; then
+    ESTADO_MCP="$(sudo -H -u "$USUARIO" claude mcp list 2>&1 || true)"
+    if echo "$ESTADO_MCP" | grep -q "^canva:.*Connected"; then
+        ok "MCP de Canva autorizado"
+    else
+        mal "MCP de Canva SIN autorizar: la generacion autonoma abortara.
+  Reautorizar con tunel SSH (docs/despliegue.md → 'El OAuth de Canva')."
+    fi
+fi
+
 sudo -u "$USUARIO" python3 publicador.py estado 2>&1 | sed 's/^/  /'
 
 echo

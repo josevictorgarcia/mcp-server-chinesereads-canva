@@ -192,10 +192,58 @@ Además: el `.venv` (ya lo crea el script), la clave de Pollinations, el
 OAuth de Canva y `historial.json`. Todo detallado en
 [configuracion.md](configuracion.md).
 
-El OAuth de Canva **debe hacerse con el usuario del servicio**: copiar las
-credenciales de otro usuario caduca a las pocas horas y deja la generación
-autónoma muerta sin avisar. Si el generador termina sin encolar nada,
-lo primero que hay que mirar es `claude mcp list` con ese usuario.
+### El OAuth de Canva: una sola sesión, y es la del servidor
+
+Esto ha roto producción una vez (2026-08-31), así que conviene leerlo entero.
+
+**Canva admite UNA sesión activa por cliente OAuth.** Claude Code usa siempre
+el mismo `client_id`, así que autorizar Canva en tu Mac **echa al VPS**, y al
+revés. No hay aviso: el servidor simplemente se queda con
+`canva: ! Needs authentication` y la siguiente generación autónoma aborta sin
+encolar nada. Pasó exactamente así: se autorizó Canva en el Mac a las 19:15
+UTC y la generación de las 19:56 UTC murió en el paso 5.
+
+**La sesión que manda es la del VPS.** Si necesitas Canva en el Mac para algo
+puntual, cuenta con que después hay que reautorizar el servidor — y hazlo
+antes de las 19:00, que es cuando genera.
+
+El OAuth **debe hacerse con el usuario del servicio** (`chinesereads`):
+copiar las credenciales de otro usuario caduca a las pocas horas y deja la
+generación muerta sin avisar.
+
+**Cómo reautorizar un servidor headless.** El problema es que el flujo OAuth
+redirige a `http://localhost:3118/callback`, y ese `localhost` es el del VPS,
+donde no hay navegador. La solución es un túnel SSH desde la máquina que sí
+lo tiene:
+
+```bash
+# 1. En tu Mac, en tu propio terminal (no dentro de Claude Code):
+ssh -L 3118:localhost:3118 root@<tu-vps>
+
+# 2. Ya dentro del VPS, con el usuario del servicio:
+sudo -H -u chinesereads -i
+cd /home/chinesereads/publicador
+claude
+
+# 3. Dentro de Claude Code: /mcp → canva → Authenticate.
+#    Abre la URL que imprima en el navegador del Mac. Al terminar, Canva
+#    redirige a localhost:3118 y el túnel lo lleva al VPS. Se cierra solo.
+# 4. Comprobar y salir:
+claude mcp list        # canva debe decir "✔ Connected"
+```
+
+Si el navegador se queda en "no se puede conectar" es que el túnel no está
+puesto: copia la URL entera de la barra de direcciones y pégasela a la
+sesión, que también vale.
+
+**Cómo saber si esto ha vuelto a pasar**, antes de que se note en el feed:
+
+```bash
+sudo -H -u chinesereads claude mcp list     # canva: ✔ Connected
+```
+
+Si el generador termina sin encolar nada, esto es lo primero que hay que
+mirar. `despliegue/verificar.sh` lo comprueba desde el 2026-08-31.
 
 El historial vive en las **dos** máquinas, así que el flujo de
 `generar-post` lo sincroniza con `rsync -a --update` (solo gana el más
