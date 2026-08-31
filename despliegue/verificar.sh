@@ -111,10 +111,22 @@ if command -v systemctl >/dev/null 2>&1; then
              | grep -o 'chinesereads-[a-z-]*\.timer' \
              | grep -v -e 'chinesereads-publicador.timer' \
                        -e 'chinesereads-generador.timer' | sort -u)"
-    [ -z "$EXTRA" ] && ok "no hay timers de chinesereads fuera de los dos del repo" \
-                    || mal "timer(s) inesperados (¿un systemd-run que se quedó?):
-$EXTRA
-  se quitan con: systemctl stop <unidad> && systemctl reset-failed <unidad-sin-.timer>"
+    # Un timer suelto con FECHA COMPLETA (2026-09-01 13:00:00) es legítimo:
+    # dispara una vez y se autodestruye. El que hay que cazar es el que lleva
+    # comodines, porque ese se repite a diario y no se va nunca.
+    if [ -z "$EXTRA" ]; then
+        ok "no hay timers de chinesereads fuera de los dos del repo"
+    else
+        for t in $EXTRA; do
+            CAL="$(systemctl cat "$t" 2>/dev/null | grep -m1 '^OnCalendar=' | cut -d= -f2-)"
+            case "$CAL" in
+                *'*'*) mal "timer recurrente inesperado: $t ($CAL)
+  Se repetirá TODOS los días. Quitar con:
+    systemctl stop $t && systemctl reset-failed ${t%.timer}" ;;
+                *)     nota "$t: disparo único el $CAL, se borra solo al dispararse" ;;
+            esac
+        done
+    fi
 fi
 # El MCP de Canva es el punto ciego historico: se cae solo (Canva admite una
 # sola sesion por cliente OAuth, asi que autorizarlo en el Mac echa al
