@@ -79,6 +79,11 @@ COOLDOWN_NUMEROS = 3
 # se repite hasta pasados estos posts. Es lo que obliga a alternar entre
 # "6 palabras de comida" y "6 preposiciones" o "palabras de los dramas".
 COOLDOWN_ANGULOS = 3
+# Ventana sobre la que se mide la cuota de cada ángulo (su `peso` en
+# plantillas.json). No se reparte a partes iguales: la cantera de vocabulario
+# es mucho mayor que la de gramática o de pares que se confunden, y un reparto
+# uniforme agotaría las cortas en pocos meses (decisión del usuario, 2026-09-01).
+VENTANA_ANGULOS = 30
 # Familias de reserva por si plantillas.json aún no declara `angulos_de_post`.
 ANGULOS_POR_DEFECTO = [
     {"id": "campo-semantico", "descripcion": "Vocabulario de un tema concreto."},
@@ -639,10 +644,12 @@ def planificar_post(plantilla_id: str | None = None) -> dict:
     """Decide QUÉ FORMA tiene el post de hoy antes de inventar el contenido:
     cuántas slides lleva y desde qué ángulo se agrupan las palabras.
 
-    Las dos decisiones son rotación, no criterio: gana la opción que lleve más
-    posts sin usarse (entre las nunca usadas, una al azar). Es lo que impide
-    que todos los posts acaben siendo "6 palabras de un tema", que es a lo que
-    tiende el modelo si nadie se lo dice.
+    Ninguna de las dos es criterio del modelo. El número de slides rota (gana
+    el que lleva más posts sin usarse). El ángulo va por CUOTA: cada familia
+    tiene un `peso` en plantillas.json y gana la que más por debajo de su
+    cuota va en los últimos posts, sin repetir los recientes. Es lo que impide
+    que todos los posts acaben siendo "6 palabras de un tema", y a la vez que
+    la gramática salga tanto como el vocabulario y se agote.
 
     Lo que devuelve es una propuesta con fundamento, no una orden: si el tema
     que se te ocurre pide claramente otro número (hay 5 palabras buenas y la
@@ -681,17 +688,29 @@ def planificar_post(plantilla_id: str | None = None) -> dict:
     familias = _angulos()
     recientes = angulos_recientes()
     libres = [a for a in familias if a["id"] not in recientes] or familias
+    historial = _historial()
     ultimo_uso_a: dict[str, int] = {}
-    for indice, entrada in enumerate(_historial()):
+    for indice, entrada in enumerate(historial):
         if entrada.get("angulo"):
             ultimo_uso_a[entrada["angulo"]] = indice
-    nunca_a = [a for a in libres if a["id"] not in ultimo_uso_a]
-    if nunca_a:
-        angulo = random.choice(nunca_a)
-        motivo_a = "no se ha usado nunca"
-    else:
-        angulo = min(libres, key=lambda a: ultimo_uso_a[a["id"]])
-        motivo_a = "es el que lleva más posts sin usarse"
+    # Cuota: de los últimos VENTANA_ANGULOS posts con ángulo, cuántos le
+    # tocarían a cada familia según su peso, frente a cuántos ha tenido.
+    ventana = [e["angulo"] for e in historial[-VENTANA_ANGULOS:] if e.get("angulo")]
+    peso_total = sum(a.get("peso", 1) for a in familias) or 1
+
+    def _deficit(a: dict) -> float:
+        cuota = len(ventana) * a.get("peso", 1) / peso_total
+        return cuota - ventana.count(a["id"])
+
+    # Gana el mayor déficit; a igualdad, el que lleva más tiempo sin usarse
+    # (nunca usado cuenta como el más antiguo).
+    angulo = max(libres, key=lambda a: (round(_deficit(a), 6),
+                                        -ultimo_uso_a.get(a["id"], -1)))
+    motivo_a = (
+        f"es el que más por debajo de su cuota va: peso {angulo.get('peso', 1)} "
+        f"de {peso_total}, {ventana.count(angulo['id'])} de los últimos "
+        f"{len(ventana)} posts"
+    )
 
     return {
         "plantilla_id": plantilla_id,
@@ -711,7 +730,9 @@ def planificar_post(plantilla_id: str | None = None) -> dict:
             "recientes": recientes,
         },
         "otros_angulos": [
-            {"id": a["id"], "descripcion": a.get("descripcion", "")}
+            {"id": a["id"], "peso": a.get("peso", 1),
+             "en_ventana": ventana.count(a["id"]),
+             "descripcion": a.get("descripcion", "")}
             for a in familias
             if a["id"] != angulo["id"]
         ],

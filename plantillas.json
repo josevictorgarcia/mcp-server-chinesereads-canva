@@ -9,6 +9,7 @@
   "angulos_de_post": [
     {
       "id": "campo-semantico",
+      "peso": 4,
       "descripcion": "Vocabulario de un tema concreto del mundo real.",
       "ejemplos": [
         "la cocina",
@@ -20,6 +21,7 @@
     },
     {
       "id": "categoria-gramatical",
+      "peso": 1,
       "descripcion": "Una clase de palabra entera, aunque no sea 'tangible'. Es el ángulo que más se olvida y el que más falta hace.",
       "ejemplos": [
         "preposiciones y localizadores (在, 上, 里, 旁边)",
@@ -31,6 +33,7 @@
     },
     {
       "id": "situacion",
+      "peso": 3,
       "descripcion": "Lo que de verdad se dice en un momento concreto, no el vocabulario del tema en abstracto.",
       "ejemplos": [
         "pedir en un restaurante",
@@ -42,6 +45,7 @@
     },
     {
       "id": "cultura-y-tendencia",
+      "peso": 1,
       "descripcion": "Ángulo de actualidad o cultura pop, el que engancha a quien pasa el dedo. Brand-safe siempre: nada de política, polémicas, marcas registradas ni personas reales.",
       "ejemplos": [
         "palabras que sueltan en todos los dramas",
@@ -53,6 +57,7 @@
     },
     {
       "id": "expresiones",
+      "peso": 2,
       "descripcion": "Frases hechas y muletillas: lo que se dice, no lo que se estudia.",
       "ejemplos": [
         "formas de decir 'vale'",
@@ -63,6 +68,7 @@
     },
     {
       "id": "confusiones",
+      "peso": 1,
       "descripcion": "Pares que se confunden y errores típicos del que empieza. Formato muy compartible.",
       "ejemplos": [
         "会 vs 能",
@@ -72,7 +78,7 @@
       ]
     }
   ],
-  "_comentario_angulos": "Formas de agrupar las palabras de un post. planificar_post rota entre ellas (gana la que lleva más posts sin usarse) y registrar_publicacion guarda el id elegido en historial.angulo. Es una lista de datos: añadir o quitar familias aquí es seguro y no toca el servidor. Sin esto todos los posts acababan siendo 'N palabras sobre <un tema>'.",
+  "_comentario_angulos": "Formas de agrupar las palabras de un post. planificar_post reparte los posts por CUOTA: `peso` es la parte proporcional de cada ángulo (4+3+2+1+1+1 = 12: campo-semantico sale 4 de cada 12 posts, gramática 1 de cada 12), porque la cantera de vocabulario es mucho mayor que la de gramática o confusiones y un reparto uniforme agotaría antes las cortas. Gana el ángulo que más por debajo de su cuota va en los últimos 30 posts, sin repetir ninguno de los 3 últimos. registrar_publicacion guarda el id elegido en historial.angulo. Es una lista de datos: añadir familias o cambiar pesos aquí es seguro y no toca el servidor.",
   "_comentario_descartes": "Carpeta 'descartes' dentro de chinesereads-posts: las imágenes de IA candidatas que no acaban en portada se suben ahí como assets (upload-asset-from-url con la URL de caché sin clave), además de guardarse en posts/descartes/ en local. Canva es la copia que sobrevive a un desastre.",
   "_comentario": "canva_design_id debe apuntar a un diseño MULTI-PÁGINA en Canva: varias páginas duplicadas con el mismo layout (hasta max_paginas). Cada hueco.texto_actual debe ser EXACTAMENTE el texto que aparece ahora en la plantilla (en cada página), para que se pueda localizar y sustituir. Los huecos con tipo 'imagen' no llevan max_caracteres; se rellenan buscando una imagen de licencia libre (CC0/dominio público) o, si no se encuentra, a mano.",
   "plantillas": [

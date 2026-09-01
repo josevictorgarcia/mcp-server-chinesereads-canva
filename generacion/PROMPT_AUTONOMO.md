@@ -15,7 +15,8 @@ post toca hoy.
 1. **Plantilla**: siempre `texto-6`. Es la preferencia del usuario y la
    marcada como `por_defecto` en el catálogo; no la cambies por tu cuenta.
 2. **Forma del post**: llama a `planificar_post`. Te da el número de
-   slides y el ángulo, los dos por rotación. **No des 6 por hecho**: el
+   slides (por rotación) y el ángulo (por cuota: cada
+   familia tiene un peso y gana la que más por debajo va). **No des 6 por hecho**: el
    rango es 4-8 y que la longitud cambie de un post a otro es
    intencionado. Puedes bajar o subir un poco si el tema lo pide (5
    palabras buenas mejor que 6 con una de relleno), pero no repetir el

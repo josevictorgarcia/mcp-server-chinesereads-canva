@@ -184,7 +184,7 @@ el post (4-8, rotando: si los últimos van todos con el mismo número,
 `preparar_encargo` lo rechaza) y desde **qué ángulo** se agrupan — un campo
 semántico, una categoría gramatical entera (preposiciones, adverbios de
 tiempo, medidores), una situación, un ángulo de tendencia, expresiones hechas
-o pares que se confunden. Los ángulos se editan en `plantillas.json` →
+o pares que se confunden. Los ángulos y sus pesos se editan en `plantillas.json` →
 `angulos_de_post`. Es lo que evita que la cuenta acabe siendo siempre
 "6 sustantivos sobre un tema".
 
@@ -246,8 +246,12 @@ Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
 - **Longitud y ángulo del post** (`planificar_post`): el número de slides rota
   entre 4 y 8, y si los últimos posts seguidos llevan todos el mismo,
   `preparar_encargo` lo rechaza. El ángulo (campo semántico, categoría
-  gramatical, situación, tendencia, expresiones, confusiones) rota igual, así
-  que no salen dos posts del mismo corte pegados.
+  gramatical, situación, tendencia, expresiones, confusiones) va por
+  **cuota**: cada uno tiene un `peso` en `plantillas.json` (vocabulario 4,
+  situaciones 3, expresiones 2, tendencia/gramática/confusiones 1) y gana el
+  que más por debajo de su cuota va en los últimos 30 posts, sin repetir los
+  3 últimos. Uniforme no valía: la cantera de vocabulario es mucho mayor que
+  la de gramática, y a 1 de cada 6 la gramática se agotaba en meses.
 - **Slides finales** (`elegir_final`): rotación uniforme — siempre toca la
   plantilla de cierre que lleve más posts sin usarse.
 

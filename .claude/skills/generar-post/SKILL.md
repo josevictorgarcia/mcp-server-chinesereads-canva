@@ -18,7 +18,8 @@ las rechaza `preparar_encargo`).
 
 **Número de slides (N) y ángulo**: si el usuario da N en la petición ("5
 palabras…"), úsalo. Si no, **no des 6 por hecho: llama a `planificar_post`**.
-Devuelve las dos cosas por rotación (gana lo que lleva más posts sin usarse):
+Devuelve las dos cosas decididas por código (el número por rotación, el
+ángulo por cuota según su `peso`):
 
 - `numero_slides`, entre `minimo` y `maximo` (4 a 8 en `texto-6`). Es una
   propuesta con fundamento: si el tema da 5 palabras buenas y la sexta sería
