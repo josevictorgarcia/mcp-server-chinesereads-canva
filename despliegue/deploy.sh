@@ -70,8 +70,11 @@ chmod +x "${DESTINO}/generacion/generacion_autonoma.sh"
 if [ ! -x "${DESTINO}/.venv/bin/python" ]; then
     sudo -u "$USUARIO" python3 -m venv "${DESTINO}/.venv"
 fi
-sudo -u "$USUARIO" "${DESTINO}/.venv/bin/pip" install --quiet --upgrade pip
-sudo -u "$USUARIO" "${DESTINO}/.venv/bin/pip" install --quiet -r "${DESTINO}/requirements.txt"
+# `python -m pip` y no `.venv/bin/pip`: el script pip lleva grabada en su
+# shebang la ruta con la que se creó el venv, y si el repo se movió de sitio
+# (pasó el 2026-09-01) falla con "Permission denied". El intérprete no.
+sudo -u "$USUARIO" "${DESTINO}/.venv/bin/python" -m pip install --quiet --upgrade pip
+sudo -u "$USUARIO" "${DESTINO}/.venv/bin/python" -m pip install --quiet -r "${DESTINO}/requirements.txt"
 echo "   entorno listo"
 
 # ──────────────────────────────────────────────── 3. cola pública por HTTPS
