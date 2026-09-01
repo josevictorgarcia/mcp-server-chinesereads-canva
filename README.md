@@ -19,7 +19,7 @@ local. Sin redimensionado, sin autofill de Enterprise, sin recursos premium.
 | [docs/instagram.md](docs/instagram.md) · [docs/tiktok.md](docs/tiktok.md) | Cada red: conexión, autenticación y pendientes |
 | [docs/publicacion.md](docs/publicacion.md) | Cómo funciona la publicación automática |
 | [docs/pollinations.md](docs/pollinations.md) | Imágenes con IA y su coste |
-| [SKILL.md](SKILL.md) | El flujo de once pasos que genera un post |
+| [.claude/skills/generar-post/SKILL.md](.claude/skills/generar-post/SKILL.md) | El flujo de once pasos que genera un post |
 
 Índice completo en [docs/](docs/).
 
@@ -36,6 +36,22 @@ El de Canva sabe de diseños pero no sabe nada de tus plantillas ni de lo que ya
 publicaste. Ese hueco lo llena el servidor local, y ahí es donde vive la lógica
 que hace que esto sea fiable: **las reglas duras las comprueba código, no el
 modelo.** Contar caracteres es justo el tipo de cosa que un LLM hace regular.
+
+El repo está partido por responsabilidades:
+
+```
+plantillas.json                      catálogo: ids de Canva, huecos, reglas, ángulos, paleta
+catalogo/servidor_catalogo.py        servidor MCP local: validación, rotaciones, imágenes IA
+publicacion/publicador.py            publica la cola en Instagram y TikTok (solo stdlib)
+generacion/                          generación autónoma en el servidor (script + encargo)
+.claude/skills/generar-post/SKILL.md el flujo de once pasos que sigue Claude
+despliegue/                          deploy.sh, verificar.sh, unidades de systemd, plantillas
+docs/                                toda la documentación
+```
+
+Lo que no va a git vive en la raíz: `historial.json` (memoria
+anti-repetición), `publicacion_config.json` y `.pollinations_token`
+(credenciales), `cola/`, `publicados/` y `posts/` (imágenes).
 
 ## Instalación
 
@@ -58,22 +74,22 @@ Paso a paso completo (config, ssh al servidor, cómo pedir un post) en
 ## Configurar tus plantillas
 
 Cada plantilla debe ser un diseño **multi-página** en Canva: varias páginas
-duplicadas con el mismo layout (hasta el número que pongas en `max_paginas`,
-p. ej. 12). Un post de N slides se genera copiando N de esas páginas, así que
-necesitas al menos tantas páginas en el maestro como slides vayas a pedir
-nunca en un post.
+duplicadas con el mismo layout. Un post de N slides se genera copiando N de
+esas páginas, así que necesitas al menos tantas páginas en el maestro como
+slides vayas a pedir nunca en un post.
 
 Edita `plantillas.json` (o pide al asistente que use `anadir_plantilla`). Por cada
 plantilla necesitas:
 
 - **`canva_design_id`** — está en la URL del diseño maestro:
   `canva.com/design/DAFxxxxxxxx/edit` → el `DAFxxxxxxxx`.
-- **`max_paginas`** — cuántas páginas tiene el maestro (= el máximo de slides
-  que podrá tener un post con esta plantilla).
+- **`max_paginas`** — el máximo de slides de un post con esta plantilla.
+  **8**, aunque el maestro tenga más páginas: Instagram admite 10 imágenes
+  por carrusel y portada + cierre se llevan dos; con más, el publicador
+  recorta en silencio.
 - **`min_paginas`** — el mínimo (4 por defecto): por debajo, el post se lee en
   dos segundos y no compensa el scroll. Entre esos dos números rota
-  `planificar_post`, así que si prefieres que los posts no se te vayan a 12
-  slides, baja `max_paginas` y listo.
+  `planificar_post`.
 - **`huecos`** — un objeto por cada bloque que quieras cambiar en cada página.
   El campo `texto_actual` debe ser **literalmente** lo que pone hoy ese bloque
   en la plantilla: así es como se localiza al editar. Los de texto llevan
@@ -96,7 +112,8 @@ En Claude Code, dentro de la carpeta del proyecto:
 > hazme un post de 5 palabras en chino sobre deportes
 ```
 
-La skill `generar-post` se dispara sola. El flujo es: elegir plantilla y número
+La skill `generar-post` (`.claude/skills/generar-post/SKILL.md`) se dispara
+sola. El flujo es: elegir plantilla y número
 de slides → pedir el contrato de huecos → generar contenido por slide →
 validar → duplicar N páginas y editarlas en Canva → exportar y descargar todas
 las páginas → portada → slide final de cierre → registrar el post completo en
@@ -163,7 +180,7 @@ variantes). La paleta se edita a mano en `plantillas.json` → plantilla
 esas listas es seguro, la legibilidad la sigue garantizando el código.
 
 Lo mismo con el contenido: `planificar_post` decide **cuántas palabras** lleva
-el post (4-12, rotando: si los últimos van todos con el mismo número,
+el post (4-8, rotando: si los últimos van todos con el mismo número,
 `preparar_encargo` lo rechaza) y desde **qué ángulo** se agrupan — un campo
 semántico, una categoría gramatical entera (preposiciones, adverbios de
 tiempo, medidores), una situación, un ángulo de tendencia, expresiones hechas
@@ -213,7 +230,7 @@ Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
   exacto (p. ej. "deportes" completo otra vez).
 - **Palabras** (`elementos_usados`): las palabras usadas en los últimos
   `COOLDOWN_POSTS` posts (15 por defecto, configurable en
-  `servidor_catalogo.py`) de esa plantilla se evitan. No es un bloqueo
+  `catalogo/servidor_catalogo.py`) de esa plantilla se evitan. No es un bloqueo
   permanente — pasado ese número de posts, la palabra vuelve a estar
   disponible, lo justo para que nadie la recuerde.
 - **Portadas** (`portadas_recientes`): misma ventana de cooldown para la foto
@@ -236,7 +253,7 @@ Si la carpeta está vacía, el post sale sin cierre y se avisa en el resumen.
 
 ## Publicación automática (Instagram y TikTok)
 
-Los posts no se quedan en Canva: se publican solos. `publicador.py` (sin MCP
+Los posts no se quedan en Canva: se publican solos. `publicacion/publicador.py` (sin MCP
 y sin dependencias) vive en el VPS de chinesereads.com y, cada día a las
 20:00 hora española, publica el post más antiguo de la cola por las APIs
 oficiales de Meta y TikTok. Un segundo temporizador a las 19:00 genera el
@@ -277,7 +294,7 @@ Si el ordenador muere o borras esta carpeta, esto es lo que pasa:
 
 - **Recuperable con `git clone`** (está todo en el repo): el código del
   servidor, `plantillas.json` (con los ids de los diseños maestros y de las
-  carpetas de Canva), `SKILL.md`, la configuración MCP (`.mcp.json`), toda la
+  carpetas de Canva), la skill `generar-post`, la configuración MCP (`.mcp.json`), toda la
   documentación y **el despliegue completo del servidor**
   ([`despliegue/`](despliegue/)). En el Mac: `python3 -m venv .venv &&
   ./.venv/bin/pip install -r requirements.txt` y reconectar el MCP de Canva.
@@ -304,6 +321,7 @@ Si el ordenador muere o borras esta carpeta, esto es lo que pasa:
 
 ```bash
 ./.venv/bin/python -c "
+import sys; sys.path.insert(0, 'catalogo')
 import servidor_catalogo as s
 print(s.listar_plantillas())
 print(s.preparar_encargo('texto-3', 'animales', 4))
@@ -311,5 +329,5 @@ print(s.preparar_encargo('texto-3', 'animales', 4))
 ```
 
 Debe listar tus plantillas y devolver el contrato de una petición de 4 slides
-para `texto-3`. Si tocas `servidor_catalogo.py`, reconecta con `/mcp`: el
-subproceso en marcha es el anterior.
+para `texto-3`. Si tocas `catalogo/servidor_catalogo.py`, reconecta con
+`/mcp`: el subproceso en marcha es el anterior.

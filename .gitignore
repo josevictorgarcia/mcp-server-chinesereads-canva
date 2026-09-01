@@ -3,8 +3,10 @@
 __pycache__/
 *.pyc
 
-# Config local del cliente MCP (específica de esta máquina)
-.claude/
+# Config local del cliente MCP (específica de esta máquina). La skill de
+# generar-post sí va en git: .claude/skills/ es donde Claude Code la busca.
+.claude/*
+!.claude/skills/
 
 # Exportaciones de posts (imágenes regenerables, no son código fuente)
 posts/

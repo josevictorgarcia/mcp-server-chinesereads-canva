@@ -16,12 +16,12 @@
 # la hora dos veces al año.
 
 set -u
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."   # raíz del repo
 LOG=generacion.log
 
 echo "[$(date '+%F %T')] --- generación autónoma ---" >> "$LOG"
 
-PENDIENTES=$(python3 publicador.py pendientes 2>/dev/null || echo 0)
+PENDIENTES=$(python3 publicacion/publicador.py pendientes 2>/dev/null || echo 0)
 if [ "${PENDIENTES:-0}" -ge 1 ]; then
     echo "[$(date '+%F %T')] Cola con ${PENDIENTES} post(s): no hace falta generar." >> "$LOG"
     exit 0
@@ -44,11 +44,11 @@ fi
 # apruebe permisos). Ejecutar siempre con un usuario SIN privilegios cuyo
 # único cometido sea este repo.
 # shellcheck disable=SC2086  # MODELO_ARG debe expandirse en dos palabras
-claude -p "$(cat PROMPT_AUTONOMO.md)" \
+claude -p "$(cat generacion/PROMPT_AUTONOMO.md)" \
     $MODELO_ARG \
     --dangerously-skip-permissions \
     >> "$LOG" 2>&1
 CODIGO=$?
 
-echo "[$(date '+%F %T')] Generación terminada con código ${CODIGO}. En cola: $(python3 publicador.py pendientes 2>/dev/null || echo '?')" >> "$LOG"
+echo "[$(date '+%F %T')] Generación terminada con código ${CODIGO}. En cola: $(python3 publicacion/publicador.py pendientes 2>/dev/null || echo '?')" >> "$LOG"
 exit "$CODIGO"

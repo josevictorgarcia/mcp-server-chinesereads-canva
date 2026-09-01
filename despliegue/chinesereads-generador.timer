@@ -2,7 +2,7 @@
 Description=Generacion diaria del post de chinesereads a las 19:00 hora espanola
 
 [Timer]
-# Una hora antes del de publicacion, para que el post este listo a las 8:00.
+# Una hora antes del de publicacion, para que el post este listo a las 20:00.
 # Zona horaria explicita: el servidor va en UTC y el cron de Debian ignora
 # CRON_TZ, por eso esto es un timer y no una linea de crontab.
 OnCalendar=*-*-* 19:00:00 Europe/Madrid

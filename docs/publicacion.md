@@ -12,7 +12,7 @@ La arquitectura y las decisiones de fondo. El montaje del servidor está en
 **Cola + temporizadores.** Cuando generas un post, además de descargarse
 las imágenes se escribe un `meta.json` con la descripción y los hashtags ya
 decididos, y la carpeta viaja por `rsync` a una cola en el servidor. Cada
-día a las **20:00** (hora española) se ejecuta `publicador.py publicar`, que
+día a las **20:00** (hora española) se ejecuta `publicacion/publicador.py publicar`, que
 coge el post **más antiguo** de la cola, lo publica en Instagram y TikTok
 con las APIs oficiales, y lo archiva.
 
@@ -26,7 +26,7 @@ Consecuencia del modelo de cola: **el post de mañana se genera hoy**. Si
 mantienes 3-5 posts en la cola, puedes estar una semana sin encender el
 ordenador y la cuenta sigue publicando a diario.
 
-¿Y si la cola se vacía? A las **19:00** se ejecuta `generacion_autonoma.sh`,
+¿Y si la cola se vacía? A las **19:00** se ejecuta `generacion/generacion_autonoma.sh`,
 que comprueba la cola y **solo si está vacía** arranca Claude Code en el
 propio servidor para generar el post del día y encolarlo. Tus posts siempre
 tienen prioridad: si generaste algo, el bot ni se despierta.
@@ -96,7 +96,7 @@ originales se quedan como archivo local). Un post entero pasa de 23 MB a
 1,6 MB, lo que además acelera la descarga por parte de Meta y TikTok, que
 tienen tiempo de espera.
 
-Como red de seguridad, `publicador.py` comprueba cada imagen encolada
+Como red de seguridad, `publicacion/publicador.py` comprueba cada imagen encolada
 —extensión, cabecera real del fichero y tamaño— antes de llamar a ninguna
 API: si algo no es JPEG de verdad, no publica y lo dice en el log.
 
@@ -166,12 +166,13 @@ avisa en el log.
 ## Comandos del publicador
 
 ```bash
-python3 publicador.py estado       # config, tokens y cola
-python3 publicador.py cola         # posts pendientes
-python3 publicador.py pendientes   # solo el número (lo usa el generador)
-python3 publicador.py publicar             # publica el más antiguo
-python3 publicador.py publicar --dry-run   # simula: caption, URLs, accesibilidad
-python3 publicador.py publicar --solo instagram   # (o --solo tiktok)
+# desde la raíz del repo
+python3 publicacion/publicador.py estado       # config, tokens y cola
+python3 publicacion/publicador.py cola         # posts pendientes
+python3 publicacion/publicador.py pendientes   # solo el número (lo usa el generador)
+python3 publicacion/publicador.py publicar             # publica el más antiguo
+python3 publicacion/publicador.py publicar --dry-run   # simula: caption, URLs, accesibilidad
+python3 publicacion/publicador.py publicar --solo instagram   # (o --solo tiktok)
 ```
 
 Si una red falla y la otra no, el post se queda en la cola y al día

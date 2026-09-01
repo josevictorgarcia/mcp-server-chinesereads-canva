@@ -2,7 +2,7 @@
   "mcpServers": {
     "catalogo-plantillas": {
       "command": "./.venv/bin/python",
-      "args": ["servidor_catalogo.py"],
+      "args": ["catalogo/servidor_catalogo.py"],
       "env": {}
     },
     "canva": {

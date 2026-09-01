@@ -31,7 +31,7 @@ Ninguno viaja jamás al navegador ni aparece en logs.
 ## 1. `publicacion_config.json`
 
 El fichero central. Se crea solo a partir de
-`publicacion_config.ejemplo.json` al ejecutar el script; solo hay que
+`despliegue/publicacion_config.ejemplo.json` al ejecutar el script; solo hay que
 rellenar los huecos.
 
 ```jsonc
@@ -68,7 +68,7 @@ Tras editarlo:
 
 ```bash
 chmod 600 publicacion_config.json
-python3 publicador.py estado     # debe listar las redes configuradas
+python3 publicacion/publicador.py estado     # debe listar las redes configuradas
 ```
 
 ## 2. `.pollinations_token`
@@ -123,12 +123,11 @@ renovar, y la generación autónoma se cae con `canva: Needs authentication`
 `~/.claude/mcp-needs-auth-cache.json` con una entrada de `canva`, hay que
 repetir esta autorización.
 
-```bash
-# Desde tu ordenador, con un túnel para que el enlace vuelva al servidor
-ssh -L 8090:localhost:8090 root@TU_SERVIDOR
-sudo -u chinesereads -i
-cd ~/publicador && claude          # → /mcp → conectar canva
-```
+Se hace con un túnel SSH al puerto 3118 desde tu Mac; el procedimiento
+paso a paso está en [despliegue.md → El OAuth de Canva](despliegue.md#el-oauth-de-canva-una-sola-sesión-y-es-la-del-servidor).
+**Y ojo: Canva admite una sola sesión por cliente OAuth.** Autorizar Canva
+en el Mac echa al servidor, y al revés: la sesión que manda es la del
+servidor.
 
 Si `claude mcp list` dice *"Pending approval"*, los servidores de
 `.mcp.json` necesitan aprobación por usuario y ruta. Sin interfaz:
@@ -145,7 +144,7 @@ json.dump(c, open(ruta, 'w'), indent=2)
 "
 ```
 
-Los tres servidores deben salir `✔ Connected`.
+Los dos servidores del proyecto deben salir `✔ Connected`.
 
 ## 5. `historial.json` (no es un secreto, pero es irreemplazable)
 
@@ -188,7 +187,7 @@ We only publish our own original educational material to our own account: no thi
 Con todo puesto:
 
 ```bash
-sudo -u chinesereads python3 /home/chinesereads/publicador/publicador.py estado
+sudo -u chinesereads python3 /home/chinesereads/publicador/publicacion/publicador.py estado
 ```
 
 Debe decir `Redes configuradas: instagram, tiktok` y la URL pública

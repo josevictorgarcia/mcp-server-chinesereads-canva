@@ -48,7 +48,7 @@ root** con permisos automáticos (*"--dangerously-skip-permissions cannot be
 used with root/sudo privileges"*), y con razón — un agente autónomo no debe
 tener el servidor entero a su alcance. El publicador tampoco necesita root.
 
-**2. Clona el repo y prepara Python.** `publicador.py` funciona con el
+**2. Clona el repo y prepara Python.** `publicacion/publicador.py` funciona con el
 Python del sistema sin dependencias; el `.venv` (Pillow + MCP) solo hace
 falta para la generación autónoma.
 
@@ -98,12 +98,15 @@ dependencias y no toca nada que ya esté bien — en particular, **no recrea
 Caddy si el montaje no ha cambiado**, así que tu web ni se entera.
 
 ```bash
-sudo bash /home/chinesereads/publicador/despliegue/deploy.sh
+curl -fsSL -o deploy.sh https://raw.githubusercontent.com/josevictorgarcia/mcp-server-chinesereads-canva/main/despliegue/deploy.sh
+sudo bash deploy.sh
 ```
 
-Si el cambio es solo de código o documentación, basta con un `git pull` como
-el usuario del servicio. El script es la opción segura cuando no estás
-seguro de qué cambió.
+Descárgalo de nuevo en vez de lanzar la copia que ya hay en el servidor:
+esa copia es la versión anterior y, si el cambio movió ficheros de sitio,
+puede fallar a medias. Si el cambio es solo de código o documentación,
+basta con un `git pull` como el usuario del servicio. El script es la
+opción segura cuando no estás seguro de qué cambió.
 
 Para comprobar en cualquier momento que el servidor coincide exactamente con
 el repositorio:
@@ -142,13 +145,12 @@ permisos 600; los marcados con 🌐 son lo único accesible desde internet.
 ├── .claude/  .claude.json                 ← sesión de Claude Code (MCP, OAuth de Canva)
 └── publicador/                            ← este repo, clonado
     │
-    ├── publicador.py                      ← publica (Python de sistema, sin dependencias)
-    ├── servidor_catalogo.py               ← servidor MCP local (catálogo, validación)
-    ├── generacion_autonoma.sh             ← genera con Claude si la cola está vacía
     ├── plantillas.json                    ← catálogo: ids de Canva, huecos, reglas
-    ├── SKILL.md  PROMPT_AUTONOMO.md       ← el flujo y el encargo autónomo
-    ├── .mcp.json  requirements.txt
-    ├── README.md
+    ├── .mcp.json  requirements.txt  README.md
+    ├── catalogo/servidor_catalogo.py      ← servidor MCP local (catálogo, validación)
+    ├── publicacion/publicador.py          ← publica (Python de sistema, sin dependencias)
+    ├── generacion/                        ← generacion_autonoma.sh + PROMPT_AUTONOMO.md
+    ├── .claude/skills/generar-post/       ← SKILL.md: el flujo de once pasos
     │
     ├── 🔒 publicacion_config.json         ← tokens de Instagram y TikTok
     ├── 🔒 .pollinations_token             ← clave de generación de imágenes
@@ -268,7 +270,7 @@ aborta y ese día no se publica.
 systemctl list-timers 'chinesereads-*'                # próximos disparos
 journalctl -u chinesereads-publicador.service -n 50   # qué pasó
 systemctl start chinesereads-publicador.service       # publicar ahora
-sudo -u chinesereads python3 /home/chinesereads/publicador/publicador.py estado
+sudo -u chinesereads python3 /home/chinesereads/publicador/publicacion/publicador.py estado
 docker exec docker-caddy-1 ls /srv/cola-chinesereads  # ¿montaje vivo?
 sudo -H -u chinesereads claude mcp list               # ¿Canva sigue autorizado?
 bash /home/chinesereads/publicador/despliegue/verificar.sh   # todo de golpe

@@ -70,7 +70,8 @@ Dentro de la carpeta del proyecto, en Claude Code:
 > hazme un post de 5 palabras en chino sobre deportes
 ```
 
-La skill `generar-post` se dispara sola y hace los once pasos: elegir
+La skill `generar-post` (`.claude/skills/generar-post/SKILL.md`, también
+invocable como `/generar-post`) se dispara sola y hace los once pasos: elegir
 plantilla, pedir el contrato de huecos, generar el contenido, validarlo,
 duplicar y editar en Canva, exportar, portada, slide final, registrar en el
 historial, encolar en el servidor y resumir.
@@ -79,7 +80,7 @@ Al final te enseña las imágenes y la caption exacta. El post se publicará a
 las 20:00 del primer día en que sea el más antiguo de la cola; si quieres
 retenerlo, se le pone `no_publicar_antes_de`.
 
-## Después de tocar `servidor_catalogo.py`
+## Después de tocar `catalogo/servidor_catalogo.py`
 
 El servidor MCP local corre como un subproceso que se levantó al abrir la
 sesión: **si se añaden o cambian herramientas, hay que reconectar con
@@ -95,6 +96,7 @@ código actual.
 
 ```bash
 ./.venv/bin/python -c "
+import sys; sys.path.insert(0, 'catalogo')
 import servidor_catalogo as s
 print(s.listar_plantillas())
 print(s.preparar_encargo('texto-3', 'animales', 4))
@@ -111,6 +113,7 @@ del título, pásale la ruta de una portada que tengas ya descargada:
 
 ```bash
 ./.venv/bin/python -c "
+import sys; sys.path.insert(0, 'catalogo')
 import servidor_catalogo as s
 r = s.elegir_portada('posts/familia-2026-08-30/portada-candidata.png')
 print(r['elegida'], r['color'])
@@ -122,6 +125,7 @@ Y para ver qué forma tendría el próximo post (cuántas slides y desde qué
 
 ```bash
 ./.venv/bin/python -c "
+import sys; sys.path.insert(0, 'catalogo')
 import servidor_catalogo as s
 print(s.planificar_post())
 "

@@ -65,7 +65,7 @@ en modo desarrollo, no.
 ## Cómo funciona la autenticación (y por qué no caduca)
 
 El token que da el panel es de **larga duración: 60 días**. Pero
-`publicador.py` lo renueva solo: cada vez que publica, si han pasado más de
+`publicacion/publicador.py` lo renueva solo: cada vez que publica, si han pasado más de
 7 días desde la última renovación, llama a
 
 ```
@@ -90,7 +90,7 @@ Por eso la cola se sirve desde `https://chinesereads.com/cola-chinesereads/`
    `media_type=CAROUSEL`, `children=<ids>` y el `caption`.
 4. **Publicar**: `POST /{user_id}/media_publish` con `creation_id`.
 
-Todo esto lo hace `publicador.py`; aquí está por si algún día hay que
+Todo esto lo hace `publicacion/publicador.py`; aquí está por si algún día hay que
 depurarlo a mano.
 
 ## Límites que nos afectan

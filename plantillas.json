@@ -78,7 +78,7 @@
   "plantillas": [
     {
       "id": "texto-6",
-      "nombre": "5 palabras en chino sobre X",
+      "nombre": "N palabras en chino sobre X",
       "descripcion": "Slide de vocabulario con carácter, pinyin, traducción y una frase de ejemplo completa (chino, pinyin y traducción). Fondo fijo, solo cambia el texto.",
       "canva_design_id": "DAHGvSQ2oJQ",
       "formato": "1080x1080",
@@ -351,7 +351,7 @@
           "nota": "El rojo exacto del logo de chinesereads. Solo sobre fotos claras y lisas; se pierde si la foto ya tiene rojos (farolillos, banderas)."
         }
       ],
-      "_comentario_colores": "Paleta del título de portada. elegir_color_titulo descarta los que no llegan a 3:1 de contraste sobre la franja del título y, entre los que quedan, rota por el que lleva más posts sin usarse (lee portada.color del historial). Añadir o quitar colores aquí es seguro: la legibilidad la garantiza el código, no la lista.",
+      "_comentario_colores": "Paleta del título de portada. elegir_portada descarta los que no llegan a 3:1 de contraste sobre la franja del título y, entre los que quedan, rota por el que lleva más posts sin usarse (lee portada.color del historial). Añadir o quitar colores aquí es seguro: la legibilidad la garantiza el código, no la lista.",
       "huecos": [
         {
           "id": "TITULO",

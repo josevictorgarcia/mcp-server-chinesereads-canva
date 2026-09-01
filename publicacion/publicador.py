@@ -2,7 +2,7 @@
 """Publicador automático de posts en Instagram y TikTok.
 
 Script independiente: sin MCP, sin dependencias externas (solo stdlib).
-Pensado para correr en el VPS con un cron diario. Lee la cola de posts
+Pensado para correr en el VPS con un temporizador diario de systemd. Lee la cola de posts
 (carpetas con las imágenes + un meta.json), publica el más antiguo en las
 redes configuradas y lo archiva en publicados/.
 
@@ -11,20 +11,20 @@ herramientas — aquí no hay modelo en el bucle. El cron ejecuta este script
 a pelo; la descripción y los hashtags ya vienen decididos en el meta.json
 que se generó junto al post.
 
-Uso:
-  python3 publicador.py estado              comprueba config, tokens y cola
-  python3 publicador.py cola                lista los posts pendientes
-  python3 publicador.py pendientes          imprime solo el nº de posts en cola
-  python3 publicador.py publicar            publica el post más antiguo
-  python3 publicador.py publicar --dry-run  simula sin publicar nada
-  python3 publicador.py publicar --solo instagram   (o --solo tiktok)
+Uso (desde la raíz del repo):
+  python3 publicacion/publicador.py estado              config, tokens y cola
+  python3 publicacion/publicador.py cola                posts pendientes
+  python3 publicacion/publicador.py pendientes          solo el nº de posts en cola
+  python3 publicacion/publicador.py publicar            publica el más antiguo
+  python3 publicacion/publicador.py publicar --dry-run  simula sin publicar nada
+  python3 publicacion/publicador.py publicar --solo instagram   (o --solo tiktok)
 
 El disco no se llena: tras publicar, el post pasa a publicados/ y se borra
 del servidor a los `dias_retencion` días (7 por defecto). La copia
 permanente vive en Canva (los diseños del post) y, si quieres, en tu Mac.
 
-Configuración en publicacion_config.json (copiar de
-publicacion_config.ejemplo.json y rellenar). Contiene tokens: está en
+Configuración en publicacion_config.json, en la raíz del repo (copiar de
+despliegue/publicacion_config.ejemplo.json y rellenar). Contiene tokens: está en
 .gitignore y jamás debe subirse a git. Guía completa: docs/publicacion.md.
 """
 
@@ -38,7 +38,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent
+BASE = Path(__file__).resolve().parent.parent   # raíz del repo
 COLA = BASE / "cola"
 PUBLICADOS = BASE / "publicados"
 POSTS = BASE / "posts"
@@ -107,9 +107,9 @@ def _http(url: str, *, metodo: str = "GET", form: dict | None = None,
 def cargar_config() -> dict:
     if not CONFIG.exists():
         raise SystemExit(
-            "No existe publicacion_config.json. Copia "
-            "publicacion_config.ejemplo.json, rellénalo (ver docs/configuracion.md) "
-            "y vuelve a intentarlo."
+            "No existe publicacion_config.json en la raíz del repo. Copia "
+            "despliegue/publicacion_config.ejemplo.json, rellénalo (ver "
+            "docs/configuracion.md) y vuelve a intentarlo."
         )
     return json.loads(CONFIG.read_text(encoding="utf-8"))
 
@@ -397,14 +397,14 @@ def cmd_estado() -> int:
 
 
 def cmd_cola() -> int:
-    for carpeta in posts_en_cola():
+    pendientes = posts_en_cola()
+    if not pendientes:
+        print("Cola vacía.")
+    for carpeta in pendientes:
         meta = _cargar_meta(carpeta)
         publicado = ", ".join(meta.get("publicado", {})) or "pendiente"
         print(f"{carpeta.name}  [{publicado}]  "
               f"{len(_imagenes_del_post(carpeta, meta))} imágenes")
-    else:
-        if not posts_en_cola():
-            print("Cola vacía.")
     return 0
 
 
@@ -532,16 +532,15 @@ def _limpiar_publicados(cfg: dict) -> None:
             _log(f"Limpieza: {carpeta.name} borrado del servidor "
                  f"({dias} días desde su publicación; sigue en Canva).")
 
-    _limpiar_posts_del_servidor(dias, limite)
+    _limpiar_posts_del_servidor(cfg, dias, limite)
 
 
-def _limpiar_posts_del_servidor(dias: int, limite: datetime) -> None:
+def _limpiar_posts_del_servidor(cfg: dict, dias: int, limite: datetime) -> None:
     """Borra también los PNG originales que deja la generación autónoma en
     `posts/`. Solo aplica en el VPS: en el Mac esa carpeta es el archivo del
     usuario y no se toca nunca (se distingue por `vps.ssh`, que está vacío
     en el servidor y relleno en el Mac). La copia permanente de todo post
     está en Canva."""
-    cfg = cargar_config()
     if cfg.get("vps", {}).get("ssh"):
         return                      # estamos en el Mac: no tocar nada
     if not POSTS.is_dir():

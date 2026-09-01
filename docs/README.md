@@ -50,11 +50,19 @@ está bien.
 
 ## Dónde está lo que no es documentación
 
-- **`SKILL.md`** (en la raíz): el flujo de once pasos que sigue Claude para
-  generar un post. Vive en la raíz porque es donde lo busca la skill, no en
-  esta carpeta.
-- **`PROMPT_AUTONOMO.md`** (en la raíz): el encargo que recibe Claude cuando
-  genera un post solo en el servidor. Lo lee `generacion_autonoma.sh` por
-  ruta relativa.
-- **`despliegue/`**: los ficheros que se copian al servidor (unidades de
-  systemd, override de Docker, plantillas) y el script `deploy.sh`.
+El repo está partido por responsabilidades; en la raíz solo quedan el
+catálogo (`plantillas.json`), `requirements.txt`, `.mcp.json` y el estado
+local que no va a git (`historial.json`, `cola/`, `posts/`, la config).
+
+- **`.claude/skills/generar-post/SKILL.md`**: el flujo de once pasos que
+  sigue Claude para generar un post. Está ahí porque es donde Claude Code
+  busca las skills del proyecto: se dispara sola al pedir un post.
+- **`catalogo/servidor_catalogo.py`**: el servidor MCP local (catálogo,
+  validación, rotaciones, imágenes de IA).
+- **`publicacion/publicador.py`**: publica la cola en Instagram y TikTok.
+- **`generacion/`**: `generacion_autonoma.sh` (lo lanza el timer del
+  servidor) y `PROMPT_AUTONOMO.md`, el encargo que recibe Claude cuando
+  genera solo.
+- **`despliegue/`**: lo que se copia al servidor (unidades de systemd,
+  override de Docker, plantillas de configuración) y los scripts
+  `deploy.sh` y `verificar.sh`.

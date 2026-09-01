@@ -35,7 +35,7 @@ from mcp.server.mcpserver import MCPServer
 # Rutas de datos
 # --------------------------------------------------------------------------
 
-BASE = Path(os.environ.get("CATALOGO_DIR", Path(__file__).parent)).resolve()
+BASE = Path(os.environ.get("CATALOGO_DIR", Path(__file__).parent.parent)).resolve()
 PLANTILLAS = BASE / "plantillas.json"
 HISTORIAL = BASE / "historial.json"
 
@@ -44,9 +44,9 @@ HISTORIAL = BASE / "historial.json"
 # de posts, la palabra vuelve a estar disponible.
 COOLDOWN_POSTS = 15
 
-# Color del título de portada. La franja que se mide es la vertical donde cae
-# el título en la plantilla (fracciones de la altura): medir la foto entera
-# engaña — una foto oscura puede tener nubes claras justo detrás del texto.
+# Franja del título de portada por defecto (fracciones de la altura), solo si
+# plantillas.json no declara variantes con su propia caja. Se mide esa franja y
+# no la foto entera: una foto oscura puede tener nubes claras justo detrás.
 BANDA_TITULO = (0.27, 0.60)
 # Contraste WCAG mínimo para texto grande (3:1) y mínimo tolerable contra las
 # zonas extremas de la franja, que es donde un color plano se rompe.
@@ -209,10 +209,6 @@ def _hex_a_rgb(valor: str) -> tuple[int, int, int]:
     if len(v) != 6:
         raise ValueError(f"Color no válido: {valor!r} (formato esperado #RRGGBB).")
     return tuple(int(v[i:i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
-
-
-def _rgb_a_hex(rgb: tuple[int, int, int]) -> str:
-    return "#{:02X}{:02X}{:02X}".format(*rgb)
 
 
 def _luminancia_relativa(rgb: tuple[int, int, int]) -> float:
@@ -584,7 +580,7 @@ def portadas_recientes(cooldown: int = COOLDOWN_POSTS) -> list[dict]:
     aparezca aquí (misma foto de galería o mismo prompt/semilla de IA) y varía
     la redacción del título respecto a los recientes. Fuera de esta ventana,
     una foto vuelve a estar disponible — igual que el cooldown de palabras.
-    `color` es el hex del título; de rotarlo ya se encarga elegir_color_titulo.
+    `color` es el hex del título; de rotarlo ya se encarga elegir_portada.
     """
     entradas = [h for h in _historial() if h.get("portada")]
     recientes = entradas[-cooldown:] if cooldown > 0 else []
@@ -977,112 +973,6 @@ def elegir_portada(ruta_imagen: str) -> dict:
     }
 
 
-@mcp.tool()
-def elegir_color_titulo(ruta_imagen: str, banda: list[float] | None = None) -> dict:
-    """Mide la foto de portada y decide **de qué color va el título**, entre
-    los colores de marca declarados en plantillas.json (`portada` →
-    `colores_titulo`).
-
-    Sustituye a mirar la imagen a ojo. Dos reglas duras, las dos en código:
-
-    1. **Legibilidad primero.** El contraste se calcula con la fórmula de la
-       WCAG entre cada color de la paleta y el fondo real de la *franja donde
-       cae el título* (no la media de toda la foto: una foto oscura con nubes
-       claras justo detrás del texto engañaba a la media). Solo se consideran
-       viables los colores que llegan a 3:1, el mínimo para texto grande.
-    2. **Variedad después.** Entre los viables gana el que lleve más posts sin
-       usarse (o uno al azar entre los que no se han usado nunca), leyendo
-       `portada.color` del historial. Así el feed no sale siempre igual sin
-       que ningún post pierda legibilidad.
-
-    Recolorear es **gratis e instantáneo** (`format_text` en la transacción de
-    edición de Canva) y generar una imagen nueva cuesta pollen: si el título
-    no se lee, esto es lo primero que hay que probar. Solo si
-    `ninguno_viable` es true la foto no tiene salida y toca cambiarla.
-
-    `banda` permite acotar la franja vertical analizada como fracciones de la
-    altura ([0.27, 0.60] por defecto, que es donde cae el título en la
-    plantilla de portada).
-    """
-    from PIL import Image, ImageStat
-
-    ruta = Path(ruta_imagen).expanduser()
-    if not ruta.exists():
-        raise ValueError(f"No existe el fichero de imagen: {ruta}")
-
-    desde, hasta = BANDA_TITULO if banda is None else (banda[0], banda[1])
-    if not 0 <= desde < hasta <= 1:
-        raise ValueError("banda debe ser [desde, hasta] con 0 <= desde < hasta <= 1.")
-
-    with Image.open(ruta) as img:
-        color = img.convert("RGB")
-        gris = color.convert("L")
-        ancho, alto = gris.size
-        tercio = alto // 3
-        caja = (0, int(alto * desde), ancho, int(alto * hasta))
-        franja_color = color.crop(caja)
-        franja_gris = gris.crop(caja)
-
-        def _media_gris(recorte) -> float:
-            return round(ImageStat.Stat(recorte).mean[0], 1)
-
-        luminancia = {
-            "global": _media_gris(gris),
-            "tercio_superior": _media_gris(gris.crop((0, 0, ancho, tercio))),
-            "tercio_central": _media_gris(gris.crop((0, tercio, ancho, 2 * tercio))),
-            "tercio_inferior": _media_gris(gris.crop((0, 2 * tercio, ancho, alto))),
-            "banda_titulo": _media_gris(franja_gris),
-        }
-
-        # Saturación media de la foto entera: una portada legible pero gris
-        # (niebla, nieve, cielo blanco) se ve en blanco y negro en el feed.
-        saturacion = round(
-            ImageStat.Stat(color.convert("HSV").getchannel("S")).mean[0] / 255, 3
-        )
-
-        usos = _usos_color()
-        candidatos, viables, (medio, claro, oscuro) = _candidatos_color(
-            franja_color, usos
-        )
-
-    elegido, motivo = _rotar_color(viables, usos)
-
-    candidatos.sort(key=lambda c: c["contraste"], reverse=True)
-    return {
-        "luminancia": luminancia,
-        "fondo_banda": {
-            "rgb": list(medio),
-            "hex": _rgb_a_hex(medio),
-            "zona_mas_clara": _rgb_a_hex(claro),
-            "zona_mas_oscura": _rgb_a_hex(oscuro),
-        },
-        "banda_analizada": [desde, hasta],
-        "saturacion": saturacion,
-        "casi_monocroma": saturacion < SATURACION_MINIMA,
-        "elegido": elegido,
-        "motivo": motivo,
-        "candidatos": candidatos,
-        "ninguno_viable": elegido is None,
-        "siguiente_paso": (
-            ("AVISO: la foto es casi monocroma (saturación "
-             f"{saturacion}): legible, pero en el feed se verá en blanco y "
-             "negro. Luminoso no es lo mismo que gris — repite el prompt con "
-             "una escena clara pero CON color (madera, verde, textiles, "
-             "tejados, luz cálida) salvo que el blanco y negro sea "
-             "deliberado. " if saturacion < SATURACION_MINIMA else "")
-            + "Aplica el hex de 'elegido' al título con format_text en la "
-            "misma transacción de edición, y pásalo como portada['color'] en "
-            "registrar_publicacion (sin eso la rotación de colores no avanza)."
-            if elegido else
-            "Ningún color de la paleta llega a 3:1 sobre esa franja: la foto "
-            "tiene el fondo demasiado revuelto justo donde va el título. Aquí "
-            "sí toca cambiar de imagen (otro descarte ya pagado antes que una "
-            "generación nueva)."
-        ),
-    }
-
-
-
 def _token_pollinations() -> str:
     try:
         return POLLINATIONS_TOKEN_FILE.read_text(encoding="utf-8").strip()
@@ -1158,7 +1048,6 @@ def generar_imagen_ia(
     borrosa o deforme, repite con otra `seed`. En el historial registra solo
     prompt+seed, nunca `url_para_canva` (lleva el token).
     """
-    import random
     import urllib.error
     import urllib.parse
     import urllib.request
@@ -1319,7 +1208,7 @@ def registrar_publicacion(
     {"titulo": "...", "imagen": "<nombre del asset o prompt+seed de IA>",
     "origen": "ia" | "galeria" | "manual", "color": "#RRGGBB",
     "escena": "museo-porcelana", "variante": "portada-3"} — es lo que alimenta el cooldown de
-    portadas_recientes, la rotación de colores de elegir_color_titulo (sin
+    portadas_recientes, la rotación de colores de elegir_portada (sin
     `color`, el título tenderá a salir siempre igual) y el cooldown de escenas
     de escenas_recientes (sin `escena`, las portadas se repetirán de tipo) y la
     rotación de variantes de elegir_portada (sin `variante`, siempre saldrá la
@@ -1420,13 +1309,15 @@ def anadir_plantilla(
     huecos: list[dict],
     formato: str = "1080x1080",
     reglas_estilo: list[str] | None = None,
-    max_paginas: int = 12,
+    max_paginas: int = 8,
 ) -> dict:
     """Registra una plantilla nueva en el catálogo sin editar el JSON a mano.
 
     canva_design_id debe apuntar a un diseño MULTI-PÁGINA (varias páginas con el
-    mismo layout duplicadas en Canva): max_paginas es cuántas páginas tiene, y
-    limita cuántas slides puede tener un post con esta plantilla.
+    mismo layout duplicadas en Canva): max_paginas limita cuántas slides puede
+    tener un post con esta plantilla. Por defecto 8, que es el tope real aunque
+    el maestro tenga más páginas: Instagram admite 10 imágenes por carrusel y
+    portada + slide de cierre se llevan dos.
 
     Cada hueco es un objeto: {"id": "titulo", "descripcion": "...",
     "max_caracteres": 40, "tipo": "texto"}. El id debe coincidir con el texto que

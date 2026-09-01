@@ -148,7 +148,7 @@ client_key=...&client_secret=...&code=...&grant_type=authorization_code
 Respuesta: `access_token` (24 h), `refresh_token` (**1 año**), `open_id` y
 los scopes concedidos. Todo se guarda en `publicacion_config.json`.
 
-**4. Renovación automática.** `publicador.py` renueva el `access_token` en
+**4. Renovación automática.** `publicacion/publicador.py` renueva el `access_token` en
 cada ejecución si está caducado o a punto:
 
 ```

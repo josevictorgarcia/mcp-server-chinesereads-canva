@@ -63,7 +63,7 @@ else
 fi
 
 sudo -u "$USUARIO" mkdir -p "${DESTINO}/cola" "${DESTINO}/publicados"
-chmod +x "${DESTINO}/generacion_autonoma.sh"
+chmod +x "${DESTINO}/generacion/generacion_autonoma.sh"
 
 # El venv solo hace falta para la generación autónoma (Pillow + MCP);
 # publicador.py funciona con el Python del sistema, sin dependencias.
@@ -137,7 +137,7 @@ fi
 log "5/5 Plantillas de configuración"
 CONFIG="${DESTINO}/publicacion_config.json"
 if [ ! -f "$CONFIG" ]; then
-    sudo -u "$USUARIO" cp "${DESTINO}/publicacion_config.ejemplo.json" "$CONFIG"
+    sudo -u "$USUARIO" cp "${DESTINO}/despliegue/publicacion_config.ejemplo.json" "$CONFIG"
     echo "   creado publicacion_config.json a partir de la plantilla"
 else
     echo "   publicacion_config.json ya existe (no se toca)"
@@ -169,7 +169,7 @@ cat <<FIN
       - systemctl enable --now chinesereads-generador.timer
 
  Comprobar cómo va todo:
-   sudo -u ${USUARIO} python3 ${DESTINO}/publicador.py estado
+   sudo -u ${USUARIO} python3 ${DESTINO}/publicacion/publicador.py estado
    systemctl list-timers 'chinesereads-*'
 ════════════════════════════════════════════════════════════════════
 FIN

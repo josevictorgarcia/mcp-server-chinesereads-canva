@@ -142,7 +142,7 @@ if command -v claude >/dev/null 2>&1; then
     fi
 fi
 
-sudo -u "$USUARIO" python3 publicador.py estado 2>&1 | sed 's/^/  /'
+sudo -u "$USUARIO" python3 publicacion/publicador.py estado 2>&1 | sed 's/^/  /'
 
 echo
 if [ "$FALLOS" -eq 0 ]; then

@@ -14,6 +14,6 @@ WorkingDirectory=/home/chinesereads/publicador
 # Credenciales de Claude (token de suscripcion o ANTHROPIC_API_KEY).
 # Fichero aparte con chmod 600: nunca en el repo.
 EnvironmentFile=/etc/chinesereads-generador.env
-ExecStart=/home/chinesereads/publicador/generacion_autonoma.sh
+ExecStart=/home/chinesereads/publicador/generacion/generacion_autonoma.sh
 # Generar un post lleva varios minutos (Canva, imagenes, exportaciones).
 TimeoutStartSec=2700
