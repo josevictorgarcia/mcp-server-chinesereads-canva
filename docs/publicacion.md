@@ -184,4 +184,4 @@ igualmente para dejar paso a los siguientes.
 Si sabes que una red no va a funcionar durante un tiempo, mejor **pausarla**
 que dejarla fallar: pon `"pausada": true` en su sección de
 `publicacion_config.json` y el publicador la ignora por completo. Es lo que
-está hecho ahora mismo con TikTok, a la espera de la auditoría.
+está hecho con TikTok, que rechazó la auditoría (ver [tiktok.md](tiktok.md)).

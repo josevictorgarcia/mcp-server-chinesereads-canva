@@ -53,7 +53,7 @@ rellenar los huecos.
     "access_token": "",         // lo rellena el OAuth (dura 24 h)
     "access_token_caduca": "",  // lo gestiona el publicador
     "refresh_token": "",        // lo rellena el OAuth (dura 1 año, rota solo)
-    "privacy_level": "SELF_ONLY" // PUBLIC_TO_EVERYONE cuando pase la auditoría
+    "privacy_level": "SELF_ONLY" // PUBLIC_TO_EVERYONE solo con auditoría aprobada
   },
   "hashtags_por_defecto": ["#learnchinese", "..."]
 }
@@ -166,9 +166,10 @@ Haz copia de vez en cuando en algún sitio **privado** (nunca el repo).
 
 ## Textos guardados para el formulario de TikTok
 
-Para cuando envíes la auditoría (ver [tiktok.md](tiktok.md)). La
-explicación de cómo se usa cada producto y scope, dentro del límite de
-1000 caracteres:
+Es lo que se envió en la auditoría del 2026-08-29, **rechazada** porque
+TikTok no aprueba apps de uso propio (ver [tiktok.md](tiktok.md)). Se guarda
+por si algún día cambia la política o el caso de uso. La explicación de cómo
+se usa cada producto y scope, dentro del límite de 1000 caracteres:
 
 ```
 ChineseReads (chinesereads.com) is a free web app for learning Chinese through graded reading. We publish daily educational carousels (Chinese character, pinyin and meaning) to our own TikTok account, @chinesereadsapp.

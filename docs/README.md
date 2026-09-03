@@ -27,7 +27,7 @@ genere solo; el resultado es el mismo y ambos usan las mismas reglas.
 | Documento | Para qué |
 |---|---|
 | [instagram.md](instagram.md) | Cómo se conectó, cómo funciona la autenticación, límites |
-| [tiktok.md](tiktok.md) | Lo mismo + el sandbox y **qué queda pendiente** (la auditoría) |
+| [tiktok.md](tiktok.md) | Lo mismo + el sandbox, **por qué está en pausa** (auditoría rechazada) y cómo subir a mano |
 | [publicacion.md](publicacion.md) | Arquitectura de la publicación, formatos, alcance y shadowban |
 
 ## Otros

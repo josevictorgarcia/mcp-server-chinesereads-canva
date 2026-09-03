@@ -1,14 +1,15 @@
-# TikTok: cómo quedó conectado y qué falta
+# TikTok: cómo quedó conectado y por qué está en pausa
 
-Estado: **conectado y funcionando en modo Sandbox desde el 2026-08-29.**
-Publica de verdad en `@chinesereadsapp`, pero los posts salen en **privado**
-(`SELF_ONLY`) hasta que TikTok apruebe la auditoría. Ver
-[Lo que queda pendiente](#lo-que-queda-pendiente).
+Estado: **conectado en modo Sandbox desde el 2026-08-29, pausado desde el
+2026-09-03.** La integración funciona (publica de verdad en
+`@chinesereadsapp`), pero TikTok **rechazó la auditoría** y sin ella la API
+solo publica en cuentas privadas. Ver
+[Por qué se queda en pausa](#por-qué-se-queda-en-pausa).
 
-**Auditoría enviada el 2026-08-29** (respuesta típica en 2-6 semanas, por
-email). Mientras llega, TikTok está **pausado** en `publicacion_config.json`
-(`"pausada": true`): el publicador ni lo intenta, así que no falla ni
-ensucia el log, e Instagram sigue publicando con normalidad.
+TikTok está pausado en `publicacion_config.json` (`"pausada": true`): el
+publicador ni lo intenta, así que no falla ni ensucia el log, e Instagram
+sigue publicando con normalidad. Los TikToks se suben **a mano desde el
+móvil** (ver [Cómo publicar en TikTok mientras tanto](#cómo-publicar-en-tiktok-mientras-tanto)).
 
 ---
 
@@ -89,7 +90,7 @@ dig @8.8.8.8 +short TXT chinesereads.com
 ```
 
 **Ojo**: sandbox y producción emiten códigos distintos. Ahora mismo el DNS
-tiene el del sandbox; cuando se envíe producción a revisión habrá que
+tiene el del sandbox; si algún día se pasara a producción habría que
 **añadir** (no sustituir) el suyo.
 
 ## El flujo de autenticación, paso a paso
@@ -192,62 +193,65 @@ cambió la versión. Y desconfía de los tutoriales de blogs: en este proyecto
 varios daban por obligatoria una página de Facebook para Instagram que ya
 no hace falta desde 2024.
 
-## Lo que queda pendiente
+## Por qué se queda en pausa
 
-**La auditoría (app review).** Es lo único, pero tiene una consecuencia
-práctica que conviene entender bien, porque no es la que parece.
-
-Sin auditoría, la API **no publica en cuentas públicas**. Comprobado en el
-primer intento real (2026-08-29):
+Sin auditoría (app review), la API **no publica en cuentas públicas**.
+Comprobado en el primer intento real (2026-08-29):
 
 ```
 HTTP 403 ... {"error":{"code":"unaudited_client_can_only_post_to_private_accounts"}}
 ```
 
 No depende de nuestro `privacy_level`, sino de la **privacidad de la
-cuenta**: mientras `@chinesereadsapp` sea pública, la API se niega. Para
-publicar por API antes de la auditoría hay que poner la cuenta en **privado**
-(en la app: Configuración → Privacidad → Cuenta privada). El post entra
-como `SELF_ONLY`; después puedes volver a poner la cuenta en pública y
-hacer público ese post desde la app.
+cuenta**: mientras `@chinesereadsapp` sea pública, la API se niega. Solo
+publicaría con la cuenta en privado y el post como `SELF_ONLY`, lo que no
+sirve para una cuenta pública que publica a diario.
 
-Es decir: con la cuenta pública, TikTok queda en pausa hasta la auditoría —
-Instagram sigue funcionando con normalidad, y los TikToks públicos pueden
-salir mientras tanto por Metricool.
+**La auditoría se envió el 2026-08-29 y fue rechazada el 2026-09-03** con
+este motivo:
 
-Para pedirla hacen falta dos cosas que ahora ya se pueden preparar:
+> App will not be approved for personal or company internal use. TikTok for
+> Developers currently does not support personal or internal company use.
 
-1. **La explicación** (máx. 1000 caracteres) — redactada y lista en
-   [configuracion.md](configuracion.md).
-2. **Un vídeo demostrando el flujo completo**, grabado desde el Sandbox.
-   Basta una captura de pantalla enseñando: el post generado, la cola, el
-   comando publicando y el resultado apareciendo en TikTok.
+No es un problema de redacción ni de vídeo: es política de TikTok. **No
+aprueban apps cuyo uso sea publicar en la cuenta del propio desarrollador**,
+que es exactamente lo que hace esta. Volver a enviarla con el mismo caso de
+uso da el mismo resultado. Solo tendría sentido reintentarlo si algún día la
+web ChineseReads ofreciera de verdad a sus usuarios "compartir en TikTok";
+inventar ese caso de uso para pasar la revisión no es una opción.
 
-Consejos para que no la rechacen: describe un caso de uso concreto (nada
-de "gestión de redes sociales" en abstracto), deja claro que publicas
-**contenido propio en tu propia cuenta**, y no dejes marcados scopes que no
-demuestres en el vídeo.
+Lo que queda montado (app, sandbox, dominio verificado, OAuth, código del
+publicador) no se ha desmontado: sigue en el repo por si TikTok cambia de
+política o aparece un caso de uso legítimo. La explicación del formulario
+sigue guardada en [configuracion.md](configuracion.md).
 
-Plazo típico: **2 a 6 semanas**. Mientras tanto no bloquea nada.
-
-Cuando la aprueben:
+Si algún día se aprobara, los pasos serían:
 
 1. Añadir al DNS el código TXT de la app de **producción**.
 2. Cambiar `client_key` y `client_secret` en `publicacion_config.json` por
    los de producción (los del sandbox dejan de valer).
 3. Repetir el OAuth una vez (volver a subir la página de retorno).
-4. Cambiar `"privacy_level"` a `"PUBLIC_TO_EVERYONE"`.
+4. Cambiar `"privacy_level"` a `"PUBLIC_TO_EVERYONE"` y quitar `"pausada"`.
 
-Curiosidad útil: `creator_info` ya informa de que la cuenta admite
-`PUBLIC_TO_EVERYONE`, pero eso describe la cuenta, no los permisos de la
-app. Los clientes sin auditar siguen forzados a privado.
+## Cómo publicar en TikTok mientras tanto
 
-## Alternativa mientras tanto: Metricool
+**A mano, desde el móvil.** El post del día ya está en Canva, en la carpeta
+`chinesereads-posts`, con el nombre `tema-fecha` (ejemplo:
+`deportes-2026-09-03`). Desde la app de Canva en el móvil: abrir el diseño,
+descargarlo como imágenes (JPG o PNG, todas las páginas) y subirlas a TikTok
+como carrusel de fotos con el mismo texto que llevó Instagram. Ese texto
+está en `meta.json`, dentro de la carpeta del post en `publicados/`
+del VPS, y también es el que aparece publicado en Instagram, de donde es
+más cómodo copiarlo.
 
-Si quieres TikToks **públicos** desde ya, Metricool (que ya tienes) es
-partner auditado de TikTok: arrastras los JPEG de `_cola/` a su calendario
-y los programa. No sustituye a nada de lo montado aquí; es solo un puente
-manual para los días en que quieras publicación pública inmediata.
+Lo que **no** sale a cuenta:
 
-Lo que **no** sirve es su API: el plan Advanced la incluye para
-analíticas, no para publicar programáticamente.
+- **Metricool** (partner auditado de TikTok) publica en público, pero hay
+  que arrastrar los JPEG desde un ordenador. Más lío que el móvil.
+- **Intermediarios con app auditada** (Upload-Post, Ayrshare y similares)
+  permitirían dejarlo automático llamando a su API en vez de a la de
+  TikTok, pero ninguno es gratis para TikTok: desde unos 16 $/mes el más
+  barato (comprobado el 2026-09-03). Si algún día compensa, el cambio es
+  solo en la parte de TikTok de `publicacion/publicador.py`.
+- **Postiz, Mixpost y demás autoalojados**: necesitan tu propia app de
+  TikTok, así que chocan con el mismo rechazo.

@@ -4,7 +4,9 @@ Pides *"5 palabras en chino sobre deportes"* y sale un carrusel nuevo de 5
 slides en tu cuenta de Canva, con la plantilla intacta y sin repetir palabras
 recientes.
 
-Y no se queda ahí: el post se publica solo en Instagram y TikTok a las 20:00.
+Y no se queda ahí: el post se publica solo en Instagram a las 20:00 (TikTok
+está preparado pero en pausa: TikTok no aprueba apps de uso propio; ver
+[docs/tiktok.md](docs/tiktok.md)).
 
 Coste: **0 €**. Canva Free + el servidor MCP oficial de Canva + este servidor
 local. Sin redimensionado, sin autofill de Enterprise, sin recursos premium.
@@ -16,7 +18,7 @@ local. Sin redimensionado, sin autofill de Enterprise, sin recursos premium.
 | [docs/local.md](docs/local.md) | Instalar y usarlo en tu Mac |
 | [docs/despliegue.md](docs/despliegue.md) | Montar el servidor desde cero |
 | [docs/configuracion.md](docs/configuracion.md) | Todos los secretos: qué, de dónde y dónde va |
-| [docs/instagram.md](docs/instagram.md) · [docs/tiktok.md](docs/tiktok.md) | Cada red: conexión, autenticación y pendientes |
+| [docs/instagram.md](docs/instagram.md) · [docs/tiktok.md](docs/tiktok.md) | Cada red: conexión, autenticación y estado |
 | [docs/publicacion.md](docs/publicacion.md) | Cómo funciona la publicación automática |
 | [docs/pollinations.md](docs/pollinations.md) | Imágenes con IA y su coste |
 | [.claude/skills/generar-post/SKILL.md](.claude/skills/generar-post/SKILL.md) | El flujo de once pasos que genera un post |
